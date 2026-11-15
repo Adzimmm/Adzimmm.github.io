@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ms" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Admin · Adzim's Portfolio</title>
+  <script>
+    // Same theme choice as the portfolio (localStorage "adzim-theme"), before first paint.
+    try { if (localStorage.getItem('adzim-theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css?v=5">
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
+</head>
+<body>
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <!-- Not configured yet -->
+  <main class="auth" id="view-setup" hidden>
+    <div class="auth-card">
+      <div class="auth-brand"><span class="mark">a</span><b>adzim<span>.portfolio</span></b></div>
+      <h1>Admin belum disambung</h1>
+      <p class="muted">Isi <code>url</code> dan <code>anonKey</code> dalam <code>supabase-config.js</code>, kemudian muat semula halaman ini.</p>
+    </div>
+  </main>
+
+  <!-- Login -->
+  <main class="auth" id="view-login" hidden>
+    <form class="auth-card" id="login-form" autocomplete="on">
+      <div class="auth-brand"><span class="mark">a</span><b>adzim<span>.portfolio</span></b></div>
+      <h1>Selamat kembali 👋</h1>
+      <p class="muted">Log masuk untuk ubah kandungan portfolio anda.</p>
+      <label class="field"><span>Emel</span><input type="email" name="email" autocomplete="username" placeholder="nama@contoh.com" required></label>
+      <label class="field"><span>Kata laluan</span>
+        <span class="pw"><input type="password" name="password" autocomplete="current-password" required>
+          <button type="button" class="pw-toggle" aria-label="Tunjuk kata laluan" data-show-pw>Tunjuk</button></span>
+      </label>
+      <button class="btn primary block" type="submit">Log masuk</button>
+      <p class="form-error" id="login-error" role="alert"></p>
+      <a class="back-link" href="../">← Kembali ke laman</a>
+    </form>
+  </main>
+
+  <!-- Editor -->
+  <div class="shell" id="view-app" hidden>
+    <aside class="sidebar">
+      <div class="side-brand"><span class="mark">a</span><div><b>adzim<span>.portfolio</span></b><small>Panel admin</small></div></div>
+      <nav class="side-nav" id="side-nav" aria-label="Bahagian"></nav>
+      <div class="side-foot">
+        <a class="side-link" href="../" target="_blank" rel="noopener"><i data-icon="external"></i>Lihat laman</a>
+        <button class="side-link" type="button" id="theme-toggle"><i data-icon="theme"></i><span>Tema terang</span></button>
+        <div class="who"><span class="avatar" id="avatar">A</span><div><small>Log masuk sebagai</small><b id="who-email"></b></div>
+          <button class="icon-btn" type="button" id="logout" title="Log keluar" aria-label="Log keluar"><i data-icon="logout"></i></button></div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="page-head">
+        <div>
+          <p class="crumb">Admin</p>
+          <h1 id="page-title">Teks laman</h1>
+          <p class="muted" id="page-desc"></p>
+        </div>
+        <span class="mode-badge" id="mode-badge" hidden>Mod demo — tiada apa disimpan</span>
+      </header>
+      <p class="notice" id="import-notice" hidden><i data-icon="info"></i><span>Kandungan belum ada dalam Supabase. Editor menunjukkan kandungan semasa laman — tekan <b>Sandaran → Import kandungan semasa</b> dahulu.</span></p>
+      <main class="panel-area" id="panel"></main>
+    </div>
+
+    <div class="savebar" id="savebar" hidden>
+      <span class="dot" aria-hidden="true"></span>
+      <div class="save-text"><b id="save-status">Perubahan belum disimpan</b><small id="save-what"></small></div>
+      <button class="btn ghost" id="discard" type="button">Buang perubahan</button>
+      <button class="btn primary" id="save" type="button">Simpan <kbd>⌘S</kbd></button>
+    </div>
+  </div>
+
+  <!-- Ask / confirm dialog -->
+  <dialog class="ask" id="ask">
+    <form method="dialog" id="ask-form">
+      <h2 id="ask-title"></h2>
+      <p class="muted" id="ask-text"></p>
+      <label class="field" id="ask-field"><span id="ask-label"></span><input id="ask-input" autocomplete="off"></label>
+      <div class="ask-actions">
+        <button class="btn primary" value="ok" type="submit" id="ask-ok">OK</button>
+        <button class="btn ghost" value="cancel" type="submit" formnovalidate>Batal</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="../supabase-config.js"></script>
+  <script src="../site-data.js"></script>
+  <script src="../portfolio-data.js"></script>
+  <script src="../resume-data.js"></script>
+  <script type="module" src="admin.js?v=3"></script>
+</body>
+</html>

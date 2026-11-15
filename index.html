@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="Adzim's portfolio — UUM Multimedia student: logos, branding, social media, print and UI/UX.">
+  <title>Adzim's Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;0,700;1,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=20261116a">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <!-- Link preview (WhatsApp, LinkedIn, X) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Adzim's Portfolio">
+  <meta property="og:description" content="UUM Multimedia student: logos, branding, social media, print and UI/UX.">
+  <meta property="og:image" content="https://adzimmm.github.io/assets/og-image.png">
+  <meta property="og:url" content="https://adzimmm.github.io/">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Adzim's Portfolio: Welcome to my Portfolio, with three campus posters">
+  <meta name="twitter:card" content="summary_large_image">
+  <script>
+    /* Set the motion state before first paint: animation follows the OS reduced-motion setting. */
+    (function () {
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      try { localStorage.removeItem('adzim-motion'); } catch (e) {} // old toggle choice, no longer used
+      document.documentElement.dataset.motion = reduce ? 'off' : 'on';
+      var theme = 'dark';
+      try { if (localStorage.getItem('adzim-theme') === 'light') theme = 'light'; } catch (e) {}
+      document.documentElement.dataset.theme = theme;
+      document.querySelector('meta[name="theme-color"]').content = theme === 'light' ? '#faf9fc' : '#000000';
+    })();
+  </script>
+</head>
+<body>
+  <div class="base-background" aria-hidden="true"><div class="base-background-mask"></div></div>
+  <a class="skip" href="#work">Skip to projects</a>
+  <div class="scroll-progress" aria-hidden="true"><span class="scroll-progress-bar"></span></div>
+
+  <header class="site-header" id="site-header">
+    <a class="brand" href="#top" aria-label="Adzim, home">
+      <span class="brand-logo" aria-hidden="true">
+        <img class="logo-light" src="assets/uum-light-sm.webp" alt="" width="640" height="268">
+        <img class="logo-dark" src="assets/uum-dark-sm.webp" alt="" width="640" height="267">
+      </span>
+      <strong><span data-c="brand.name">adzim</span><span class="muted" data-c="brand.suffix">.portfolio</span></strong>
+    </a>
+    <div class="header-actions">
+    <nav id="main-nav" aria-label="Main navigation">
+      <div class="nav-pill">
+        <a href="#top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1Z"/></svg><span data-c="nav.home">Home</span></a>
+        <a href="#about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span data-c="nav.about">About</span></a>
+        <a href="#education"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m2 9 10-5 10 5-10 5Z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/></svg><span data-c="nav.education">Education</span></a>
+        <a href="#experience"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg><span data-c="nav.experience">Experience</span></a>
+        <a href="#work"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg><span data-c="nav.projects">Projects</span></a>
+      </div>
+      <button class="resume-btn" type="button" data-resume><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span data-c="nav.resume">Resume</span></button>
+    </nav>
+    <button class="theme-toggle" type="button" aria-label="Switch to light mode" title="Switch to light mode">
+      <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+      <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 13.4A9 9 0 0 1 10.6 3.2 9 9 0 1 0 20.8 13.4Z"/></svg>
+    </button>
+    <button class="menu" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Open menu">
+      <span></span><span></span>
+    </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HOME -->
+    <section class="hero hero-min" id="top" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="hero-hi"><span data-c="hero.hi">Hi, I'm</span> <strong data-c="hero.name">Adzim.</strong></p>
+        <h1 id="hero-title">
+          <span class="line" data-c="hero.title">Welcome to my Portfolio</span>
+        </h1>
+        <p class="hero-intro" data-c="hero.intro">This is where I keep my work from static design to stories that move.</p>
+        <form class="hero-search" role="search" action="#work">
+          <label class="search">
+            <span class="visually-hidden">Search projects</span>
+            <input id="search" type="search" placeholder="Tanya je pape kau nak" autocomplete="off" spellcheck="false">
+            <span class="search-hint" aria-hidden="true">Type <kbd>/</kbd> <span data-c="hero.searchHint">to ask</span></span>
+            <button class="search-go" type="submit" aria-label="Show matching projects">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.25 17.25 13.5 13.5M2.75 9a6.25 6.25 0 1 0 12.5 0 6.25 6.25 0 0 0-12.5 0Z"/></svg>
+            </button>
+          </label>
+        </form>
+        <a class="see-more" href="#preview"><span data-c="hero.seeMore">See More</span> <span aria-hidden="true">↓</span></a>
+      </div>
+    </section>
+
+    <!-- Sliding preview of real work: three rows, filled by app.js -->
+    <div class="marquee-wrap marquee-wrap--after-hero" id="preview">
+      <div class="marquee marquee--right" data-row="logo" role="group" aria-label="Logo preview"><div class="marquee-track"></div></div>
+      <div class="marquee" data-row="square" role="group" aria-label="Square social media preview"><div class="marquee-track"></div></div>
+      <div class="marquee marquee--right" data-row="portrait" role="group" aria-label="Portrait social media preview"><div class="marquee-track"></div></div>
+      <p class="marquee-note" data-c-rich="gallery.note">A quick look at <strong>my work</strong>,<br class="desktop"> from <strong>logos to social media campaigns.</strong></p>
+    </div>
+
+    <!-- ABOUT -->
+    <section id="about" class="about" aria-labelledby="about-title">
+      <div class="section-head">
+        <h2 id="about-title" data-c="about.title">About Me</h2>
+      </div>
+      <div class="about-pair">
+        <div class="panel about-me">
+          <h3 data-c="about.cardTitle">Hi, I'm Adzim.</h3>
+          <p data-c="about.body">My full name is Ahmad Zaid Adzim bin Abdul Rahim. Passionate about learning, with a strong affinity for minimalist aesthetics and visual communication. Constantly creative and evolving to turn complex ideas into clean, impactful digital experiences.</p>
+          <p class="availability"><span aria-hidden="true"></span><b data-c="about.availability">Currently interning at Wiser.MY · 21 Sep 2026 – 21 Jan 2027</b></p>
+          <div class="list-head"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></b><span data-c="about.languagesTitle">Languages</span></div>
+          <ul class="hair-list" id="about-languages">
+            <li><span>Bahasa Melayu</span><small>Native</small></li>
+            <li><span>English</span><small>Intermediate, working proficiency</small></li>
+          </ul>
+        </div>
+        <div class="panel">
+          <div class="list-head"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 12.5 9 5 9-5M3 17l9 5 9-5"/></svg></b><span data-c="about.softwareTitle">Software</span></div>
+          <ul class="hair-list skill-list" id="about-software">
+            <li><span>Adobe Photoshop</span><small data-level="3">Advanced</small></li>
+            <li><span>Adobe Illustrator</span><small data-level="3">Advanced</small></li>
+            <li><span>Adobe InDesign</span><small data-level="3">Advanced</small></li>
+            <li><span>Canva</span><small data-level="3">Advanced</small></li>
+            <li><span>CapCut</span><small data-level="3">Advanced</small></li>
+            <li><span>Figma</span><small data-level="2">Intermediate</small></li>
+            <li><span>DaVinci Resolve</span><small data-level="2">Intermediate</small></li>
+            <li><span>Adobe Premiere Pro</span><small data-level="1">Basic</small></li>
+          </ul>
+          <div class="list-head spaced"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19l7-7 3 3-7 7Z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18Z"/><path d="M2 2l7.6 7.6"/><circle cx="11" cy="11" r="2"/></svg></b><span data-c="about.fieldsTitle">Fields</span></div>
+          <ul class="chips" id="about-fields">
+            <li>Graphic design</li>
+            <li>UI/UX</li>
+            <li>Motion graphic</li>
+            <li>Videography</li>
+            <li>Photography</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- EDUCATION (filled by app.js from resume-data.js) -->
+    <section id="education" class="education" aria-labelledby="education-title">
+      <div class="section-head">
+        <h2 id="education-title" data-c="education.title">Education</h2>
+      </div>
+      <div class="tl-group">
+        <div id="education-list"></div>
+      </div>
+    </section>
+
+    <!-- EXPERIENCE (filled by app.js from resume-data.js) -->
+    <section id="experience" class="experience" aria-labelledby="experience-title">
+      <div class="section-head">
+        <h2 id="experience-title" data-c="experience.title">Experience</h2>
+      </div>
+      <div class="exp-cols">
+      <div class="tl-group">
+        <div class="list-head"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg></b><span data-c="experience.workTitle">Work, curricular &amp; leadership</span></div>
+        <div id="experience-grid"></div>
+      </div>
+      <div class="tl-group">
+        <div class="list-head"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0Z"/><path d="M16 6h3a3 3 0 0 1-3 4M8 6H5a3 3 0 0 0 3 4M12 13v4M8 21h8M10 17h4v4h-4Z"/></svg></b><span data-c="experience.awardsTitle">Awards &amp; certificates</span></div>
+        <div id="honors-list"></div>
+      </div>
+      </div>
+    </section>
+
+    <!-- PROJECTS -->
+    <section id="work" class="work" aria-labelledby="work-title">
+      <div class="section-head">
+        <h2 id="work-title"><span data-c="projects.title">Projects</span><span class="accent">.</span></h2>
+        <p class="section-sub" data-c="projects.sub">Lorem Ipsum</p>
+      </div>
+
+      <div class="toolbar">
+        <div class="filters" role="group" aria-label="Category filter"></div>
+      </div>
+
+      <div class="status-row">
+        <p class="results" id="results" aria-live="polite"></p>
+      </div>
+
+      <div id="grid" class="grid"></div>
+
+      <div class="empty" id="empty" hidden>
+        <h3 data-c="projects.emptyTitle">No work matches that.</h3>
+        <p data-c="projects.emptyText">Try another keyword or view all categories.</p>
+        <button class="btn" id="reset" type="button"><span data-c="projects.emptyButton">Reset search &amp; filter</span> ↗</button>
+      </div>
+
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact" class="closing" aria-labelledby="closing-title">
+      <p class="closing-line" id="closing-title"><b data-c="contact.line">Every visual has a story</b><span aria-hidden="true">↗</span></p>
+      <p class="closing-sub" data-c="contact.sub">Have a project, idea or collaboration? Let's talk.</p>
+      <div class="cta-row">
+        <a class="icon-btn" data-contact="email" href="mailto:ahmadzaidadzim.work@gmail.com" aria-label="Email Adzim" title="Email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></a>
+        <a class="icon-btn" data-contact="linkedin" href="https://www.linkedin.com/in/ahmad-zaid-adzim" target="_blank" rel="noopener" aria-label="LinkedIn profile" title="LinkedIn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 10.5V17M8 7.5v.01M12 17v-6.5M12 13.5a2.5 2.5 0 0 1 5 0V17"/></svg></a>
+        <a class="icon-btn" data-contact="instagram" href="https://www.instagram.com/adzimmm01" target="_blank" rel="noopener" aria-label="Instagram @adzimmm01" title="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor" stroke="none"/></svg></a>
+        <button class="resume-btn" type="button" data-resume><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span data-c="nav.resume">Resume</span></button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand" href="#top" data-c="footer.brand">adzim.portfolio</a>
+    <span data-c="footer.tagline">Design &amp; video portfolio</span>
+    <span data-c="footer.copyright">© 2026 Adzim</span>
+  </footer>
+
+  <dialog id="detail" aria-labelledby="detail-title">
+    <button class="close" type="button" aria-label="Close project details">✕</button>
+    <div id="detail-content"></div>
+  </dialog>
+
+  <!-- Resume preview: content from resume-data.js, no phone number or references -->
+  <dialog id="resume" aria-labelledby="resume-title">
+    <div class="resume-bar">
+      <p class="resume-name"><span class="pulse" aria-hidden="true"></span><span id="resume-title" data-c="resume.dialogTitle">Adzim — Resume</span></p>
+      <div class="resume-actions">
+        <a class="resume-download" href="resume.pdf" download="Resume ADZIM.pdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg><span data-c="resume.download">Download PDF</span></a>
+        <button class="resume-close" type="button" aria-label="Close resume">✕</button>
+      </div>
+    </div>
+    <div class="resume-pages" id="resume-sheet"></div>
+  </dialog>
+
+  <script src="supabase-config.js?v=20261116a"></script>
+  <script src="site-data.js?v=20261116a"></script>
+  <script src="portfolio-data.js?v=20261116a"></script>
+  <script src="resume-data.js?v=20261116a"></script>
+  <script src="app.js?v=20261116a"></script>
+</body>
+</html>
