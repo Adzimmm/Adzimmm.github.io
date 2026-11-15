@@ -1,0 +1,24 @@
+# Free Supabase projects pause after about a week without activity.
+# This reads the public "content" table twice a week so the project stays awake.
+# The key below is the publishable (public) key already used by the site.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '17 3 * * 1,4'   # Monday and Thursday, 03:17 UTC
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read site content from Supabase
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            'https://kizpexgoqssuxoclpozy.supabase.co/rest/v1/content?select=key' \
+            -H 'apikey: sb_publishable_3BinoAREe_T6hg_rD3U-ZA_oYpIP-4z')
+          echo "Supabase answered HTTP $code"
+          test "$code" = "200"
