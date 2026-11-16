@@ -1062,3 +1062,9 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 [data-theme="light"] .fd-tab,[data-theme="light"] .fd-tab::before{background:color-mix(in srgb,var(--color) 30%,#fff)}
 [data-theme="light"] .fd-tab{border-color:color-mix(in srgb,var(--color) 75%,#0f0c15)}
 [data-theme="light"] .card.cyber .card-cta span{background:rgba(255,255,255,.55)}
+/* Folder tab shares the card glow: brighten the whole front, and tint the tab like the glowing card top */
+.card.cyber:hover .cy-card,.card.cyber.is-lit .cy-card{filter:none}
+.card.cyber:hover .fd-front,.card.cyber.is-lit .fd-front{filter:brightness(1.1)}
+.fd-tab,.fd-tab::before{transition:background-color .3s,border-color .3s}
+:root:not([data-theme="light"]) .card.cyber:hover .fd-tab,:root:not([data-theme="light"]) .card.cyber.is-lit .fd-tab,:root:not([data-theme="light"]) .card.cyber:hover .fd-tab::before,:root:not([data-theme="light"]) .card.cyber.is-lit .fd-tab::before{background:color-mix(in srgb,var(--color) 22%,#2b2833)}
+[data-theme="light"] .card.cyber:hover .fd-front,[data-theme="light"] .card.cyber.is-lit .fd-front{filter:none}
