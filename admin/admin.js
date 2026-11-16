@@ -24,7 +24,7 @@ const ICON_NAMES = {
   'logo-folio': 'Star', 'brand-design': 'Tag', 'social-media': 'Phone',
   'digital-art': 'Pen', 'print-media': 'Printer', 'ui-ux': 'Screen', others: 'Sparkle',
 };
-const SWATCHES = ['#b8a0ff', '#8dbaff', '#a2d9ba', '#d7c785', '#ddad82', '#f4a1ba', '#ff8a80', '#c9c4d6'];
+const SWATCHES = ['#b8a0ff', '#8dbaff', '#a2d9ba', '#d7c785', '#ddad82', '#f4a1ba', '#ff8a80', '#c9c4d6', '#7fd6c9', '#ffb470', '#d79bff', '#b5d86b'];
 
 /* ---------- Icons (static, trusted markup) ---------- */
 const P = {
@@ -47,6 +47,8 @@ const P = {
   close: '<path d="M6 6l12 12M18 6 6 18"/>',
   moon: '<path d="M20.8 13.4A9 9 0 0 1 10.6 3.2 9 9 0 1 0 20.8 13.4Z"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+  copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
 };
 const svg = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] || ''}</svg>`;
 function ico(name) { const i = document.createElement('i'); i.className = 'ico'; i.innerHTML = svg(name); return i; }
@@ -157,8 +159,12 @@ function updateSavebar() {
 function markDirty(doc) { state.dirty.add(doc); updateSavebar(); }
 
 window.addEventListener('beforeunload', e => {
-  if (state.dirty.size) { e.preventDefault(); e.returnValue = ''; }
+  if (state.dirty.size || state.wizard?.hasContent()) { e.preventDefault(); e.returnValue = ''; }
 });
+// A file dropped outside a drop zone must not open in the tab (that would lose unsaved work).
+['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => {
+  if ([...(e.dataTransfer?.types || [])].includes('Files')) e.preventDefault();
+}));
 
 /* ---------- Supabase ---------- */
 // Demo mode: on this computer only (localhost + ?demo), without Supabase, nothing is saved.
@@ -260,8 +266,13 @@ async function toWebp(bitmap, max) {
 }
 
 async function uploadImage(file, folder, alt) {
-  if (DEMO) throw new Error('Demo mode: uploading needs a real login.');
   const bitmap = await createImageBitmap(file);
+  if (DEMO) { // nothing leaves this computer: the page shows the file itself until reload
+    const url = URL.createObjectURL(file);
+    const local = { alt, dark: false, storage: [], src: url, display: url, thumb: url, width: bitmap.width, height: bitmap.height };
+    bitmap.close();
+    return local;
+  }
   const base = `${folder}/${Date.now().toString(36)}-${slug(file.name.replace(/\.[^.]+$/, ''))}`;
   const out = { alt, dark: false, storage: [] };
   for (const [name, max] of Object.entries(SIZES)) {
@@ -301,7 +312,7 @@ function moveBtns(list, i, doc, rerender) {
     if (j < 0 || j >= list.length) return;
     [list[i], list[j]] = [list[j], list[i]];
     markDirty(doc);
-    rerender();
+    rerender(j); // j: where the moved item is now
   };
   return h('span', { class: 'row-tools' },
     iconBtn('up', 'Move up', move(-1), { disabled: i === 0 }),
@@ -402,132 +413,722 @@ function renderText() {
   return [jumpNav(cards), ...cards];
 }
 
-/* ---------- Tab: Projek ---------- */
+/* ---------- Tab: Projects (folders) ---------- */
+// Each item of the "portfolio" row is one folder card in Projects; its sections are its collections.
+
+// Folder icons: the same set as FILTER_ICONS in ../app.js, so the preview matches the site.
+const FOLDER_ICONS = {
+  'logo-folio': '<circle cx="12" cy="12" r="9"/><path d="m12 7 1.5 3.2 3.5.5-2.5 2.4.6 3.4L12 15l-3.1 1.5.6-3.4L7 10.7l3.5-.5Z"/>',
+  'brand-design': '<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9Z"/><circle cx="8" cy="8" r="1.5"/>',
+  'social-media': '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/>',
+  'digital-art': '<path d="M12 19l7-7 3 3-7 7Z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18Z"/><circle cx="11" cy="11" r="2"/>',
+  'print-media': '<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6Z"/>',
+  'ui-ux': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/>',
+  others: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/>',
+};
+const folderIconSvg = key => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${FOLDER_ICONS[key] || FOLDER_ICONS.others}</svg>`;
+const iconOf = p => (FOLDER_ICONS[p.icon] ? p.icon : FOLDER_ICONS[p.id] ? p.id : 'others');
+const accentOf = p => p.accent || THEMES[p.id]?.accent || '#c9c4d6';
+const labelOf = p => p.label ?? THEMES[p.id]?.label ?? '';
+const visualsOf = p => p.sections.reduce((n, s) => n + s.images.length, 0);
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+const norm = s => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+const nameTaken = (list, name, except) => !!norm(name) && list.some(p => p !== except && norm(p.title) === norm(name));
+const LIGHT_ART_TIP = 'Tick for white or very light artwork. The site shows it on a dark background so it stays visible.';
+const OPEN_HINT = window.matchMedia('(hover: hover)').matches ? 'Hover it to open.' : 'Tap it to open.';
+// Cache version of this file (deploy.sh sets it), passed on so the preview loads the matching style.css.
+const ASSET_V = new URL(import.meta.url).searchParams.get('v') || '';
+
+function uniqueId(list, name) {
+  const base = slug(name);
+  let id = base;
+  for (let n = 2; list.some(p => p.id === id); n++) id = `${base}-${n}`;
+  return id;
+}
+
+// A colour no other folder uses yet.
+function freeAccent(list) {
+  const used = new Set(list.map(p => accentOf(p).toLowerCase()));
+  return SWATCHES.find(c => !used.has(c)) || SWATCHES[list.length % SWATCHES.length];
+}
+
+// New folders go before a last "Others" folder, else at the end.
+const newFolderIndex = list => (list.length && list[list.length - 1].id === 'others' ? list.length - 1 : list.length);
+
+// Guesses from the folder name. First match wins; the order keeps "poster" from reading as a social "post".
+const ICON_GUESS = [
+  ['logo-folio', /logo|identit|emblem|monogram|wordmark/],
+  ['ui-ux', /\bui\b|\bux\b|interface|\bapps?\b|web|dashboard|wireframe|prototype|mobile/],
+  ['print-media', /print|poster|flyer|leaflet|banner|bunting|brochure|booklet|magazine|editorial|signage|merch/],
+  ['social-media', /social|instagram|tiktok|facebook|\bposts?\b|feed|stor(y|ies)|carousel|campaign/],
+  ['brand-design', /brand|packag|label|food|menu|product/],
+  ['digital-art', /\bart\b|artwork|illustrat|drawing|paint|character|sketch|comic|digital/],
+];
+const guessIcon = name => (ICON_GUESS.find(([, re]) => re.test(name.toLowerCase())) || ['others'])[0];
+const LABEL_GUESS = [
+  [/poster/, 'Poster'], [/flyer|leaflet/, 'Flyer'], [/banner|bunting/, 'Banner'], [/brochure|booklet|magazine|editorial/, 'Editorial'],
+  [/identit/, 'Identity system'], [/logo|wordmark|monogram/, 'Logo'], [/packag/, 'Packaging'], [/brand/, 'Branding'],
+  [/campaign/, 'Campaign'], [/social|instagram|tiktok|facebook|carousel/, 'Social media'],
+  [/\bui\b|\bux\b|interface|dashboard|wireframe/, 'Interface'], [/web/, 'Website'], [/\bapps?\b|mobile/, 'App'],
+  [/character/, 'Character'], [/illustrat|drawing|paint/, 'Illustration'], [/comic/, 'Comic'],
+  [/video|motion|animation/, 'Motion'], [/photo/, 'Photography'], [/\b3d\b/, '3D'], [/print/, 'Print'],
+];
+function guessLabel(name) {
+  const hit = LABEL_GUESS.find(([re]) => re.test(name.toLowerCase()));
+  if (hit) return hit[1];
+  return name.replace(/\b(designs?|projects?|works?|collections?|folio|portfolio)\b|&/gi, ' ').trim().split(/\s+/).slice(0, 2).join(' ');
+}
+
+/* Reading dropped images and Finder folders */
+const IMAGE_EXT = /\.(jpe?g|png|webp|gif|avif|bmp|heic|heif|tiff?)$/i;
+const isImageFile = f => !f.name.startsWith('.') && !/svg/.test(f.type) && (f.type.startsWith('image/') || IMAGE_EXT.test(f.name));
+const byName = (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+const allFiles = dir => [...dir.files, ...dir.dirs.flatMap(allFiles)];
+const skipName = name => name.startsWith('.') || name === '__MACOSX';
+
+// The entries of a drop must be taken during the drop event itself; reading them can wait.
+function dropEntries(dt) {
+  const entries = [...(dt.items || [])].filter(i => i.kind === 'file').map(i => (i.webkitGetAsEntry ? i.webkitGetAsEntry() : null));
+  return entries.length && entries.every(Boolean) ? entries : null;
+}
+const entryFile = entry => new Promise((res, rej) => entry.file(res, rej));
+async function readDir(dirEntry) {
+  const reader = dirEntry.createReader();
+  const entries = [];
+  for (;;) { // readEntries answers in batches until it returns an empty one
+    const batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+    if (!batch.length) break;
+    entries.push(...batch);
+  }
+  return readTree(entries, dirEntry.name);
+}
+// A drop as a small tree of images, sorted like Finder: { name, files, dirs: [{ name, files, dirs }] }.
+async function readTree(entries, name = '') {
+  const node = { name, files: [], dirs: [] };
+  for (const e of entries) {
+    if (skipName(e.name)) continue;
+    if (e.isDirectory) node.dirs.push(await readDir(e));
+    else if (e.isFile) {
+      const f = await entryFile(e).catch(() => null);
+      if (f && isImageFile(f)) node.files.push(f);
+    }
+  }
+  node.files.sort(byName);
+  node.dirs.sort(byName);
+  return node;
+}
+const readDrop = (entries, files) => (entries ? readTree(entries) : Promise.resolve({ name: '', files: files.filter(isImageFile).sort(byName), dirs: [] }));
+
+// <input webkitdirectory> gives a flat list with paths like "Folder/Sub folder/image.png".
+function treeFromPicked(fileList) {
+  const top = { name: '', files: [], dirs: [] };
+  [...fileList].forEach(f => {
+    const parts = (f.webkitRelativePath || f.name).split('/');
+    if (!isImageFile(f) || parts.some(skipName)) return;
+    top.name = top.name || (parts.length > 1 ? parts[0] : '');
+    if (parts.length <= 2) { top.files.push(f); return; }
+    let sub = top.dirs.find(x => x.name === parts[1]);
+    if (!sub) top.dirs.push(sub = { name: parts[1], files: [], dirs: [] });
+    sub.files.push(f);
+  });
+  top.files.sort(byName);
+  top.dirs.sort(byName).forEach(x => x.files.sort(byName));
+  return top.name ? { name: '', files: [], dirs: [top] } : top;
+}
+
+// Reads an image once: its size, a small preview and two hints for the gallery on the site.
+// opaque: no see-through pixels, so it fills its frame. dark: mostly white or light artwork on a
+// transparent background, which the site puts on a dark stage (.dark-art) so it stays visible.
+async function analyseImage(file, { preview = true } = {}) {
+  const bmp = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, 240 / Math.max(bmp.width, bmp.height));
+    const w = Math.max(1, Math.round(bmp.width * scale));
+    const hgt = Math.max(1, Math.round(bmp.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = hgt;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(bmp, 0, 0, w, hgt);
+    const px = ctx.getImageData(0, 0, w, hgt).data;
+    let clear = 0, seen = 0, light = 0;
+    for (let i = 0; i < px.length; i += 4) {
+      if (px[i + 3] < 250) clear++;
+      if (px[i + 3] > 40) {
+        seen++;
+        if (0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2] > 204) light++;
+      }
+    }
+    const opaque = clear / (w * hgt) < 0.02;
+    const out = { width: bmp.width, height: bmp.height, opaque, dark: !opaque && seen > 0 && light / seen > 0.75 };
+    if (preview) out.preview = URL.createObjectURL(await new Promise(res => canvas.toBlob(res, 'image/webp', 0.82)) || file);
+    return out;
+  } finally {
+    bmp.close();
+  }
+}
+
+// Files and Finder folders dropped on el (the highlight goes on mark).
+function wireDrop(el, onDrop, mark = el) {
+  const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
+  ['dragenter', 'dragover'].forEach(ev => el.addEventListener(ev, e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    mark.classList.add('over');
+  }));
+  el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) mark.classList.remove('over'); });
+  el.addEventListener('drop', e => {
+    mark.classList.remove('over');
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    onDrop(dropEntries(e.dataTransfer), [...e.dataTransfer.files]);
+  });
+}
+
+/* Pickers shared by the wizard and the folder editor */
+function swatchPicker(get, set) {
+  const row = h('div', { class: 'swatches', role: 'radiogroup', 'aria-label': 'Colour' });
+  const draw = () => {
+    const now = (get() || '').toLowerCase();
+    const custom = !SWATCHES.includes(now);
+    row.replaceChildren(
+      ...SWATCHES.map(c => h('button', { type: 'button', role: 'radio', 'aria-checked': String(now === c), class: `swatch-btn${now === c ? ' on' : ''}`,
+        style: `background:${c}`, title: c, 'aria-label': `Colour ${c}`, onclick: () => { set(c); draw(); } })),
+      h('label', { class: `swatch-custom${custom ? ' on' : ''}`, title: 'Other colour', style: custom ? `background:${now}` : null },
+        h('input', { type: 'color', value: /^#[0-9a-f]{6}$/.test(now) ? now : '#b8a0ff', 'aria-label': 'Other colour',
+          oninput: e => { set(e.target.value); e.target.parentElement.style.background = e.target.value; }, onchange: draw }),
+        custom ? '' : '+'));
+  };
+  draw();
+  return { el: row, draw };
+}
+
+function iconPicker(get, set) {
+  const row = h('div', { class: 'icon-pick', role: 'radiogroup', 'aria-label': 'Icon' });
+  const draw = () => row.replaceChildren(...Object.entries(ICON_NAMES).map(([key, name]) => {
+    const on = get() === key;
+    const b = h('button', { type: 'button', role: 'radio', 'aria-checked': String(on), class: `icon-opt${on ? ' on' : ''}`, title: name, 'aria-label': name,
+      onclick: () => { set(key); draw(); } });
+    b.innerHTML = folderIconSvg(key);
+    return b;
+  }));
+  draw();
+  return { el: row, draw };
+}
+
+function switchField(label, checked, onChange) {
+  const hint = h('small');
+  const input = h('input', { type: 'checkbox', role: 'switch', checked, onchange: () => onChange(input.checked) });
+  const el = h('label', { class: 'switch-field' }, input, h('span', { class: 'switch', 'aria-hidden': 'true' }),
+    h('span', { class: 'switch-text' }, h('b', {}, label), hint));
+  return { el, input, setHint: text => { hint.textContent = text; } };
+}
+
+// The folder card exactly as the site draws it: folder-preview.html loads the site's own style.css.
+function folderPreview() {
+  const query = new URLSearchParams({ theme: document.documentElement.dataset.theme === 'light' ? 'light' : 'dark' });
+  if (ASSET_V) query.set('v', ASSET_V);
+  const frame = h('iframe', { class: 'fd-preview', title: 'Preview of the folder card', src: `folder-preview.html?${query}` });
+  let data = null;
+  const push = () => {
+    const win = frame.contentWindow;
+    if (data && win && typeof win.renderFolder === 'function') win.renderFolder({ ...data, theme: document.documentElement.dataset.theme });
+  };
+  frame.addEventListener('load', () => {
+    frame.contentWindow.onFolderSize = px => { frame.style.height = `${px}px`; };
+    push();
+  });
+  // Follow the admin's light/dark switch while the frame is on the page.
+  const watch = new MutationObserver(() => (frame.isConnected ? push() : watch.disconnect()));
+  watch.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  return {
+    el: frame,
+    update(p, collections, visuals) {
+      data = { title: (p.title || '').trim() || 'Folder name', label: labelOf(p), desc: p.desc || '', color: accentOf(p),
+        icon: folderIconSvg(iconOf(p)), collections, visuals };
+      push();
+    },
+  };
+}
+
+/* New folder: one dialog with three short steps and a live preview. Nothing is uploaded until
+   "Create & publish", so closing it leaves no stray files in Storage. */
+function openFolderWizard() {
+  const list = state.docs.portfolio;
+  const d = 'portfolio';
+  const f = { title: '', label: '', desc: '', accent: freeAccent(list), icon: 'others', hidden: false };
+  const touched = { label: false, icon: false };
+  // own: receives loose images. auto: named after the folder until renamed.
+  const cols = []; // { title, own, auto, items: [{ file, name, size, width, height, opaque, dark, preview }] }
+  let busy = false;
+  let queue = Promise.resolve();
+
+  const preview = folderPreview();
+  const filled = () => cols.filter(c => c.items.length);
+  const imageCount = () => cols.reduce((n, c) => n + c.items.length, 0);
+  const hasContent = () => !!(f.title.trim() || imageCount());
+
+  /* ① Details */
+  const nameInput = h('input', { class: 'name-input', placeholder: 'e.g. Poster Design', autocomplete: 'off', maxlength: '60' });
+  const nameWarn = h('p', { class: 'warn', role: 'status', hidden: true });
+  const labelInput = h('input', { placeholder: 'Shown small, above the name' });
+  const descInput = h('textarea', { rows: 2, placeholder: 'One or two lines about this work (optional)' });
+  const colours = swatchPicker(() => f.accent, c => { f.accent = c; refresh(); });
+  const icons = iconPicker(() => f.icon, k => { f.icon = k; touched.icon = true; refresh(); });
+
+  function setName(value, typed = false) {
+    f.title = value;
+    if (!typed) nameInput.value = value;
+    if (!touched.label) labelInput.value = f.label = guessLabel(value.trim());
+    if (!touched.icon) { f.icon = guessIcon(value); icons.draw(); }
+    cols.forEach(c => {
+      if (!c.auto) return;
+      c.title = value.trim();
+      if (c.input) c.input.value = c.title;
+    });
+    const taken = nameTaken(list, value);
+    nameWarn.hidden = !taken;
+    if (taken) nameWarn.replaceChildren(ico('alert'), h('span', {}, `A folder called “${value.trim()}” already exists. You can still create this one.`));
+    refresh();
+  }
+  nameInput.addEventListener('input', () => setName(nameInput.value, true));
+  labelInput.addEventListener('input', () => { f.label = labelInput.value; touched.label = true; refresh(); });
+  descInput.addEventListener('input', () => { f.desc = descInput.value; refresh(); });
+
+  /* ② Images */
+  const zoneText = h('b', {}, 'Drop images or a whole folder here');
+  const fileInput = h('input', { type: 'file', accept: 'image/*', multiple: true });
+  const dirInput = h('input', { type: 'file', multiple: true });
+  dirInput.webkitdirectory = true;
+  fileInput.addEventListener('change', () => { add({ name: '', files: [...fileInput.files].filter(isImageFile).sort(byName), dirs: [] }); fileInput.value = ''; });
+  dirInput.addEventListener('change', () => { add(treeFromPicked(dirInput.files)); dirInput.value = ''; });
+  const zone = h('div', { class: 'drop wz-drop' },
+    ico('upload'), zoneText,
+    h('small', {}, 'A folder from Finder works best: each sub-folder becomes a collection.'),
+    h('span', { class: 'drop-actions' },
+      h('button', { type: 'button', class: 'btn small', onclick: () => fileInput.click() }, ico('image'), 'Choose images'),
+      h('button', { type: 'button', class: 'btn small', onclick: () => dirInput.click() }, ico('folder'), 'Choose a folder')));
+  zone.addEventListener('click', e => { if (!e.target.closest('button')) fileInput.click(); });
+  const colsBox = h('div', { class: 'wz-cols' });
+  const addColBtn = addBtn('Add a collection', () => {
+    cols.push({ title: `Collection ${cols.length + 1}`, own: false, auto: false, items: [] });
+    drawCols();
+    refresh();
+    colsBox.lastElementChild?.querySelector('input')?.select();
+  });
+
+  const ownCollection = () => cols.find(c => c.own)
+    || (cols.unshift({ title: f.title.trim(), own: true, auto: true, items: [] }), cols[0]);
+  const namedCollection = name => cols.find(c => !c.own && norm(c.title) === norm(name))
+    || (cols.push({ title: name, own: false, auto: false, items: [] }), cols[cols.length - 1]);
+
+  // Loose images go to the folder's own collection; each sub-folder becomes a collection.
+  function add(tree) {
+    let groups;
+    if (!tree.files.length && tree.dirs.length === 1) { // one folder dropped: it is the new folder
+      const top = tree.dirs[0];
+      if (!f.title.trim() && top.name) setName(top.name);
+      groups = [[null, top.files], ...top.dirs.map(x => [x.name, allFiles(x)])];
+    } else {
+      groups = [[null, tree.files], ...tree.dirs.map(x => [x.name, allFiles(x)])];
+    }
+    return ingest(groups);
+  }
+  // Each group: [target, files]. target null = the folder's own collection, a string = the
+  // collection with that name (made if new), or a collection object.
+  function ingest(groups) {
+    queue = queue.catch(() => {}).then(async () => {
+      const total = groups.reduce((n, [, files]) => n + files.length, 0);
+      if (!total) { toast('No images found there. Use JPG, PNG, WebP or GIF files.', true); return; }
+      zone.classList.add('busy');
+      const failed = [];
+      let n = 0;
+      for (const [target, files] of groups) {
+        if (!files.length) continue;
+        const col = target === null ? ownCollection() : typeof target === 'string' ? namedCollection(target) : target;
+        for (const file of files) {
+          zoneText.textContent = `Reading ${++n} of ${total}…`;
+          if (col.items.some(it => it.name === file.name && it.size === file.size)) continue; // the same file twice
+          try { col.items.push({ file, name: file.name, size: file.size, ...(await analyseImage(file)) }); }
+          catch (_) { failed.push(file.name); }
+          if (n % 12 === 0) drawCols();
+        }
+      }
+      zone.classList.remove('busy');
+      zoneText.textContent = 'Drop more images or folders here';
+      if (failed.length) toast(`Could not read ${failed.length === 1 ? failed[0] : plural(failed.length, 'file')}. Use JPG, PNG, WebP or GIF.`, true);
+      drawCols();
+      refresh();
+    });
+    return queue;
+  }
+
+  function drawCols() {
+    colsBox.replaceChildren(...cols.map((c, ci) => {
+      const name = h('input', { value: c.title, placeholder: f.title.trim() || 'Collection name', 'aria-label': 'Collection name' });
+      name.addEventListener('input', () => { c.title = name.value; c.auto = false; });
+      c.input = name;
+      const more = h('input', { type: 'file', accept: 'image/*', multiple: true });
+      more.addEventListener('change', () => { ingest([[c, [...more.files].filter(isImageFile).sort(byName)]]); more.value = ''; });
+      return h('section', { class: 'wz-col' },
+        h('div', { class: 'wz-col-head' },
+          ico('folder'), name,
+          h('span', { class: 'count' }, plural(c.items.length, 'image')),
+          iconBtn('plus', 'Add images to this collection', () => more.click()),
+          iconBtn('trash', 'Remove this collection', () => {
+            c.items.forEach(it => URL.revokeObjectURL(it.preview));
+            cols.splice(ci, 1);
+            drawCols();
+            refresh();
+          }, { danger: true }),
+          more),
+        c.items.length
+          ? h('div', { class: 'wz-thumbs' }, c.items.map((it, ii) => {
+            const dark = h('input', { type: 'checkbox', checked: it.dark });
+            const frame = h('div', { class: `thumb-img${it.dark ? ' on-dark' : ''}` },
+              h('img', { src: it.preview, alt: '', draggable: 'false' }),
+              h('button', { type: 'button', class: 'wz-x', title: 'Remove image', 'aria-label': `Remove ${it.name}`, onclick: () => {
+                URL.revokeObjectURL(it.preview);
+                c.items.splice(ii, 1);
+                drawCols();
+                refresh();
+              } }, ico('close')));
+            dark.addEventListener('change', () => { it.dark = dark.checked; frame.classList.toggle('on-dark', it.dark); });
+            return h('figure', { class: 'wz-thumb', title: it.name }, frame, h('label', { class: 'check', title: LIGHT_ART_TIP }, dark, 'Light art'));
+          }))
+          : h('p', { class: 'empty' }, 'Empty. Use + to add images.'));
+    }));
+  }
+
+  /* ③ Publish */
+  const show = switchField('Show on the site now', true, on => { f.hidden = !on; refresh(); });
+  const summaryLine = h('p', { class: 'wz-summary' });
+  const otherChanges = state.dirty.has(d) ? h('p', { class: 'muted note' }, 'Your other unsaved Projects changes are saved at the same time.') : null;
+
+  const statusText = h('span', {}, 'Only the name is needed. Everything else is filled in for you.');
+  const fill = h('span');
+  const progress = h('div', { class: 'wz-progress', role: 'progressbar', 'aria-label': 'Upload progress', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': '0', hidden: true }, fill);
+  const cancelBtn = h('button', { type: 'button', class: 'btn ghost', onclick: () => tryClose() }, 'Cancel');
+  const createLabel = h('span', {}, 'Create & publish');
+  const createBtn = h('button', { type: 'button', class: 'btn primary', onclick: () => publish() }, ico('check'), createLabel);
+
+  function refresh() {
+    const n = imageCount();
+    preview.update(f, filled().length, n);
+    summaryLine.replaceChildren(h('b', {}, f.title.trim() || 'New folder'), ` · ${plural(filled().length, 'collection')} · ${plural(n, 'image')}`);
+    show.setHint(f.hidden ? 'Saved as a hidden draft. Show it later from the folder settings.' : 'Visitors see it in Projects as soon as it is created.');
+    createLabel.textContent = f.hidden ? 'Create hidden draft' : 'Create & publish';
+    createBtn.disabled = busy || !f.title.trim();
+  }
+
+  const step = (n, title, text, ...body) => h('section', { class: 'wz-step' },
+    h('h3', {}, h('span', { class: 'wz-num' }, String(n)), title), text ? h('p', { class: 'muted step-text' }, text) : null, ...body);
+  const dlg = h('dialog', { class: 'wizard', 'aria-labelledby': 'wz-title' },
+    h('header', { class: 'wz-head' },
+      h('div', {}, h('p', { class: 'crumb' }, 'Projects'), h('h2', { id: 'wz-title' }, 'New folder')),
+      iconBtn('close', 'Close', () => tryClose())),
+    h('div', { class: 'wz-body' },
+      h('div', { class: 'wz-form' },
+        step(1, 'Details', 'Only the name is needed. The label, colour and icon are picked from it, and you can change any of them.',
+          h('label', { class: 'field' }, h('span', {}, 'Folder name'), nameInput), nameWarn,
+          h('label', { class: 'field' }, h('span', {}, 'Small label'), labelInput),
+          h('div', { class: 'field' }, h('span', {}, 'Colour'), colours.el),
+          h('div', { class: 'field' }, h('span', {}, 'Icon'), icons.el),
+          h('label', { class: 'field' }, h('span', {}, 'Description'), descInput)),
+        step(2, 'Images', '', zone, colsBox, addColBtn, fileInput, dirInput),
+        step(3, 'Publish', '', show.el, summaryLine, otherChanges)),
+      h('aside', { class: 'wz-aside' },
+        h('p', { class: 'eyebrow' }, 'Live preview'),
+        preview.el,
+        h('p', { class: 'muted preview-note' }, `This is how the folder looks on the site. ${OPEN_HINT}`))),
+    h('footer', { class: 'wz-foot' }, h('div', { class: 'wz-status' }, statusText, progress), cancelBtn, createBtn));
+  wireDrop(dlg, (entries, files) => readDrop(entries, files).then(add).catch(err => toast(err.message, true)), zone);
+
+  async function tryClose() {
+    if (busy) return;
+    if (hasContent() && !await ask({ title: 'Discard this new folder?', text: 'Nothing has been uploaded yet, so nothing changes on the site.', ok: 'Discard', danger: true })) return;
+    finish();
+  }
+  let closed = false;
+  function finish() {
+    if (closed) return;
+    closed = true;
+    cols.forEach(c => c.items.forEach(it => URL.revokeObjectURL(it.preview)));
+    state.wizard = null;
+    document.body.append($('#toast'));
+    if (dlg.open) dlg.close();
+    dlg.remove();
+  }
+  dlg.addEventListener('cancel', e => { e.preventDefault(); tryClose(); });
+  dlg.addEventListener('close', () => { if (!busy) finish(); });
+
+  async function publish() {
+    const title = f.title.trim();
+    if (!title || busy) { nameInput.focus(); return; }
+    busy = true;
+    dlg.classList.add('is-busy');
+    cancelBtn.disabled = true;
+    refresh();
+    statusText.textContent = 'Getting the images ready…';
+    await queue.catch(() => {});
+    const id = uniqueId(list, title);
+    const folder = { id, category: id, title, label: f.label.trim(), desc: f.desc.trim(), accent: f.accent, icon: f.icon, sections: [] };
+    if (f.hidden) folder.hidden = true;
+    const total = imageCount();
+    const failed = [];
+    let n = 0;
+    progress.hidden = !total;
+    for (const c of filled()) {
+      const name = c.title.trim() || title;
+      const section = { title: name, images: [] };
+      for (const it of c.items) {
+        statusText.textContent = `Uploading ${++n} of ${total}…`;
+        try {
+          const a = await uploadImage(it.file, `${id}/${slug(name)}`, `${name} — visual ${section.images.length + 1}`);
+          a.dark = !!it.dark;
+          a.opaque = !!it.opaque;
+          section.images.push(a);
+        } catch (err) {
+          failed.push(it.name);
+          console.warn(`Upload failed: ${it.name}`, err);
+        }
+        const pct = Math.round((n / total) * 100);
+        fill.style.width = `${pct}%`;
+        progress.setAttribute('aria-valuenow', String(pct));
+      }
+      if (section.images.length) folder.sections.push(section);
+    }
+    if (total && failed.length === total) { // nothing went up: keep everything here to try again
+      busy = false;
+      dlg.classList.remove('is-busy');
+      cancelBtn.disabled = false;
+      progress.hidden = true;
+      statusText.textContent = 'No image could be uploaded. Check the connection and try again.';
+      refresh();
+      toast('Upload failed. Nothing was created.', true);
+      return;
+    }
+    list.splice(newFolderIndex(list), 0, folder);
+    state.cat = list.indexOf(folder);
+    markDirty(d);
+    let saveError = null;
+    if (!DEMO) {
+      statusText.textContent = 'Saving…';
+      try { await saveDocs([d]); } catch (err) { saveError = err; }
+      updateSavebar();
+    }
+    busy = false;
+    finish();
+    showTab('projects');
+    if (DEMO) toast('Demo mode: the folder was added on this page only. Nothing was saved.');
+    else if (saveError) toast(`The images are uploaded, but saving failed: ${saveError.message} Click Save to try again.`, true);
+    else if (failed.length) toast(`Folder created, but ${plural(failed.length, 'image')} could not be uploaded.`, true);
+    else toast(f.hidden ? 'Folder saved as a hidden draft.' : 'Folder created. It is on the site now.');
+  }
+
+  dlg.append($('#toast')); // toasts must show above the dialog
+  state.wizard = { hasContent };
+  document.body.append(dlg);
+  dlg.showModal();
+  drawCols();
+  refresh();
+  nameInput.focus();
+}
+
+/* Folder list and editor */
 function renderProjects() {
   const list = state.docs.portfolio;
   const d = 'portfolio';
   state.cat = Math.min(state.cat, Math.max(0, list.length - 1));
   const rerender = () => showTab('projects');
-  const visuals = p => p.sections.reduce((n, s) => n + s.images.length, 0);
+  const select = i => { state.cat = i; rerender(); };
 
+  const items = list.map((p, i) => h('div', { class: `cat-item${i === state.cat ? ' active' : ''}${p.hidden ? ' is-hidden' : ''}` },
+    h('button', { class: 'cat-name', type: 'button', onclick: () => select(i) },
+      h('i', { class: 'swatch', style: `background:${accentOf(p)}` }),
+      h('span', {}, h('b', {}, p.title || '(untitled)'), h('small', {},
+        h('span', { class: 'badge', title: 'Hidden draft: not shown on the site', hidden: !p.hidden }, 'Hidden'),
+        `${plural(p.sections.length, 'collection')} · ${plural(visualsOf(p), 'image')}`))),
+    moveBtns(list, i, d, select)));
   const side = h('aside', { class: 'cat-list' },
-    h('p', { class: 'eyebrow' }, `${list.length} ${list.length === 1 ? 'category' : 'categories'}`),
-    ...list.map((p, i) => h('div', { class: `cat-item${i === state.cat ? ' active' : ''}` },
-      h('button', { class: 'cat-name', type: 'button', onclick: () => { state.cat = i; rerender(); } },
-        h('i', { class: 'swatch', style: `background:${p.accent || '#c9c4d6'}` }),
-        h('span', {}, h('b', {}, p.title || '(untitled)'), h('small', {}, `${p.sections.length} collections · ${visuals(p)} images`))),
-      moveBtns(list, i, d, () => { state.cat = i + 0; rerender(); }))),
-    addBtn('New category', async () => {
-      const name = await ask({ title: 'New category', label: 'Category name', ok: 'Create' });
-      if (!name) return;
-      let id = slug(name);
-      while (list.some(p => p.id === id)) id += '-2';
-      list.push({ id, category: id, title: name, desc: '', label: '', accent: '#b8a0ff', icon: 'others', sections: [] });
-      state.cat = list.length - 1;
-      markDirty(d);
-      rerender();
-    }));
+    h('button', { class: 'btn primary new-folder', type: 'button', onclick: openFolderWizard }, ico('plus'), 'New folder'),
+    h('p', { class: 'eyebrow' }, plural(list.length, 'folder')),
+    ...items);
 
   const p = list[state.cat];
-  if (!p) return [h('div', { class: 'split' }, side, h('div', { class: 'card' }, h('p', { class: 'empty' }, 'No categories yet. Click "New category" to start.')))];
+  if (!p) return [h('div', { class: 'split' }, side, h('div', { class: 'card' }, h('p', { class: 'empty' }, 'No folders yet. Click “New folder” to start.')))];
 
-  const iconSel = h('select', {}, Object.entries(ICON_NAMES).map(([k, label]) => h('option', { value: k, selected: (p.icon || p.id) === k }, label)));
-  iconSel.addEventListener('change', () => { p.icon = iconSel.value; markDirty(d); });
-  const swatchRow = h('div', { class: 'swatches' });
-  const drawSwatches = () => swatchRow.replaceChildren(
-    ...SWATCHES.map(c => h('button', { type: 'button', class: `swatch-btn${(p.accent || '').toLowerCase() === c ? ' on' : ''}`, style: `background:${c}`, title: c, 'aria-label': `Colour ${c}`,
-      onclick: () => { p.accent = c; markDirty(d); drawSwatches(); } })),
-    h('label', { class: 'swatch-custom', title: 'Other colour' }, h('input', { type: 'color', value: p.accent || '#b8a0ff', oninput: e => { p.accent = e.target.value; markDirty(d); } }), '+'));
-  drawSwatches();
+  const preview = folderPreview();
+  const refresh = () => preview.update(p, p.sections.length, visualsOf(p));
+  const nameWarn = h('p', { class: 'warn', role: 'status', hidden: true });
+  const checkName = () => {
+    const taken = nameTaken(list, p.title, p);
+    nameWarn.hidden = !taken;
+    if (taken) nameWarn.replaceChildren(ico('alert'), h('span', {}, `Another folder is also called “${p.title.trim()}”. Visitors may mix them up.`));
+  };
+  const live = (el, fn) => { el.querySelector('input,textarea').addEventListener('input', fn); return el; };
+  const colours = swatchPicker(() => accentOf(p), c => {
+    p.accent = c;
+    markDirty(d);
+    refresh();
+    items[state.cat].querySelector('.swatch').style.background = c;
+  });
+  const icons = iconPicker(() => iconOf(p), k => { p.icon = k; markDirty(d); refresh(); });
+  const visible = switchField('Show on the site', !p.hidden, on => {
+    if (on) delete p.hidden; else p.hidden = true;
+    markDirty(d);
+    visibleHint();
+    items[state.cat].classList.toggle('is-hidden', !!p.hidden);
+    items[state.cat].querySelector('.badge').hidden = !p.hidden;
+  });
+  const visibleHint = () => visible.setHint(p.hidden ? 'Hidden draft: not shown on the site. Save to apply.' : 'Shown in Projects on the site.');
+  visibleHint();
+
+  const duplicate = () => {
+    const title = `${p.title || 'Folder'} copy`;
+    const id = uniqueId(list, title);
+    // Settings and empty collections only: shared images would be deleted from Storage with either copy.
+    list.splice(state.cat + 1, 0, { id, category: id, title, label: labelOf(p), desc: p.desc || '', accent: accentOf(p), icon: iconOf(p), hidden: true,
+      sections: p.sections.map(s => ({ title: s.title, images: [] })) });
+    markDirty(d);
+    select(state.cat + 1);
+    toast('Copied as a hidden draft with empty collections. Add images, then show it on the site.');
+  };
+  const remove = async () => {
+    const ok = await ask({ title: `Delete folder "${p.title}"?`, text: 'All collections and images in this folder will be removed.', ok: 'Delete folder', danger: true });
+    if (!ok) return;
+    await removeStored(p.sections.flatMap(s => s.images));
+    list.splice(state.cat, 1);
+    state.cat = Math.max(0, state.cat - 1);
+    markDirty(d);
+    rerender();
+  };
 
   const editor = h('div', { class: 'cat-editor' },
-    card(p.title || 'Category', `Shows as a card and a filter button in Projects. Link: #project/${p.id}`,
-      h('div', { class: 'grid2' }, field(p, 'title', 'Name', d), field(p, 'label', 'Small label (top of card)', d)),
-      field(p, 'desc', 'Description', d, { multi: true, rows: 2 }),
-      h('div', { class: 'grid2' },
-        h('div', { class: 'field' }, h('span', {}, 'Accent colour'), swatchRow),
-        h('label', { class: 'field' }, h('span', {}, 'Filter icon'), iconSel)),
+    card(p.title || 'Folder', `Shows as a folder card in Projects. Link: #project/${p.id}`,
+      h('div', { class: 'folder-grid' },
+        h('div', { class: 'folder-fields' },
+          live(field(p, 'title', 'Name', d), () => { checkName(); refresh(); }), nameWarn,
+          live(field(p, 'label', 'Small label (top of card)', d), refresh),
+          live(field(p, 'desc', 'Description', d, { multi: true, rows: 2 }), refresh),
+          h('div', { class: 'field' }, h('span', {}, 'Colour'), colours.el),
+          h('div', { class: 'field' }, h('span', {}, 'Icon'), icons.el),
+          visible.el),
+        h('div', { class: 'preview-box' }, preview.el, h('p', { class: 'muted preview-note' }, `Live preview. ${OPEN_HINT}`))),
       h('div', { class: 'card-foot' },
-        h('button', { class: 'btn ghost danger', type: 'button', onclick: async () => {
-          const ok = await ask({ title: `Delete category "${p.title}"?`, text: 'All collections and images in this category will be removed.', ok: 'Delete category', danger: true });
-          if (!ok) return;
-          await removeStored(p.sections.flatMap(s => s.images));
-          list.splice(state.cat, 1);
-          state.cat = 0;
-          markDirty(d);
-          rerender();
-        } }, ico('trash'), 'Delete category'))),
-    h('div', { class: 'section-title' }, h('h2', {}, 'Collections'), h('span', { class: 'muted' }, `${p.sections.length} collections`)),
+        h('button', { class: 'btn ghost', type: 'button', onclick: duplicate }, ico('copy'), 'Duplicate folder'),
+        h('button', { class: 'btn ghost danger', type: 'button', onclick: remove }, ico('trash'), 'Delete folder'))),
+    h('div', { class: 'section-title' }, h('h2', {}, 'Collections'), h('span', { class: 'muted' }, plural(p.sections.length, 'collection'))),
     ...p.sections.map((s, si) => collectionCard(p, s, si, rerender)),
-    p.sections.length ? null : h('p', { class: 'empty card' }, 'No collections in this category yet.'),
+    p.sections.length ? null : h('p', { class: 'empty card' }, 'No collections in this folder yet.'),
     addBtn('New collection', async () => {
       const name = await ask({ title: 'New collection', label: 'Collection name', ok: 'Create' });
       if (!name) return;
-      p.sections.push({ title: name, images: [] });
+      const s = { title: name, images: [] };
+      p.sections.push(s);
+      openState.set(s, true);
       markDirty(d);
       rerender();
     }));
+  checkName();
+  refresh();
   return [h('div', { class: 'split' }, side, editor)];
 }
 
+const openState = new WeakMap(); // collection -> open or closed, kept across re-renders
+
 function collectionCard(p, s, si, rerender) {
   const d = 'portfolio';
-  const status = h('span', {}, 'Drag images here, or ', h('u', {}, 'choose files'));
+  const status = h('span', {}, 'Drag images or a folder here, or ', h('u', {}, 'choose files'));
   const drop = h('label', { class: 'drop' },
-    h('input', { type: 'file', accept: 'image/*', multiple: true, onchange: e => addFiles(e.target.files) }),
-    ico('upload'), status, h('small', {}, 'JPG, PNG or WebP. Resized to WebP automatically.'));
-  ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
-  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('over')));
-  drop.addEventListener('drop', e => { e.preventDefault(); addFiles(e.dataTransfer.files); });
+    h('input', { type: 'file', accept: 'image/*', multiple: true, onchange: e => { addFiles([...e.target.files]); e.target.value = ''; } }),
+    ico('upload'), status, h('small', {}, 'JPG, PNG, WebP or GIF. Resized to WebP automatically.'));
+  wireDrop(drop, (entries, files) => readDrop(entries, files).then(tree => addFiles(allFiles(tree))).catch(err => toast(err.message, true)));
 
   async function addFiles(files) {
-    const imgs = [...files].filter(f => f.type.startsWith('image/'));
-    if (!imgs.length) return;
+    const imgs = files.filter(isImageFile).sort(byName);
+    if (!imgs.length) { toast('No images found. Use JPG, PNG, WebP or GIF files.', true); return; }
     drop.classList.add('busy');
     let done = 0;
-    for (const f of imgs) {
-      status.textContent = `Uploading ${done + 1} of ${imgs.length}…`;
+    for (const [n, f] of imgs.entries()) {
+      status.textContent = `Uploading ${n + 1} of ${imgs.length}…`;
       try {
-        s.images.push(await uploadImage(f, `${p.id}/${slug(s.title)}`, `${s.title} — visual ${s.images.length + 1}`));
+        const info = await analyseImage(f, { preview: false });
+        const a = await uploadImage(f, `${p.id}/${slug(s.title)}`, `${s.title} — visual ${s.images.length + 1}`);
+        a.dark = info.dark;
+        a.opaque = info.opaque;
+        s.images.push(a);
         done++;
         markDirty(d);
       } catch (err) {
         toast(`Could not upload ${f.name}: ${err.message}`, true);
       }
     }
-    if (done) toast(`${done} image${done === 1 ? '' : 's'} uploaded. Click Save to publish.`);
+    if (done) toast(`${plural(done, 'image')} uploaded. Click Save to publish.`);
+    openState.set(s, true);
     rerender();
   }
 
-  const thumbs = h('div', { class: 'thumbs' }, s.images.map((a, i) => {
+  // Thumbnails: drag one onto another to move it there (the arrows still work for keyboard and touch).
+  let dragFrom = null;
+  const thumbs = h('div', { class: 'thumbs' });
+  const clearMarks = () => $$('.drop-target', thumbs).forEach(x => x.classList.remove('drop-target'));
+  thumbs.append(...s.images.map((a, i) => {
     const dark = h('input', { type: 'checkbox', checked: !!a.dark });
-    dark.addEventListener('change', () => { a.dark = dark.checked; markDirty(d); });
     const alt = h('input', { value: a.alt || '', placeholder: 'Image description', title: 'Alt text (for screen readers)' });
     alt.addEventListener('input', () => { a.alt = alt.value; markDirty(d); });
-    return h('figure', { class: 'thumb' },
-      h('div', { class: 'thumb-img' },
-        h('img', { src: asset(a.thumb || a.display || a.src), alt: '', loading: 'lazy' }),
-        h('span', { class: 'thumb-num' }, String(i + 1)),
-        h('div', { class: 'thumb-tools' },
-          moveBtns(s.images, i, d, rerender),
-          delBtn(async () => { await removeStored([a]); s.images.splice(i, 1); markDirty(d); rerender(); }, 'this image'))),
-      alt,
-      h('label', { class: 'check', title: 'Tick if the image is dark and needs a light background' }, dark, 'Dark image'));
+    const frame = h('div', { class: `thumb-img${a.dark ? ' on-dark' : ''}`, draggable: 'true', title: 'Drag to reorder' },
+      h('img', { src: asset(a.thumb || a.display || a.src), alt: '', loading: 'lazy', draggable: 'false' }),
+      h('span', { class: 'thumb-num' }, String(i + 1)),
+      h('div', { class: 'thumb-tools' },
+        moveBtns(s.images, i, d, rerender),
+        delBtn(async () => { await removeStored([a]); s.images.splice(i, 1); markDirty(d); rerender(); }, 'this image')));
+    dark.addEventListener('change', () => { a.dark = dark.checked; frame.classList.toggle('on-dark', a.dark); markDirty(d); });
+    const fig = h('figure', { class: 'thumb' }, frame, alt, h('label', { class: 'check', title: LIGHT_ART_TIP }, dark, 'Light artwork'));
+    frame.addEventListener('dragstart', e => {
+      dragFrom = i;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('application/x-portfolio-image', String(i));
+      fig.classList.add('dragging');
+    });
+    frame.addEventListener('dragend', () => { dragFrom = null; fig.classList.remove('dragging'); clearMarks(); });
+    fig.addEventListener('dragover', e => {
+      if (dragFrom === null) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (dragFrom !== i) fig.classList.add('drop-target');
+    });
+    fig.addEventListener('dragleave', e => { if (!fig.contains(e.relatedTarget)) fig.classList.remove('drop-target'); });
+    fig.addEventListener('drop', e => {
+      if (dragFrom === null) return;
+      e.preventDefault();
+      const from = dragFrom;
+      dragFrom = null;
+      clearMarks();
+      if (from === i) return;
+      s.images.splice(i, 0, ...s.images.splice(from, 1));
+      markDirty(d);
+      rerender();
+    });
+    return fig;
   }));
 
   const heading = h('b', { class: 'coll-name' }, s.title || '(untitled)');
   const nameField = field(s, 'title', 'Collection name', d);
   nameField.querySelector('input').addEventListener('input', e => { heading.textContent = e.target.value || '(untitled)'; });
 
-  return h('details', { class: 'card collection', open: s.images.length < 9 },
+  const wrap = h('details', { class: 'card collection', open: openState.has(s) ? openState.get(s) : s.images.length < 9 },
     h('summary', {},
       h('span', { class: 'chev', 'aria-hidden': 'true' }),
       heading,
-      h('span', { class: 'count' }, `${s.images.length} images`),
+      h('span', { class: 'count' }, plural(s.images.length, 'image')),
       h('span', { class: 'row-tools', onclick: e => e.preventDefault() },
         moveBtns(p.sections, si, d, rerender),
         delBtn(async () => { await removeStored(s.images); p.sections.splice(si, 1); markDirty(d); rerender(); }, `collection "${s.title}"`))),
     h('div', { class: 'coll-body' }, nameField, s.images.length ? thumbs : null, drop));
+  wrap.addEventListener('toggle', () => openState.set(s, wrap.open));
+  return wrap;
 }
 
 /* ---------- Tab: Education & Experience ---------- */
@@ -662,7 +1263,7 @@ function renderBackup() {
 /* ---------- Tabs and views ---------- */
 const TABS = {
   text: { title: 'Site text', desc: 'Edit the text in every part of the site: hero, About, Projects, Contact and more.', icon: 'text', doc: 'site', render: renderText },
-  projects: { title: 'Projects', desc: 'Add categories and collections, upload images and reorder them.', icon: 'projects', doc: 'portfolio', render: renderProjects },
+  projects: { title: 'Projects', desc: 'Add folders and collections, upload images and reorder them.', icon: 'projects', doc: 'portfolio', render: renderProjects },
   resume: { title: 'Education & Experience', desc: 'Schools, work and awards. Also shown in the Resume preview.', icon: 'resume', doc: 'resume', render: renderResume },
   preview: { title: 'Preview gallery', desc: 'Choose images for the 3 moving rows under the hero.', icon: 'preview', doc: 'preview', render: renderPreview },
   backup: { title: 'Backup', desc: 'Import content and download copies.', icon: 'backup', render: renderBackup },

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-motion="on">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Folder preview</title>
+  <!-- One project folder card exactly as the site draws it, for the live preview in the admin page.
+       The admin calls window.renderFolder(data) on every change. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;0,700;1,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    // The site's own stylesheet, with the admin's cache version so both always match after a deploy.
+    // The theme comes in the address too, so the card does not fade from dark on first paint.
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var v = params.get('v');
+      document.documentElement.dataset.theme = params.get('theme') === 'light' ? 'light' : 'dark';
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '../style.css' + (v ? '?v=' + encodeURIComponent(v) : '');
+      document.head.appendChild(link);
+      document.documentElement.dataset.motion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'off' : 'on';
+    })();
+  </script>
+  <style>
+    /* Only the card: no header offset and no page scroll. */
+    html{scrollbar-gutter:auto;overflow:hidden}
+    html body{min-height:0;padding:0;overflow:hidden}
+    #stage{padding:20px 18px 18px}
+    #grid{display:block;max-width:330px;margin:0 auto;padding:0}
+  </style>
+</head>
+<body>
+  <div id="stage"><div class="grid" id="grid"></div></div>
+  <script>
+    (() => {
+      'use strict';
+      const root = document.documentElement;
+      const grid = document.getElementById('grid');
+      const fx = (cls, n) => `<span class="${cls}" aria-hidden="true">${'<i></i>'.repeat(n)}</span>`;
+
+      // Same markup as buildCards() in ../app.js (a div instead of a link: nothing to click here).
+      grid.innerHTML = `
+        <div class="card cyber is-visible in-view">
+          <div class="cy-folder">
+          <span class="fd-back" aria-hidden="true"></span>
+          <span class="fd-paper" aria-hidden="true"></span><span class="fd-paper" aria-hidden="true"></span><span class="fd-paper" aria-hidden="true"></span>
+          <div class="fd-front">
+          <svg class="fd-outline" aria-hidden="true" preserveAspectRatio="none"><path/></svg>
+          <div class="cy-card">
+            <span class="cy-glare" aria-hidden="true"></span>
+            ${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}${fx('cy-corners', 4)}
+            <span class="cy-scan" aria-hidden="true"></span>
+            <div class="cy-body">
+              <span class="cy-icon"></span>
+              <p class="card-kicker"></p>
+              <h3></h3>
+              <p class="card-desc"></p>
+              <p class="cy-meta"><span><b data-n="collections">0</b> collections</span><span><b data-n="visuals">0</b> visuals</span></p>
+            </div>
+          </div>
+          </div>
+          </div>
+        </div>`;
+
+      const card = grid.querySelector('.card');
+      const cy = grid.querySelector('.cy-card');
+      const outline = grid.querySelector('.fd-outline');
+      const $ = sel => grid.querySelector(sel);
+
+      // Same folder outline as shapeFolders() in ../app.js.
+      function draw() {
+        const w = cy.offsetWidth, h = cy.offsetHeight;
+        if (!w || !h) return;
+        const T = 16, R = 20, r = 10, rr = 14, f = 6, x = Math.round(w * 0.38);
+        const d = `M0 ${T + R}A${R} ${R} 0 0 1 ${R} ${T}L${x - f} ${T}Q${x} ${T} ${x} ${T - f}L${x} ${r}A${r} ${r} 0 0 1 ${x + r} 0`
+          + `L${w - rr} 0A${rr} ${rr} 0 0 1 ${w} ${rr}L${w} ${h - R}A${R} ${R} 0 0 1 ${w - R} ${h}L${R} ${h}A${R} ${R} 0 0 1 0 ${h - R}Z`;
+        cy.style.clipPath = `path('${d}')`;
+        outline.setAttribute('viewBox', `0 0 ${w} ${h}`);
+        outline.firstChild.setAttribute('d', d);
+      }
+
+      // Tell the admin how tall the card is, so the frame fits it.
+      const stage = document.getElementById('stage');
+      function report() {
+        if (typeof window.onFolderSize === 'function') window.onFolderSize(Math.ceil(stage.getBoundingClientRect().height));
+      }
+      new ResizeObserver(() => { draw(); report(); }).observe(cy);
+
+      // icon is trusted markup from the admin's own icon set; everything else is plain text.
+      window.renderFolder = data => {
+        root.dataset.theme = data.theme === 'light' ? 'light' : 'dark';
+        card.style.setProperty('--color', data.color);
+        $('.cy-icon').innerHTML = data.icon;
+        $('.card-kicker').textContent = data.label;
+        $('h3').textContent = data.title;
+        $('.card-desc').textContent = data.desc;
+        $('[data-n="collections"]').textContent = data.collections;
+        $('[data-n="visuals"]').textContent = data.visuals;
+        draw();
+        report();
+      };
+
+      // Tilt toward the pointer, as on the site (mouse only, motion on).
+      if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        card.addEventListener('pointermove', e => {
+          if (root.dataset.motion !== 'on') return;
+          const box = card.getBoundingClientRect();
+          const x = (e.clientX - box.left) / box.width - 0.5;
+          const y = (e.clientY - box.top) / box.height - 0.5;
+          card.style.setProperty('--rx', `${(-y * 16).toFixed(2)}deg`);
+          card.style.setProperty('--ry', `${(x * 16).toFixed(2)}deg`);
+          card.style.setProperty('--gx', `${((x + 0.5) * 100).toFixed(1)}%`);
+          card.style.setProperty('--gy', `${((y + 0.5) * 100).toFixed(1)}%`);
+        });
+        card.addEventListener('pointerleave', () => { card.style.removeProperty('--rx'); card.style.removeProperty('--ry'); });
+      }
+      // Touch screens: a tap opens and closes the folder.
+      card.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') card.classList.toggle('is-lit'); });
+      // A file dropped on the preview must not open inside the frame.
+      ['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => e.preventDefault()));
+    })();
+  </script>
+</body>
+</html>

@@ -81,7 +81,7 @@
   const reduceQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const desktopQuery = window.matchMedia('(min-width: 901px)');
 
-  const projects = window.PORTFOLIO_DATA;
+  const projects = window.PORTFOLIO_DATA.filter(p => !p.hidden); // hidden = draft folder from the admin page
   const site = window.SITE;
   const CATEGORY_NAMES = Object.fromEntries(projects.map(p => [p.id, p.title]));
   const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
