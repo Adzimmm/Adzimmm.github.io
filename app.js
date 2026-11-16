@@ -192,7 +192,7 @@
       <a class="card cyber" href="#project/${p.id}" data-id="${p.id}" data-cat="${p.id}" style="${palette(p)}" aria-label="View ${escapeHtml(p.title)}">
         <div class="cy-card">
           <span class="cy-glare" aria-hidden="true"></span>
-          ${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}
+          ${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}${fx('cy-corners', 4)}
           <span class="cy-scan" aria-hidden="true"></span>
           <div class="cy-body">
             <span class="cy-icon">${ICON(FILTER_ICONS[p.icon] || FILTER_ICONS[p.id] || FILTER_ICONS.others)}</span>
@@ -639,7 +639,7 @@
       year = y;
       const text = f.text(it);
       return `${pill}<div class="tl-item${i % 2 ? ' is-right' : ''}"><article class="tl-card">
-        <span class="tl-fx" aria-hidden="true"><span class="cy-glare"></span>${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}<span class="cy-scan"></span></span>
+        <span class="tl-fx" aria-hidden="true"><span class="cy-glare"></span>${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}${fx('cy-corners', 4)}<span class="cy-scan"></span></span>
         <p class="tl-date">${escapeHtml(f.date(it))}</p>
         <h3 class="tl-title">${escapeHtml(f.title(it))}</h3>
         <p class="tl-org">${escapeHtml(f.sub(it))}</p>
