@@ -56,6 +56,7 @@
     root.dataset.theme = theme;
     const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
     themeBtn.setAttribute('aria-label', label);
+    themeBtn.setAttribute('aria-checked', String(theme === 'light')); // the switch is "on" in light (day) mode
     themeBtn.title = label;
     $('meta[name="theme-color"]').content = theme === 'light' ? '#faf9fc' : '#000000';
   }

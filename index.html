@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;0,700;1,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3977f7cefb">
+  <link rel="stylesheet" href="style.css?v=c2e1820b39">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -75,9 +75,12 @@
       </div>
       <button class="resume-btn" type="button" data-resume><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span data-c="nav.resume">Resume</span></button>
     </nav>
-    <button class="theme-toggle" type="button" aria-label="Switch to light mode" title="Switch to light mode">
-      <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
-      <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 13.4A9 9 0 0 1 10.6 3.2 9 9 0 1 0 20.8 13.4Z"/></svg>
+    <button class="theme-toggle theme-switch" type="button" role="switch" aria-checked="false" aria-label="Switch to light mode" title="Switch to light mode">
+      <span class="ts-slider" aria-hidden="true">
+        <span class="ts-star ts-star-1"></span><span class="ts-star ts-star-2"></span><span class="ts-star ts-star-3"></span>
+        <svg viewBox="0 0 16 16" class="ts-cloud"><path transform="matrix(.77976 0 0 .78395-299.99-418.63)" fill="#fff" d="m391.84 540.91c-.421-.329-.949-.524-1.523-.524-1.351 0-2.451 1.084-2.485 2.435-1.395.526-2.388 1.88-2.388 3.466 0 1.874 1.385 3.423 3.182 3.667v.034h12.73v-.006c1.775-.104 3.182-1.584 3.182-3.395 0-1.747-1.309-3.186-2.994-3.379.007-.106.011-.214.011-.322 0-2.707-2.271-4.901-5.072-4.901-2.073 0-3.856 1.202-4.643 2.925"/></svg>
+        <span class="ts-knob"></span>
+      </span>
     </button>
     <button class="menu" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Open menu">
       <span></span><span></span>
@@ -244,10 +247,10 @@
     <div class="resume-pages" id="resume-sheet"></div>
   </dialog>
 
-  <script src="supabase-config.js?v=3977f7cefb"></script>
-  <script src="site-data.js?v=3977f7cefb"></script>
-  <script src="portfolio-data.js?v=3977f7cefb"></script>
-  <script src="resume-data.js?v=3977f7cefb"></script>
-  <script src="app.js?v=3977f7cefb"></script>
+  <script src="supabase-config.js?v=c2e1820b39"></script>
+  <script src="site-data.js?v=c2e1820b39"></script>
+  <script src="portfolio-data.js?v=c2e1820b39"></script>
+  <script src="resume-data.js?v=c2e1820b39"></script>
+  <script src="app.js?v=c2e1820b39"></script>
 </body>
 </html>

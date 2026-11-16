@@ -1088,3 +1088,20 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 .card.cyber .cy-meta{margin-top:auto;padding-top:18px}
 /* Projects: no category filter pills and no "Showing x of y" line */
 #work .toolbar,#work .status-row{display:none}
+/* ---------- Theme switch: night (stars) / day (sun + cloud) slider ---------- */
+.theme-toggle.theme-switch,.theme-toggle.theme-switch:hover{font-size:17px;position:relative;display:inline-block;width:4em;height:2.2em;padding:0;border:0;border-radius:30px;background:none;color:inherit;box-shadow:0 0 10px rgba(0,0,0,.1);-webkit-backdrop-filter:none;backdrop-filter:none;cursor:pointer}
+.theme-toggle.theme-switch:active{transform:none}
+.theme-toggle.theme-switch:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.ts-slider{position:absolute;inset:0;overflow:hidden;border-radius:30px;background-color:#2a2a2a;transition:background-color .4s}
+.ts-knob{position:absolute;left:.5em;bottom:.5em;width:1.2em;height:1.2em;border-radius:20px;box-shadow:inset 8px -4px 0 0 #fff;transition:transform .4s cubic-bezier(.81,-.04,.38,1.5),box-shadow .4s cubic-bezier(.81,-.04,.38,1.5)}
+.ts-star{position:absolute;width:5px;height:5px;border-radius:50%;background-color:#fff;transition:opacity .4s}
+.ts-star-1{left:2.5em;top:.5em}
+.ts-star-2{left:2.2em;top:1.2em}
+.ts-star-3{left:3em;top:.9em}
+.ts-cloud{position:absolute;bottom:-1.4em;left:-1.1em;width:3.5em;opacity:0;transition:opacity .4s}
+[data-theme="light"] .ts-slider{background-color:#00a6ff}
+[data-theme="light"] .ts-knob{transform:translateX(1.8em);box-shadow:inset 15px -4px 0 15px #ffcf48}
+[data-theme="light"] .ts-star{opacity:0}
+[data-theme="light"] .ts-cloud{opacity:1}
+[data-theme="light"] .theme-toggle.theme-switch{box-shadow:0 0 10px rgba(0,0,0,.12)}
+[data-motion="off"] .ts-slider,[data-motion="off"] .ts-knob,[data-motion="off"] .ts-star,[data-motion="off"] .ts-cloud{transition:none}
