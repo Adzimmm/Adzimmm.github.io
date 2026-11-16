@@ -320,9 +320,18 @@
     render({ interacted: true });
   });
 
-  // The search lives in the hero; Enter or the round button jumps down to the matching projects.
+  // The search lives in the hero. Enter (or the round button) opens the chatbox (chat.js) with the question,
+  // and the project list goes back to showing everything. Without chat.js it jumps to the matching projects.
   $('.hero-search').addEventListener('submit', e => {
     e.preventDefault();
+    if (window.PortfolioChat) {
+      const question = searchInput.value.trim();
+      searchInput.value = '';
+      state.query = '';
+      render({ interacted: true });
+      window.PortfolioChat.open(question);
+      return;
+    }
     state.query = searchInput.value;
     render({ interacted: true });
     const pad = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
@@ -788,6 +797,14 @@
   render();
   observeTargets();
   measure();
+  if (window.PortfolioChat) window.PortfolioChat.init({
+    site,
+    projects,
+    resume: window.RESUME || {},
+    icon: p => ICON(FILTER_ICONS[p.icon] || FILTER_ICONS[p.id] || FILTER_ICONS.others),
+    color: p => themeOf(p).color,
+    label: p => themeOf(p).label,
+  });
   route();
   onScroll();
   }
