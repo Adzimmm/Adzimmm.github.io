@@ -167,6 +167,11 @@
   function buildCards() {
     grid.innerHTML = projects.map(p => `
       <a class="card cyber" href="#project/${p.id}" data-id="${p.id}" data-cat="${p.id}" style="${palette(p)}" aria-label="View ${escapeHtml(p.title)}">
+        <div class="cy-folder">
+        <span class="fd-back" aria-hidden="true"></span>
+        <span class="fd-paper" aria-hidden="true"></span><span class="fd-paper" aria-hidden="true"></span><span class="fd-paper" aria-hidden="true"></span>
+        <div class="fd-front">
+        <span class="fd-tab" aria-hidden="true"></span>
         <div class="cy-card">
           <span class="cy-glare" aria-hidden="true"></span>
           ${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}${fx('cy-corners', 4)}
@@ -179,6 +184,8 @@
             <p class="cy-meta"><span><b>${p.sections.length}</b> collections</span><span><b>${visualCount(p)}</b> visuals</span></p>
             <div class="card-cta"><span>${escapeHtml(site.projects.cta)} <i aria-hidden="true">↗</i></span></div>
           </div>
+        </div>
+        </div>
         </div>
       </a>`).join('');
     $$('.card', grid).forEach(el => cards.set(el.dataset.id, el));
