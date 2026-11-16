@@ -208,9 +208,10 @@
   }
 
   // Tilt the card toward the pointer (mouse only, and only when motion is on).
-  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    grid.addEventListener('pointermove', e => {
-      const card = e.target.closest('.cyber');
+  const tiltTargets = [grid, $('#experience')].filter(Boolean);
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) tiltTargets.forEach(zone => {
+    zone.addEventListener('pointermove', e => {
+      const card = e.target.closest('.cyber, .tl-card');
       if (!card || root.dataset.motion !== 'on') return;
       const box = card.getBoundingClientRect();
       const x = (e.clientX - box.left) / box.width - 0.5;
@@ -220,11 +221,11 @@
       card.style.setProperty('--gx', `${((x + 0.5) * 100).toFixed(1)}%`);
       card.style.setProperty('--gy', `${((y + 0.5) * 100).toFixed(1)}%`);
     });
-    grid.addEventListener('pointerout', e => {
-      const card = e.target.closest('.cyber');
+    zone.addEventListener('pointerout', e => {
+      const card = e.target.closest('.cyber, .tl-card');
       if (card && !card.contains(e.relatedTarget)) { card.style.removeProperty('--rx'); card.style.removeProperty('--ry'); }
     });
-  }
+  });
 
   /* ---------- Sliding preview ---------- */
   // Rows chosen in the admin page (window.PREVIEW), else the ones bundled with Logo Folio and Social Media.
@@ -638,6 +639,7 @@
       year = y;
       const text = f.text(it);
       return `${pill}<div class="tl-item${i % 2 ? ' is-right' : ''}"><article class="tl-card">
+        <span class="tl-fx" aria-hidden="true"><span class="cy-glare"></span>${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}${fx('cy-corners', 4)}<span class="cy-scan"></span></span>
         <p class="tl-date">${escapeHtml(f.date(it))}</p>
         <h3 class="tl-title">${escapeHtml(f.title(it))}</h3>
         <p class="tl-org">${escapeHtml(f.sub(it))}</p>

@@ -952,3 +952,38 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 [data-theme="light"] .card.cyber:hover h3{background:linear-gradient(45deg,color-mix(in srgb,var(--color) 70%,#17131f),#0077cc);-webkit-background-clip:text;background-clip:text}
 @media(max-width:1100px){.grid:has(.cyber){grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.grid:has(.cyber){grid-template-columns:1fr;gap:18px}.cy-card,.cy-body{min-height:300px}}
+
+/* ---------- Timeline cards: same cyber glow and shine ---------- */
+.tl-item{perspective:900px}
+.tl-card{--color:var(--accent);border:2px solid rgba(255,255,255,.1);border-radius:16px;background:linear-gradient(45deg,#141318,#232129);
+  box-shadow:0 0 20px rgba(0,0,0,.3),inset 0 0 20px rgba(0,0,0,.2);transform:rotateX(calc(var(--rx,0deg) * .6)) rotateY(calc(var(--ry,0deg) * .6));
+  transition:transform .7s var(--ease),border-color .3s,box-shadow .3s,filter .3s}
+.tl-card>:not(.tl-fx):not(.tl-dot){position:relative;z-index:5}
+.tl-fx{position:absolute;inset:0;z-index:0;border-radius:14px;overflow:hidden;pointer-events:none}
+.tl-fx::before{content:'';position:absolute;left:var(--gx,50%);top:var(--gy,50%);width:150%;height:150%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,color-mix(in srgb,var(--color) 18%,transparent) 0%,rgba(92,103,255,.06) 45%,transparent 70%);filter:blur(20px);opacity:0;transition:opacity .3s}
+.tl-fx .cy-corners i{width:12px;height:12px;border-width:2px}
+.tl-fx .cy-corners i:nth-child(1),.tl-fx .cy-corners i:nth-child(2){top:7px}
+.tl-fx .cy-corners i:nth-child(3),.tl-fx .cy-corners i:nth-child(4){bottom:7px}
+.tl-fx .cy-corners i:nth-child(1),.tl-fx .cy-corners i:nth-child(3){left:7px}
+.tl-fx .cy-corners i:nth-child(2),.tl-fx .cy-corners i:nth-child(4){right:7px}
+.tl-card .tl-date{color:rgba(255,255,255,.5)}
+.tl-card .tl-title{color:#fff}
+.tl-card .tl-org{color:rgba(255,255,255,.72)}
+.tl-card .tl-text{color:rgba(255,255,255,.58)}
+@media(hover:hover) and (pointer:fine){
+  .tl-card:hover{transition:transform .125s ease-out,border-color .3s,box-shadow .3s,filter .3s;filter:brightness(1.1);border-color:color-mix(in srgb,var(--color) 50%,transparent);box-shadow:0 0 24px color-mix(in srgb,var(--color) 22%,transparent)}
+  .tl-card:hover .tl-fx::before{opacity:.9}
+  .tl-card:hover .cy-glare,.tl-card:hover .cy-glows i{opacity:1}
+  .tl-card:hover .cy-particles i{animation:cy-particle 2s infinite}
+  .tl-card:hover .cy-corners i{border-color:color-mix(in srgb,var(--color) 85%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--color) 50%,transparent)}
+  .tl-card:hover .tl-title{background:linear-gradient(45deg,var(--color),#00a2ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+}
+.timeline:not(.in-view) .tl-fx *{animation-play-state:paused}
+[data-motion="off"] .tl-fx *{animation:none!important}
+[data-motion="off"] .tl-card{transform:none!important}
+[data-theme="light"] .tl-card{border-color:rgba(36,23,57,.1);background:linear-gradient(45deg,#ffffff,#f3f0f8);box-shadow:0 8px 24px rgba(36,23,57,.07),inset 0 0 20px rgba(36,23,57,.03)}
+[data-theme="light"] .tl-card .tl-date{color:rgba(23,19,31,.5)}
+[data-theme="light"] .tl-card .tl-title{color:#17131f}
+[data-theme="light"] .tl-card .tl-org{color:rgba(23,19,31,.72)}
+[data-theme="light"] .tl-card .tl-text{color:rgba(23,19,31,.6)}
