@@ -171,7 +171,7 @@
         <span class="fd-back" aria-hidden="true"></span>
         <span class="fd-paper" aria-hidden="true"></span><span class="fd-paper" aria-hidden="true"></span><span class="fd-paper" aria-hidden="true"></span>
         <div class="fd-front">
-        <span class="fd-tab" aria-hidden="true"></span>
+        <span class="fd-tab" aria-hidden="true"></span><span class="fd-shine" aria-hidden="true"></span>
         <div class="cy-card">
           <span class="cy-glare" aria-hidden="true"></span>
           ${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}${fx('cy-corners', 4)}
