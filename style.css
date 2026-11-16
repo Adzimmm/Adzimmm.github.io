@@ -1046,3 +1046,13 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 [data-theme="light"] .fd-paper:nth-of-type(2){background-color:color-mix(in srgb,var(--color) 70%,#fff)}
 [data-theme="light"] .fd-paper:nth-of-type(3){background-color:color-mix(in srgb,var(--color) 45%,#fff)}
 [data-theme="light"] .fd-paper:nth-of-type(4){background-color:color-mix(in srgb,var(--color) 22%,#fff)}
+/* Smaller folders with more space around them */
+.grid:has(.cyber){max-width:1080px;margin-inline:auto;gap:40px 32px;padding:8px 12px}
+.cy-card,.cy-body{min-height:280px}
+.cy-body{padding:24px 22px 22px}
+.cy-icon{width:46px;height:46px;margin-bottom:16px;border-radius:13px}
+.cy-icon svg{width:23px;height:23px}
+.card.cyber h3{font-size:clamp(21px,1.7vw,25px)}
+.card.cyber .card-desc{font-size:14px}
+.cy-folder{padding-top:28px}
+@media(max-width:640px){.grid:has(.cyber){gap:32px;padding:4px 6px}.cy-card,.cy-body{min-height:250px}}
