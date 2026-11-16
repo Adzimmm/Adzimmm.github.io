@@ -238,9 +238,9 @@
     const all = words(raw);
     const q = { terms: terms(raw), padded: padded(all) };
     if (all.length && all.some(w => GREET.has(w)) && all.every(w => GREET.has(w) || STOP.has(w) || w === 'there' || w === 'adzim')) {
-      return { text: copy().greeting, actions: suggestions() };
+      return { text: copy().greeting, actions: suggestions(), small: true };
     }
-    if (all.length <= 5 && all.some(w => THANKS.has(w))) return { text: "You're welcome! Anything else you'd like to know?" };
+    if (all.length <= 5 && all.some(w => THANKS.has(w))) return { text: "You're welcome! Anything else you'd like to know?", small: true };
 
     let best = null;
     [...faqEntries(), ...TOPICS].forEach(entry => {
@@ -310,15 +310,49 @@
     return el;
   }
 
-  function ask(value) {
+  /* ---------- AI answers (Cloudflare Worker in /worker), built-in answers as the fallback ---------- */
+  // The Worker answers only from the content saved in the admin. Empty url = built-in answers only.
+  const AI_URL = String((window.SUPABASE && window.SUPABASE.chatUrl) || '').replace(/\/$/, '');
+  const history = [];
+  async function aiReply(question) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const res = await fetch(AI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, history: history.slice(-6) }),
+        signal: ctrl.signal,
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const text = String((data && data.answer) || '').trim();
+      if (!text) return null;
+      // Folders the answer names get their button, like the built-in answers.
+      const named = ctx.projects.filter(p => p.title && text.toLowerCase().includes(String(p.title).toLowerCase()));
+      return { text, actions: folderActions(named) };
+    } catch (_) {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  const pause = ms => new Promise(r => setTimeout(r, ms));
+  async function ask(value) {
     const question = String(value || '').trim().slice(0, 300);
     if (!question) return;
     asked.add(question.toLowerCase());
     addUser(question);
-    const reply = respond(question);
+    const local = respond(question);
     const typing = addTyping();
     const wait = root.dataset.motion === 'off' ? 120 : 420 + Math.min(480, question.length * 6);
-    setTimeout(() => { typing.remove(); addBot(reply); }, wait);
+    const started = Date.now();
+    const reply = (AI_URL && !local.small && await aiReply(question)) || local;
+    await pause(Math.max(0, wait - (Date.now() - started)));
+    typing.remove();
+    addBot(reply);
+    history.push({ role: 'user', text: question }, { role: 'bot', text: reply.text });
   }
 
   function build() {

@@ -4,4 +4,6 @@
 window.SUPABASE = {
   url: 'https://kizpexgoqssuxoclpozy.supabase.co',
   anonKey: 'sb_publishable_3BinoAREe_T6hg_rD3U-ZA_oYpIP-4z', // publishable (public) key
+  // AI answers for the chatbox (Cloudflare Worker in /worker). Empty = built-in answers only.
+  chatUrl: 'https://portfolio-chat.ahmadzaidadzim-work.workers.dev',
 };
