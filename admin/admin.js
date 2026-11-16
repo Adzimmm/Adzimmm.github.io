@@ -43,6 +43,7 @@ const P = {
   upload: '<path d="M12 16V4m-5 5 5-5 5 5M5 20h14"/>',
   image: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
   check: '<path d="m5 12 5 5 9-10"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
   close: '<path d="M6 6l12 12M18 6 6 18"/>',
   moon: '<path d="M20.8 13.4A9 9 0 0 1 10.6 3.2 9 9 0 1 0 20.8 13.4Z"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
@@ -70,10 +71,19 @@ const asset = src => (!src ? '' : /^(https?:|data:|blob:)/.test(src) ? src : `..
 const slug = s => String(s).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'item';
 
+// Red error box used for every error (login and toasts).
+function errorAlert(msg, onClose) {
+  return h('div', { class: 'alert-error', role: 'alert' },
+    h('button', { type: 'button', class: 'alert-close', 'aria-label': 'Close error', onclick: onClose }, ico('close')),
+    h('p', {}, ico('alert'), msg));
+}
+
 let toastTimer;
 function toast(msg, bad = false) {
   const t = $('#toast');
-  t.replaceChildren(ico(bad ? 'info' : 'check'), h('span', {}, msg));
+  const hide = () => t.classList.remove('show');
+  if (bad) t.replaceChildren(errorAlert(msg, hide));
+  else t.replaceChildren(ico('check'), h('span', {}, msg));
   t.classList.toggle('bad', bad);
   t.classList.add('show');
   clearTimeout(toastTimer);
@@ -696,11 +706,11 @@ $('#login-form').addEventListener('submit', async e => {
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true;
   btn.textContent = 'Logging in…';
-  $('#login-error').textContent = '';
+  $('#login-error').replaceChildren();
   const { data, error } = await sb.auth.signInWithPassword({ email: toLoginEmail(f.get('email')), password: f.get('password') });
   btn.disabled = false;
   btn.textContent = 'Log in';
-  if (error) { $('#login-error').textContent = 'Wrong username or password.'; return; }
+  if (error) { $('#login-error').replaceChildren(errorAlert('Wrong username or password.', () => $('#login-error').replaceChildren())); return; }
   enterApp(data.session);
 });
 
