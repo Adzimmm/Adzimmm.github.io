@@ -549,8 +549,10 @@
     glider.style.width = `${link.offsetWidth}px`;
     glider.style.transform = `translateX(${link.offsetLeft}px)`;
   }
+  // Re-measure whenever the pill or a link changes size (fonts, site text from Supabase, intro animation, resize).
+  if (window.ResizeObserver) { const ro = new ResizeObserver(() => moveGlider(gliderLink)); ro.observe($('.nav-pill')); spyItems.forEach(i => ro.observe(i.link)); }
   window.addEventListener('resize', () => moveGlider(gliderLink));
-  if (document.fonts) document.fonts.ready.then(() => moveGlider(gliderLink));
+  window.addEventListener('load', () => moveGlider(gliderLink));
   function updateSpy(y) {
     const line = window.innerHeight * 0.45;
     let current = spyItems.find(({ section }) => {

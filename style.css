@@ -491,7 +491,7 @@ html[data-motion="off"] .mq-group[aria-hidden="true"]{display:none}
 
 /* Header: glass group with a sliding platinum glider behind the current link (desktop) */
 @media(min-width:901px){
-  .nav-pill{position:relative;isolation:isolate;box-shadow:inset 1px 1px 4px rgba(255,255,255,.2),inset -1px -1px 6px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.15)}
+  .nav-pill{isolation:isolate;box-shadow:inset 1px 1px 4px rgba(255,255,255,.2),inset -1px -1px 6px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.15)}
   .nav-pill a{position:relative;z-index:2;font-weight:600;letter-spacing:.3px;transition:color .3s ease-in-out}
   .nav-pill a[aria-current]{background:none;color:#fff}
   .nav-pill a[aria-current] svg{color:inherit}
@@ -504,6 +504,7 @@ html[data-motion="off"] .mq-group[aria-hidden="true"]{display:none}
   [data-theme="light"] .nav-pill a[aria-current]{color:#0d2440}
 }
 @media(min-width:901px) and (hover:hover) and (pointer:fine){.nav-pill a:not([aria-current]):hover{background:none;color:var(--text)}}
+@media(min-width:901px) and (max-width:1099px){.nav-pill{position:relative}}
 @media(max-width:900px){.nav-glider{display:none}}
 [data-motion="off"] .nav-glider{transition:opacity .2s}
 
