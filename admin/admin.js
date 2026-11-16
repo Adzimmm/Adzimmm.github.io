@@ -676,9 +676,9 @@ function showTab(tab) {
 async function enterApp(session) {
   $('#view-login').hidden = true;
   $('#view-app').hidden = false;
-  const email = session.user.email === ADMIN_LOGIN ? 'admin@adzim' : (session.user.email || '');
-  $('#who-email').textContent = email;
-  $('#avatar').textContent = (email[0] || 'A').toUpperCase();
+  
+  $('#who-email').textContent = 'Admin';
+  $('#avatar').textContent = 'A';
   $('#mode-badge').hidden = !DEMO;
   $('#panel').replaceChildren(h('div', { class: 'loading' }, h('span', { class: 'spinner' }), 'Memuatkan kandungan…'));
   await loadDocs();
