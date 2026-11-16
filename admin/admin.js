@@ -676,7 +676,7 @@ function showTab(tab) {
 async function enterApp(session) {
   $('#view-login').hidden = true;
   $('#view-app').hidden = false;
-  const email = session.user.email || '';
+  const email = (session.user.email || '').replace(/@adzim\.portfolio$/, '');
   $('#who-email').textContent = email;
   $('#avatar').textContent = (email[0] || 'A').toUpperCase();
   $('#mode-badge').hidden = !DEMO;
@@ -697,7 +697,7 @@ $('#login-form').addEventListener('submit', async e => {
   btn.disabled = true;
   btn.textContent = 'Sedang log masuk…';
   $('#login-error').textContent = '';
-  const { data, error } = await sb.auth.signInWithPassword({ email: f.get('email'), password: f.get('password') });
+  const { data, error } = await sb.auth.signInWithPassword({ email: toLoginEmail(f.get('email')), password: f.get('password') });
   btn.disabled = false;
   btn.textContent = 'Log masuk';
   if (error) { $('#login-error').textContent = 'Emel atau kata laluan salah.'; return; }
@@ -718,3 +718,6 @@ if (DEMO) {
   const { data: { session } } = await sb.auth.getSession();
   if (session) enterApp(session); else showLogin();
 }
+
+// A plain username (no @) logs in as <username>@adzim.portfolio in Supabase Auth.
+function toLoginEmail(v) { v = String(v || '').trim().toLowerCase(); return v.includes('@') ? v : `${v}@adzim.portfolio`; }
