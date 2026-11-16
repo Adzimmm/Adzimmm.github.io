@@ -1068,3 +1068,21 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 .fd-tab,.fd-tab::before{transition:background-color .3s,border-color .3s}
 :root:not([data-theme="light"]) .card.cyber:hover .fd-tab,:root:not([data-theme="light"]) .card.cyber.is-lit .fd-tab,:root:not([data-theme="light"]) .card.cyber:hover .fd-tab::before,:root:not([data-theme="light"]) .card.cyber.is-lit .fd-tab::before{background:color-mix(in srgb,var(--color) 22%,#2b2833)}
 [data-theme="light"] .card.cyber:hover .fd-front,[data-theme="light"] .card.cyber.is-lit .fd-front{filter:none}
+
+/* ---------- Folder front: the tab is part of the card itself ----------
+   The card grows 16px upward and a mask cuts the folder-tab shape, so the glow, shine, scan line and
+   particles fill the tab too. The outline is drawn around that shape with drop-shadows on .fd-front. */
+.fd-tab{display:none}
+.fd-front .cy-card{--t:16px;--R:18px;--r:12px;--x:38%;height:calc(100% + var(--t));margin-top:calc(-1 * var(--t));border:0;border-radius:0 14px 20px 20px;box-shadow:none;
+  -webkit-mask:var(--fold);mask:var(--fold);
+  --fold:linear-gradient(#000 0 0) var(--R) var(--t) / calc(100% - var(--R)) calc(100% - var(--t)) no-repeat,
+    linear-gradient(#000 0 0) 0 calc(var(--t) + var(--R)) / var(--R) calc(100% - var(--t) - var(--R)) no-repeat,
+    radial-gradient(circle at var(--R) var(--R),#000 calc(var(--R) - .5px),transparent var(--R)) 0 var(--t) / calc(2 * var(--R)) calc(2 * var(--R)) no-repeat,
+    linear-gradient(#000 0 0) calc(var(--x) + var(--r)) 0 / calc(100% - var(--x) - var(--r)) calc(var(--t) + 2px) no-repeat,
+    linear-gradient(#000 0 0) var(--x) var(--r) / var(--r) calc(var(--t) - var(--r) + 2px) no-repeat,
+    radial-gradient(circle at var(--r) var(--r),#000 calc(var(--r) - .5px),transparent var(--r)) var(--x) 0 / calc(2 * var(--r)) calc(2 * var(--r)) no-repeat}
+.fd-front .cy-body{padding-top:calc(24px + 16px)}
+.fd-front{--edge:rgba(255,255,255,.14);--lift:rgba(0,0,0,.35);--bright:1;filter:brightness(var(--bright)) drop-shadow(1.5px 0 0 var(--edge)) drop-shadow(-1.5px 0 0 var(--edge)) drop-shadow(0 1.5px 0 var(--edge)) drop-shadow(0 -1.5px 0 var(--edge)) drop-shadow(0 10px 18px var(--lift))}
+.card.cyber:hover .fd-front,.card.cyber.is-lit .fd-front{--bright:1.1;--edge:color-mix(in srgb,var(--color) 55%,transparent);filter:brightness(var(--bright)) drop-shadow(1.5px 0 0 var(--edge)) drop-shadow(-1.5px 0 0 var(--edge)) drop-shadow(0 1.5px 0 var(--edge)) drop-shadow(0 -1.5px 0 var(--edge)) drop-shadow(0 10px 18px var(--lift))}
+[data-theme="light"] .fd-front{--edge:color-mix(in srgb,var(--color) 75%,#0f0c15);--lift:rgba(15,12,21,.12);--bright:1;filter:brightness(var(--bright)) drop-shadow(1.5px 0 0 var(--edge)) drop-shadow(-1.5px 0 0 var(--edge)) drop-shadow(0 1.5px 0 var(--edge)) drop-shadow(0 -1.5px 0 var(--edge)) drop-shadow(0 10px 18px var(--lift))}
+[data-theme="light"] .card.cyber:hover .fd-front,[data-theme="light"] .card.cyber.is-lit .fd-front{--bright:1;--edge:color-mix(in srgb,var(--color) 90%,#0f0c15);--lift:color-mix(in srgb,var(--color) 35%,transparent);filter:brightness(var(--bright)) drop-shadow(1.5px 0 0 var(--edge)) drop-shadow(-1.5px 0 0 var(--edge)) drop-shadow(0 1.5px 0 var(--edge)) drop-shadow(0 -1.5px 0 var(--edge)) drop-shadow(0 10px 18px var(--lift))}
