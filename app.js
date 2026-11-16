@@ -171,7 +171,7 @@
         <span class="fd-back" aria-hidden="true"></span>
         <span class="fd-paper" aria-hidden="true"></span><span class="fd-paper" aria-hidden="true"></span><span class="fd-paper" aria-hidden="true"></span>
         <div class="fd-front">
-        <span class="fd-tab" aria-hidden="true"></span><span class="fd-shine" aria-hidden="true"></span>
+        <svg class="fd-outline" aria-hidden="true" preserveAspectRatio="none"><path/></svg>
         <div class="cy-card">
           <span class="cy-glare" aria-hidden="true"></span>
           ${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}${fx('cy-corners', 4)}
@@ -189,6 +189,28 @@
         </div>
       </a>`).join('');
     $$('.card', grid).forEach(el => cards.set(el.dataset.id, el));
+    shapeFolders();
+  }
+
+  // The folder front (tab + card) is one shape: the card is clipped to a folder outline and the same
+  // path is stroked on top, so the outline is continuous and every card effect fills the tab too.
+  function shapeFolders() {
+    $$('.fd-front', grid).forEach(front => {
+      const card = $('.cy-card', front);
+      const svg = $('.fd-outline', front);
+      const draw = () => {
+        const w = card.offsetWidth, h = card.offsetHeight;
+        if (!w || !h) return;
+        const T = 16, R = 20, r = 10, rr = 14, f = 6, x = Math.round(w * 0.38);
+        const d = `M0 ${T + R}A${R} ${R} 0 0 1 ${R} ${T}L${x - f} ${T}Q${x} ${T} ${x} ${T - f}L${x} ${r}A${r} ${r} 0 0 1 ${x + r} 0`
+          + `L${w - rr} 0A${rr} ${rr} 0 0 1 ${w} ${rr}L${w} ${h - R}A${R} ${R} 0 0 1 ${w - R} ${h}L${R} ${h}A${R} ${R} 0 0 1 0 ${h - R}Z`;
+        card.style.clipPath = `path('${d}')`;
+        svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+        svg.firstChild.setAttribute('d', d);
+      };
+      draw();
+      if (window.ResizeObserver) new ResizeObserver(draw).observe(card);
+    });
   }
 
   // Touch screens: light up the card crossing the middle band of the screen (cards are attached in observeTargets).

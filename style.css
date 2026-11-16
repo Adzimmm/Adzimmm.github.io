@@ -1074,3 +1074,13 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
   background:linear-gradient(125deg,transparent 0%,rgba(255,255,255,.05) 45%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.05) 55%,transparent 100%)}
 [data-theme="light"] .fd-shine{background:linear-gradient(125deg,transparent 0%,color-mix(in srgb,var(--color) 12%,transparent) 42%,rgba(255,255,255,.9) 50%,color-mix(in srgb,var(--color) 12%,transparent) 58%,transparent 100%)}
 .card.cyber:hover .fd-shine,.card.cyber.is-lit .fd-shine{opacity:1}
+/* ---------- Folder front drawn as one shape (clip-path + outline path set in app.js) ---------- */
+.fd-tab,.fd-shine{display:none}
+.fd-front .cy-card{margin-top:-16px;height:calc(100% + 16px);border:0;border-radius:0}
+.fd-front .cy-body{padding-top:40px}
+.fd-outline{position:absolute;left:0;top:-16px;z-index:7;width:100%;height:calc(100% + 16px);overflow:visible;pointer-events:none}
+.fd-outline path{fill:none;stroke:rgba(255,255,255,.12);stroke-width:2;vector-effect:non-scaling-stroke;transition:stroke .3s}
+.card.cyber:hover .fd-outline path,.card.cyber.is-lit .fd-outline path{stroke:color-mix(in srgb,var(--color) 55%,transparent)}
+[data-theme="light"] .fd-outline path{stroke:color-mix(in srgb,var(--color) 75%,#0f0c15)}
+[data-theme="light"] .card.cyber:hover .fd-outline path,[data-theme="light"] .card.cyber.is-lit .fd-outline path{stroke:color-mix(in srgb,var(--color) 90%,#0f0c15)}
+.fd-front .cy-card{margin-top:0;position:relative;top:-16px}
