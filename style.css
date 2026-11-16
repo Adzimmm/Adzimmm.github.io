@@ -987,3 +987,6 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 [data-theme="light"] .tl-card .tl-title{color:#17131f}
 [data-theme="light"] .tl-card .tl-org{color:rgba(23,19,31,.72)}
 [data-theme="light"] .tl-card .tl-text{color:rgba(23,19,31,.6)}
+
+/* No corner marks on cyber cards */
+.cy-corners{display:none}
