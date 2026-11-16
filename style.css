@@ -977,7 +977,26 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 
 /* No corner marks on cyber cards (every other effect stays) */
 .cy-corners{display:none}
-/* Cyber cards stay dark in light mode too */
-[data-theme="light"] .cy-card,[data-theme="light"] .tl-card{border-color:rgba(255,255,255,.1);background:linear-gradient(45deg,#141318,#232129);box-shadow:0 10px 30px rgba(36,23,57,.18),inset 0 0 20px rgba(0,0,0,.2)}
-[data-theme="light"] .tl-card .tl-title,[data-theme="light"] .card.cyber h3{color:#fff}
-[data-theme="light"] .card.cyber .card-cta span{border-color:rgba(255,255,255,.18);color:#fff}
+/* Light mode: white cyber cards with high contrast (solid dark text, clear border, visible shine) */
+[data-theme="light"] .cy-card,[data-theme="light"] .tl-card{--ink:#0f0c15;border-color:rgba(15,12,21,.18);background:linear-gradient(45deg,#ffffff,#f6f4fa);
+  box-shadow:0 1px 2px rgba(15,12,21,.08),0 12px 32px rgba(15,12,21,.1),inset 0 0 0 1px rgba(255,255,255,.8)}
+[data-theme="light"] .card.cyber h3,[data-theme="light"] .tl-card .tl-title{color:#0f0c15}
+[data-theme="light"] .card.cyber .card-kicker,[data-theme="light"] .cy-meta,[data-theme="light"] .tl-card .tl-date{color:#4a4458}
+[data-theme="light"] .card.cyber .card-desc,[data-theme="light"] .tl-card .tl-text{color:#37313f}
+[data-theme="light"] .tl-card .tl-org{color:#2a2533}
+[data-theme="light"] .cy-meta b{color:color-mix(in srgb,var(--color) 48%,#0f0c15)}
+[data-theme="light"] .cy-icon{border-color:color-mix(in srgb,var(--color) 80%,#0f0c15);background:color-mix(in srgb,var(--color) 18%,#fff);color:color-mix(in srgb,var(--color) 48%,#0f0c15);box-shadow:0 0 16px color-mix(in srgb,var(--color) 30%,transparent)}
+[data-theme="light"] .card.cyber .card-cta span{border-color:rgba(15,12,21,.3);color:#0f0c15}
+/* effects tuned so they still show on white */
+[data-theme="light"] .cy-glare{background:linear-gradient(125deg,transparent 0%,color-mix(in srgb,var(--color) 12%,transparent) 42%,rgba(255,255,255,.9) 50%,color-mix(in srgb,var(--color) 12%,transparent) 58%,transparent 100%)}
+[data-theme="light"] .cy-card::before,[data-theme="light"] .tl-fx::before{background:radial-gradient(circle,color-mix(in srgb,var(--color) 26%,transparent) 0%,rgba(92,103,255,.08) 45%,transparent 70%)}
+[data-theme="light"] .cy-lines i{background:linear-gradient(90deg,transparent,rgba(92,103,255,.32),transparent)}
+[data-theme="light"] .cy-scan{background:linear-gradient(to bottom,transparent,rgba(92,103,255,.12),transparent)}
+[data-theme="light"] .cy-particles i{background:color-mix(in srgb,var(--color) 70%,#0f0c15)}
+@media(hover:hover) and (pointer:fine){
+  [data-theme="light"] .card.cyber:hover .cy-card,[data-theme="light"] .tl-card:hover{filter:none;border-color:color-mix(in srgb,var(--color) 70%,#0f0c15);
+    box-shadow:0 1px 2px rgba(15,12,21,.08),0 16px 40px color-mix(in srgb,var(--color) 32%,transparent)}
+  [data-theme="light"] .card.cyber:hover h3,[data-theme="light"] .tl-card:hover .tl-title{background:linear-gradient(45deg,color-mix(in srgb,var(--color) 55%,#0f0c15),#0062ad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  [data-theme="light"] .card.cyber:hover .card-cta span{background:var(--color);border-color:transparent;color:#0f0c15}
+}
+[data-theme="light"] .card.cyber:focus-visible .card-cta span{background:var(--color);border-color:transparent;color:#0f0c15}
