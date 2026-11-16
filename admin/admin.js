@@ -676,7 +676,7 @@ function showTab(tab) {
 async function enterApp(session) {
   $('#view-login').hidden = true;
   $('#view-app').hidden = false;
-  const email = (session.user.email || '').replace(/@adzim\.portfolio$/, '');
+  const email = session.user.email === ADMIN_LOGIN ? 'admin@adzim' : (session.user.email || '');
   $('#who-email').textContent = email;
   $('#avatar').textContent = (email[0] || 'A').toUpperCase();
   $('#mode-badge').hidden = !DEMO;
@@ -719,5 +719,6 @@ if (DEMO) {
   if (session) enterApp(session); else showLogin();
 }
 
-// A plain username (no @) logs in as <username>@adzim.portfolio in Supabase Auth.
-function toLoginEmail(v) { v = String(v || '').trim().toLowerCase(); return v.includes('@') ? v : `${v}@adzim.portfolio`; }
+// The admin types the username "admin@adzim" (or "admin"); Supabase Auth signs in with the real account email.
+const ADMIN_LOGIN = 'ahmadzaidadzim11@gmail.com';
+function toLoginEmail(v) { v = String(v || '').trim().toLowerCase(); return (v === 'admin' || v === 'admin@adzim') ? ADMIN_LOGIN : v; }
