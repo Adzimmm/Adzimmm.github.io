@@ -182,7 +182,6 @@
             <h3>${escapeHtml(p.title)}</h3>
             <p class="card-desc">${escapeHtml(p.desc)}</p>
             <p class="cy-meta"><span><b>${p.sections.length}</b> collections</span><span><b>${visualCount(p)}</b> visuals</span></p>
-            <div class="card-cta"><span>${escapeHtml(site.projects.cta)} <i aria-hidden="true">↗</i></span></div>
           </div>
         </div>
         </div>

@@ -1084,3 +1084,5 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 [data-theme="light"] .fd-outline path{stroke:color-mix(in srgb,var(--color) 75%,#0f0c15)}
 [data-theme="light"] .card.cyber:hover .fd-outline path,[data-theme="light"] .card.cyber.is-lit .fd-outline path{stroke:color-mix(in srgb,var(--color) 90%,#0f0c15)}
 .fd-front .cy-card{margin-top:0;position:relative;top:-16px}
+/* No "View gallery" button on the folders: the whole folder is the link */
+.card.cyber .cy-meta{margin-top:auto;padding-top:18px}
