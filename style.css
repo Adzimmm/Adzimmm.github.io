@@ -1056,3 +1056,9 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 .card.cyber .card-desc{font-size:14px}
 .cy-folder{padding-top:28px}
 @media(max-width:640px){.grid:has(.cyber){gap:32px;padding:4px 6px}.cy-card,.cy-body{min-height:250px}}
+/* Light mode: folders tinted with the category colour, outline in that colour (dark mode unchanged) */
+[data-theme="light"] .card.cyber:hover .fd-front .cy-card,[data-theme="light"] .card.cyber:hover .fd-tab{border-color:color-mix(in srgb,var(--color) 75%,transparent)}
+[data-theme="light"] .fd-front .cy-card{background:linear-gradient(160deg,color-mix(in srgb,var(--color) 30%,#fff),color-mix(in srgb,var(--color) 14%,#fff));border-color:color-mix(in srgb,var(--color) 75%,#0f0c15)}
+[data-theme="light"] .fd-tab,[data-theme="light"] .fd-tab::before{background:color-mix(in srgb,var(--color) 30%,#fff)}
+[data-theme="light"] .fd-tab{border-color:color-mix(in srgb,var(--color) 75%,#0f0c15)}
+[data-theme="light"] .card.cyber .card-cta span{background:rgba(255,255,255,.55)}
