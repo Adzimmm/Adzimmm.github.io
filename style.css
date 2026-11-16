@@ -799,9 +799,9 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 .hero-search .search{isolation:isolate;border-color:transparent;background:transparent}
 .hero-search .search:hover,.hero-search .search:focus-within{border-color:transparent}
 .hero-search .search::before,.hero-search .search::after{content:'';position:absolute;z-index:-1;border-radius:inherit;pointer-events:none}
-.hero-search .search::before{inset:-2px;background:conic-gradient(from var(--glow-angle),#4285f4,#a142f4,#ea4335,#fbbc05,#34a853,#4285f4);filter:blur(14px);opacity:.5;transition:opacity .3s,filter .3s;animation:glow-spin 8s linear infinite}
+.hero-search .search::before{inset:-3px;background:conic-gradient(from var(--glow-angle),#4285f4,#a142f4,#ea4335,#fbbc05,#34a853,#4285f4);filter:blur(16px);opacity:.78;transition:opacity .3s,filter .3s;animation:glow-spin 8s linear infinite}
 .hero-search .search::after{inset:1px;background:var(--surface-raised)}
-.hero-search .search:focus-within::before{opacity:.9;filter:blur(18px)}
+.hero-search .search:focus-within::before{opacity:1;filter:blur(20px)}
 [data-motion="off"] .hero-search .search::before{animation:none}
 
 /* Hero: compact, like a gov landing header (no forced viewport height) */
