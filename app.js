@@ -149,7 +149,7 @@
 
   function observeTargets() {
     io.disconnect();
-    $$('.card, .hero-visual, .marquee').forEach(el => io.observe(el));
+    $$('.card, .hero-visual, .marquee, .timeline').forEach(el => io.observe(el));
   }
 
   /* ---------- Cards ---------- */
