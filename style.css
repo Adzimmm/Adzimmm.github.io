@@ -1086,3 +1086,5 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 .fd-front .cy-card{margin-top:0;position:relative;top:-16px}
 /* No "View gallery" button on the folders: the whole folder is the link */
 .card.cyber .cy-meta{margin-top:auto;padding-top:18px}
+/* Projects: no category filter pills and no "Showing x of y" line */
+#work .toolbar,#work .status-row{display:none}
