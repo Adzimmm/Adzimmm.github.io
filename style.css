@@ -942,14 +942,6 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 .card.cyber:not(.in-view) *{animation-play-state:paused!important}
 [data-motion="off"] .card.cyber *{animation:none!important}
 [data-motion="off"] .cy-card{transform:none!important}
-/* light theme: same card, light surface */
-[data-theme="light"] .cy-card{border-color:rgba(36,23,57,.1);background:linear-gradient(45deg,#ffffff,#f3f0f8);box-shadow:0 10px 30px rgba(36,23,57,.08),inset 0 0 20px rgba(36,23,57,.03)}
-[data-theme="light"] .card.cyber h3{color:#17131f}
-[data-theme="light"] .card.cyber .card-kicker,[data-theme="light"] .cy-meta{color:rgba(23,19,31,.55)}
-[data-theme="light"] .card.cyber .card-desc{color:rgba(23,19,31,.66)}
-[data-theme="light"] .card.cyber .card-cta span{border-color:rgba(23,19,31,.2);color:#17131f}
-[data-theme="light"] .cy-meta b,[data-theme="light"] .cy-icon{color:color-mix(in srgb,var(--color) 60%,#17131f)}
-[data-theme="light"] .card.cyber:hover h3{background:linear-gradient(45deg,color-mix(in srgb,var(--color) 70%,#17131f),#0077cc);-webkit-background-clip:text;background-clip:text}
 @media(max-width:1100px){.grid:has(.cyber){grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.grid:has(.cyber){grid-template-columns:1fr;gap:18px}.cy-card,.cy-body{min-height:300px}}
 
@@ -982,8 +974,10 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 .timeline:not(.in-view) .tl-fx *{animation-play-state:paused}
 [data-motion="off"] .tl-fx *{animation:none!important}
 [data-motion="off"] .tl-card{transform:none!important}
-[data-theme="light"] .tl-card{border-color:rgba(36,23,57,.1);background:linear-gradient(45deg,#ffffff,#f3f0f8);box-shadow:0 8px 24px rgba(36,23,57,.07),inset 0 0 20px rgba(36,23,57,.03)}
-[data-theme="light"] .tl-card .tl-date{color:rgba(23,19,31,.5)}
-[data-theme="light"] .tl-card .tl-title{color:#17131f}
-[data-theme="light"] .tl-card .tl-org{color:rgba(23,19,31,.72)}
-[data-theme="light"] .tl-card .tl-text{color:rgba(23,19,31,.6)}
+
+/* No corner marks on cyber cards (every other effect stays) */
+.cy-corners{display:none}
+/* Cyber cards stay dark in light mode too */
+[data-theme="light"] .cy-card,[data-theme="light"] .tl-card{border-color:rgba(255,255,255,.1);background:linear-gradient(45deg,#141318,#232129);box-shadow:0 10px 30px rgba(36,23,57,.18),inset 0 0 20px rgba(0,0,0,.2)}
+[data-theme="light"] .tl-card .tl-title,[data-theme="light"] .card.cyber h3{color:#fff}
+[data-theme="light"] .card.cyber .card-cta span{border-color:rgba(255,255,255,.18);color:#fff}
