@@ -330,6 +330,10 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
 .thumb.dragging{opacity:.4}
 .thumb.drop-target .thumb-img{outline:2px solid var(--accent);outline-offset:2px}
 
+/* FAQ tab */
+.faq-note{margin:0;font-size:14px;line-height:1.5}
+.faq-note .ico{margin-top:2px;color:var(--accent)}
+
 /* ---------- New folder wizard ---------- */
 .wizard{width:min(1120px,96vw);max-width:none;height:min(860px,92vh);max-height:92vh;overflow:hidden}
 .wizard[open]{display:flex;flex-direction:column}

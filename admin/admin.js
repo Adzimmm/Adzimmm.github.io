@@ -8,7 +8,7 @@ const $$ = (sel, scope = document) => [...scope.querySelectorAll(sel)];
 const cfg = window.SUPABASE || {};
 const BUCKET = 'portfolio';
 const DOCS = ['site', 'portfolio', 'resume', 'preview'];
-const DOC_NAMES = { site: 'Text', portfolio: 'Projects', resume: 'Education & Experience', preview: 'Preview gallery' };
+const DOC_NAMES = { site: 'Text & FAQ', portfolio: 'Projects', resume: 'Education & Experience', preview: 'Preview gallery' };
 
 // Same presets as CATEGORY_THEMES / FILTER_ICONS in ../app.js, used when importing and for new categories.
 const THEMES = {
@@ -49,6 +49,7 @@ const P = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
   copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
+  chat: '<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12Z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/>',
 };
 const svg = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] || ''}</svg>`;
 function ico(name) { const i = document.createElement('i'); i.className = 'ico'; i.innerHTML = svg(name); return i; }
@@ -295,12 +296,12 @@ async function removeStored(images) {
 }
 
 /* ---------- Form controls bound to an object ---------- */
-function field(obj, key, label, doc, { multi = false, hint = '', type = 'text', rows = 3, placeholder = '' } = {}) {
+function field(obj, key, label, doc, { multi = false, hint = '', type = 'text', rows = 3, placeholder = '', wide = false } = {}) {
   const input = multi
     ? h('textarea', { rows, value: obj[key] ?? '', placeholder })
     : h('input', { type, value: obj[key] ?? '', placeholder });
   input.addEventListener('input', () => { obj[key] = input.value; markDirty(doc); });
-  return h('label', { class: 'field' }, h('span', {}, label), input, hint ? h('small', {}, hint) : null);
+  return h('label', { class: `field${wide ? ' wide' : ''}` }, h('span', {}, label), input, hint ? h('small', {}, hint) : null);
 }
 
 const iconBtn = (name, label, onclick, extra = {}) =>
@@ -1226,6 +1227,35 @@ function renderPreview() {
   });
 }
 
+/* ---------- Tab: FAQ & chat ---------- */
+// The chatbox on the site (../chat.js) matches a visitor's question to these first, then uses its
+// built-in answers. Both live in the "site" row: site.faq and site.chat.
+function renderFaq() {
+  const s = state.docs.site;
+  const d = 'site';
+  s.faq = s.faq || [];
+  s.chat = s.chat || {};
+  const defaults = (window.SITE && window.SITE.chat) || {};
+  const chatField = (key, label, opts = {}) => field(s.chat, key, label, d, { placeholder: defaults[key] || '', ...opts });
+  return [
+    card('Questions & answers', 'When a visitor asks something in the search box, the chatbox answers with these first.',
+      h('p', { class: 'notice faq-note' }, ico('info'), h('span', {},
+        'The first 4 questions show as quick buttons when the chat opens. Without an FAQ the chat already answers about ',
+        h('b', {}, 'contact, resume, education, experience, awards, software, languages, location and projects'), '.')),
+      listEditor(s.faq, d, [
+        { key: 'q', label: 'Question', wide: true, placeholder: 'e.g. Are you available for freelance work?' },
+        { key: 'a', label: 'Answer', wide: true, multi: true, rows: 3, hint: 'Write **words** for bold. Emails and links become clickable.' },
+        { key: 'keywords', label: 'Other words people use', wide: true, placeholder: 'hire, freelance, available',
+          hint: 'Optional. Comma-separated words a visitor might type instead, e.g. hire, freelance, available.' },
+      ], { q: '', a: '', keywords: '' }, 'Question')),
+    card('Chatbox text', 'The words around the chat window. An empty field uses the text shown in grey.',
+      h('div', { class: 'grid2' }, chatField('title', 'Title'), chatField('subtitle', 'Line under the title')),
+      chatField('greeting', 'First message', { multi: true, rows: 2 }),
+      chatField('placeholder', 'Typing box text'),
+      chatField('fallback', 'When there is no answer', { multi: true, rows: 2, hint: 'Shown with the quick buttons and your email.' })),
+  ];
+}
+
 /* ---------- Tab: Sandaran ---------- */
 function download(name, text, type = 'application/json') {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -1266,6 +1296,7 @@ const TABS = {
   projects: { title: 'Projects', desc: 'Add folders and collections, upload images and reorder them.', icon: 'projects', doc: 'portfolio', render: renderProjects },
   resume: { title: 'Education & Experience', desc: 'Schools, work and awards. Also shown in the Resume preview.', icon: 'resume', doc: 'resume', render: renderResume },
   preview: { title: 'Preview gallery', desc: 'Choose images for the 3 moving rows under the hero.', icon: 'preview', doc: 'preview', render: renderPreview },
+  faq: { title: 'FAQ & chat', desc: 'Questions people often ask. The chatbox on the site answers with these.', icon: 'chat', doc: 'site', render: renderFaq },
   backup: { title: 'Backup', desc: 'Import content and download copies.', icon: 'backup', render: renderBackup },
 };
 
