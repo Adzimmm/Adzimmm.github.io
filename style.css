@@ -877,3 +877,78 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 /* Editable text hooks (data-c) keep the look of the text around them */
 .list-head span[data-c]{margin-left:0;font-size:inherit;font-weight:inherit;color:inherit}
 .closing-line b,.availability b{font-weight:inherit}
+
+/* ---------- Projects: cyber cards (text + icon only) ---------- */
+.grid:has(.cyber){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.card.cyber{display:block;padding:0;border:0;border-radius:20px;background:none;overflow:visible;perspective:900px;-webkit-user-select:none;user-select:none}
+.card.cyber,.card.cyber:hover,.card.cyber:active{box-shadow:none}
+.card.cyber:active{transform:scale(.97)}
+.cy-card{--c2:#5c67ff;position:relative;height:100%;min-height:340px;border:2px solid rgba(255,255,255,.1);border-radius:20px;overflow:hidden;
+  background:linear-gradient(45deg,#141318,#232129);box-shadow:0 0 20px rgba(0,0,0,.3),inset 0 0 20px rgba(0,0,0,.2);
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .7s var(--ease),filter .3s,border-color .3s}
+.card.cyber:hover .cy-card{transition:transform .125s ease-out,filter .3s,border-color .3s;filter:brightness(1.1);border-color:color-mix(in srgb,var(--color) 45%,transparent)}
+.cy-card::before{content:'';position:absolute;left:var(--gx,50%);top:var(--gy,50%);width:150%;height:150%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,color-mix(in srgb,var(--color) 18%,transparent) 0%,rgba(92,103,255,.06) 45%,transparent 70%);filter:blur(20px);opacity:0;transition:opacity .3s;pointer-events:none}
+.card.cyber:hover .cy-card::before{opacity:.9}
+.cy-body{position:relative;z-index:5;display:flex;flex-direction:column;height:100%;min-height:340px;padding:30px 28px 26px;box-sizing:border-box}
+.cy-icon{display:grid;place-items:center;width:56px;height:56px;margin-bottom:22px;border:1px solid color-mix(in srgb,var(--color) 40%,transparent);border-radius:16px;
+  background:color-mix(in srgb,var(--color) 12%,transparent);color:var(--color);box-shadow:0 0 18px color-mix(in srgb,var(--color) 25%,transparent);transition:transform .3s var(--ease),box-shadow .3s}
+.cy-icon svg{width:28px;height:28px}
+.card.cyber:hover .cy-icon{transform:translateZ(0) scale(1.06);box-shadow:0 0 28px color-mix(in srgb,var(--color) 50%,transparent)}
+.card.cyber .card-kicker{margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.card.cyber h3{margin:0;font-size:clamp(24px,2vw,30px);font-weight:800;line-height:1.1;letter-spacing:-.01em;color:#fff;transition:color .3s}
+.card.cyber:hover h3{background:linear-gradient(45deg,var(--color),#00a2ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 12px color-mix(in srgb,var(--color) 35%,transparent))}
+.card.cyber .card-desc{margin-top:12px;font-size:15px;line-height:1.5;color:rgba(255,255,255,.62)}
+.cy-meta{display:flex;gap:16px;margin:18px 0 0;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.cy-meta b{font-size:15px;letter-spacing:0;color:var(--color)}
+.card.cyber .card-cta{margin-top:auto;padding-top:22px}
+.card.cyber .card-cta span{border-color:rgba(255,255,255,.18);color:#fff}
+@media(hover:hover) and (pointer:fine){.card.cyber:hover .card-cta span{background:var(--color);border-color:transparent;color:#111}}
+.card.cyber:focus-visible{outline:2px solid var(--color);outline-offset:6px}
+.card.cyber:focus-visible .card-cta span{background:var(--color);border-color:transparent;color:#111}
+/* effect layers */
+.cy-glare,.cy-lines,.cy-glows,.cy-particles,.cy-corners,.cy-scan{position:absolute;inset:0;pointer-events:none}
+.cy-glare{z-index:4;background:linear-gradient(125deg,transparent 0%,rgba(255,255,255,.05) 45%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.05) 55%,transparent 100%);opacity:0;transition:opacity .3s}
+.card.cyber:hover .cy-glare{opacity:1}
+.cy-lines i{position:absolute;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(92,103,255,.22),transparent);transform:scaleX(0);animation:cy-line 3s linear infinite}
+.cy-lines i:nth-child(1){top:20%;transform-origin:left}
+.cy-lines i:nth-child(2){top:40%;transform-origin:right;animation-delay:1s}
+.cy-lines i:nth-child(3){top:60%;transform-origin:left;animation-delay:2s}
+.cy-lines i:nth-child(4){top:80%;transform-origin:right;animation-delay:1.5s}
+.cy-glows i{position:absolute;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--color) 32%,transparent) 0%,transparent 70%);filter:blur(15px);opacity:0;transition:opacity .3s}
+.cy-glows i:nth-child(1){top:-20px;left:-20px}
+.cy-glows i:nth-child(2){top:50%;right:-30px;transform:translateY(-50%)}
+.cy-glows i:nth-child(3){bottom:-20px;left:30%}
+.card.cyber:hover .cy-glows i{opacity:1}
+.cy-particles i{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--color);opacity:0}
+.card.cyber:hover .cy-particles i{animation:cy-particle 2s infinite}
+.cy-particles i:nth-child(1){--x:1;--y:-1;top:40%;left:20%}
+.cy-particles i:nth-child(2){--x:-1;--y:-1;top:60%;right:20%;animation-delay:.3s}
+.cy-particles i:nth-child(3){--x:.5;--y:1;top:20%;left:40%;animation-delay:.6s}
+.cy-particles i:nth-child(4){--x:-.5;--y:1;top:80%;right:40%;animation-delay:.9s}
+.cy-particles i:nth-child(5){--x:1;--y:.5;top:30%;left:60%;animation-delay:1.2s}
+.cy-particles i:nth-child(6){--x:-1;--y:.5;top:70%;right:60%;animation-delay:1.5s}
+.cy-corners{z-index:6}
+.cy-corners i{position:absolute;width:15px;height:15px;border:2px solid rgba(92,103,255,.3);transition:border-color .3s,box-shadow .3s}
+.cy-corners i:nth-child(1){top:10px;left:10px;border-right:0;border-bottom:0}
+.cy-corners i:nth-child(2){top:10px;right:10px;border-left:0;border-bottom:0}
+.cy-corners i:nth-child(3){bottom:10px;left:10px;border-right:0;border-top:0}
+.cy-corners i:nth-child(4){bottom:10px;right:10px;border-left:0;border-top:0}
+.card.cyber:hover .cy-corners i{border-color:color-mix(in srgb,var(--color) 85%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--color) 50%,transparent)}
+.cy-scan{background:linear-gradient(to bottom,transparent,rgba(92,103,255,.1),transparent);transform:translateY(-100%);animation:cy-scan 2.6s linear infinite}
+@keyframes cy-line{0%{transform:scaleX(0);opacity:0}50%{transform:scaleX(1);opacity:1}100%{transform:scaleX(0);opacity:0}}
+@keyframes cy-scan{to{transform:translateY(100%)}}
+@keyframes cy-particle{0%{transform:translate(0,0);opacity:0}50%{opacity:1}100%{transform:translate(calc(var(--x) * 30px),calc(var(--y) * 30px));opacity:0}}
+.card.cyber:not(.in-view) *{animation-play-state:paused!important}
+[data-motion="off"] .card.cyber *{animation:none!important}
+[data-motion="off"] .cy-card{transform:none!important}
+/* light theme: same card, light surface */
+[data-theme="light"] .cy-card{border-color:rgba(36,23,57,.1);background:linear-gradient(45deg,#ffffff,#f3f0f8);box-shadow:0 10px 30px rgba(36,23,57,.08),inset 0 0 20px rgba(36,23,57,.03)}
+[data-theme="light"] .card.cyber h3{color:#17131f}
+[data-theme="light"] .card.cyber .card-kicker,[data-theme="light"] .cy-meta{color:rgba(23,19,31,.55)}
+[data-theme="light"] .card.cyber .card-desc{color:rgba(23,19,31,.66)}
+[data-theme="light"] .card.cyber .card-cta span{border-color:rgba(23,19,31,.2);color:#17131f}
+[data-theme="light"] .cy-meta b,[data-theme="light"] .cy-icon{color:color-mix(in srgb,var(--color) 60%,#17131f)}
+[data-theme="light"] .card.cyber:hover h3{background:linear-gradient(45deg,color-mix(in srgb,var(--color) 70%,#17131f),#0077cc);-webkit-background-clip:text;background-clip:text}
+@media(max-width:1100px){.grid:has(.cyber){grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.grid:has(.cyber){grid-template-columns:1fr;gap:18px}.cy-card,.cy-body{min-height:300px}}

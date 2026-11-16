@@ -185,20 +185,45 @@
     return `<ul class="hair-list">${items}${more > 0 ? `<li class="more"><span>+${more} more collections</span></li>` : ''}</ul>`;
   }
 
+  // Text-and-icon cards (no artwork) in a 3D "cyber" style; the colour is the category accent.
+  const fx = (cls, n) => `<span class="${cls}" aria-hidden="true">${'<i></i>'.repeat(n)}</span>`;
   function buildCards() {
     grid.innerHTML = projects.map(p => `
-      <a class="card" href="#project/${p.id}" data-id="${p.id}" data-cat="${p.id}" style="${palette(p)}" aria-label="View ${escapeHtml(p.title)}">
-        <div class="panel card-text">
-          <p class="card-kicker">${escapeHtml(themeOf(p).label)}</p>
-          <h3>${escapeHtml(p.title)}</h3>
-          <p class="card-desc">${escapeHtml(p.desc)}</p>
-          <div class="list-head"><b>${p.sections.length}</b>Collections<span>${visualCount(p)} visual</span></div>
-          ${collectionList(p)}
-          <div class="card-cta"><span>${escapeHtml(site.projects.cta)} <i aria-hidden="true">↗</i></span></div>
+      <a class="card cyber" href="#project/${p.id}" data-id="${p.id}" data-cat="${p.id}" style="${palette(p)}" aria-label="View ${escapeHtml(p.title)}">
+        <div class="cy-card">
+          <span class="cy-glare" aria-hidden="true"></span>
+          ${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}${fx('cy-corners', 4)}
+          <span class="cy-scan" aria-hidden="true"></span>
+          <div class="cy-body">
+            <span class="cy-icon">${ICON(FILTER_ICONS[p.icon] || FILTER_ICONS[p.id] || FILTER_ICONS.others)}</span>
+            <p class="card-kicker">${escapeHtml(themeOf(p).label)}</p>
+            <h3>${escapeHtml(p.title)}</h3>
+            <p class="card-desc">${escapeHtml(p.desc)}</p>
+            <p class="cy-meta"><span><b>${p.sections.length}</b> collections</span><span><b>${visualCount(p)}</b> visuals</span></p>
+            <div class="card-cta"><span>${escapeHtml(site.projects.cta)} <i aria-hidden="true">↗</i></span></div>
+          </div>
         </div>
-        ${artwork(p)}
       </a>`).join('');
     $$('.card', grid).forEach(el => cards.set(el.dataset.id, el));
+  }
+
+  // Tilt the card toward the pointer (mouse only, and only when motion is on).
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    grid.addEventListener('pointermove', e => {
+      const card = e.target.closest('.cyber');
+      if (!card || root.dataset.motion !== 'on') return;
+      const box = card.getBoundingClientRect();
+      const x = (e.clientX - box.left) / box.width - 0.5;
+      const y = (e.clientY - box.top) / box.height - 0.5;
+      card.style.setProperty('--rx', `${(-y * 16).toFixed(2)}deg`);
+      card.style.setProperty('--ry', `${(x * 16).toFixed(2)}deg`);
+      card.style.setProperty('--gx', `${((x + 0.5) * 100).toFixed(1)}%`);
+      card.style.setProperty('--gy', `${((y + 0.5) * 100).toFixed(1)}%`);
+    });
+    grid.addEventListener('pointerout', e => {
+      const card = e.target.closest('.cyber');
+      if (card && !card.contains(e.relatedTarget)) { card.style.removeProperty('--rx'); card.style.removeProperty('--ry'); }
+    });
   }
 
   /* ---------- Sliding preview ---------- */
