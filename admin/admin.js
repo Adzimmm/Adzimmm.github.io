@@ -8,7 +8,7 @@ const $$ = (sel, scope = document) => [...scope.querySelectorAll(sel)];
 const cfg = window.SUPABASE || {};
 const BUCKET = 'portfolio';
 const DOCS = ['site', 'portfolio', 'resume', 'preview'];
-const DOC_NAMES = { site: 'Teks', portfolio: 'Projek', resume: 'Education & Experience', preview: 'Preview gallery' };
+const DOC_NAMES = { site: 'Text', portfolio: 'Projects', resume: 'Education & Experience', preview: 'Preview gallery' };
 
 // Same presets as CATEGORY_THEMES / FILTER_ICONS in ../app.js, used when importing and for new categories.
 const THEMES = {
@@ -21,8 +21,8 @@ const THEMES = {
   others: { accent: '#c9c4d6', label: 'Experimental', icon: 'others' },
 };
 const ICON_NAMES = {
-  'logo-folio': 'Bintang', 'brand-design': 'Tag', 'social-media': 'Telefon',
-  'digital-art': 'Pen', 'print-media': 'Pencetak', 'ui-ux': 'Skrin', others: 'Kilauan',
+  'logo-folio': 'Star', 'brand-design': 'Tag', 'social-media': 'Phone',
+  'digital-art': 'Pen', 'print-media': 'Printer', 'ui-ux': 'Screen', others: 'Sparkle',
 };
 const SWATCHES = ['#b8a0ff', '#8dbaff', '#a2d9ba', '#d7c785', '#ddad82', '#f4a1ba', '#ff8a80', '#c9c4d6'];
 
@@ -109,7 +109,7 @@ function setTheme(theme) {
   document.documentElement.dataset.theme = theme;
   try { localStorage.setItem('adzim-theme', theme); } catch (_) {}
   const btn = $('#theme-toggle');
-  btn.replaceChildren(ico(theme === 'light' ? 'moon' : 'sun'), h('span', {}, theme === 'light' ? 'Tema gelap' : 'Tema terang'));
+  btn.replaceChildren(ico(theme === 'light' ? 'moon' : 'sun'), h('span', {}, theme === 'light' ? 'Dark theme' : 'Light theme'));
 }
 $('#theme-toggle').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'));
 setTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
@@ -119,7 +119,7 @@ $('[data-show-pw]').addEventListener('click', e => {
   const input = e.target.closest('.pw').querySelector('input');
   const show = input.type === 'password';
   input.type = show ? 'text' : 'password';
-  e.target.textContent = show ? 'Sorok' : 'Tunjuk';
+  e.target.textContent = show ? 'Hide' : 'Show';
 });
 
 /* ---------- State ---------- */
@@ -140,7 +140,7 @@ function bundled() {
 function updateSavebar() {
   const bar = $('#savebar');
   bar.hidden = !state.dirty.size;
-  $('#save-status').textContent = 'Perubahan belum disimpan';
+  $('#save-status').textContent = 'Unsaved changes';
   $('#save-what').textContent = [...state.dirty].map(k => DOC_NAMES[k]).join(' · ');
   $$('#side-nav [data-doc]').forEach(b => b.classList.toggle('has-changes', state.dirty.has(b.dataset.doc)));
 }
@@ -174,7 +174,7 @@ async function loadDocs() {
     return;
   }
   const { data, error } = await sb.from('content').select('key,data');
-  if (error) toast(`Gagal baca Supabase: ${error.message}`, true);
+  if (error) toast(`Could not read Supabase: ${error.message}`, true);
   const rows = Object.fromEntries((data || []).map(r => [r.key, r.data]));
   state.remote = new Set(Object.keys(rows));
   DOCS.forEach(k => { state.docs[k] = rows[k] !== undefined ? rows[k] : fallback[k]; });
@@ -193,12 +193,12 @@ function summarise(portfolio) {
 
 async function saveDocs(keys) {
   if (keys.includes('portfolio')) summarise(state.docs.portfolio);
-  if (DEMO) throw new Error('Mod demo: tiada apa disimpan. Log masuk di laman sebenar untuk simpan.');
+  if (DEMO) throw new Error('Demo mode: nothing is saved. Log in on the real site to save.');
   const rows = keys.map(key => ({ key, data: state.docs[key], updated_at: new Date().toISOString() }));
   const { error } = await sb.from('content').upsert(rows);
   if (error) {
     const denied = /row-level security|permission/i.test(error.message);
-    throw new Error(denied ? 'Tiada kebenaran: emel ini bukan admin dalam setup.sql.' : error.message);
+    throw new Error(denied ? 'Permission denied: this account is not the admin in setup.sql.' : error.message);
   }
   keys.forEach(k => { state.dirty.delete(k); state.remote.add(k); });
   $('#import-notice').hidden = DOCS.every(k => state.remote.has(k));
@@ -208,13 +208,13 @@ async function saveAll() {
   if (!state.dirty.size) return;
   const btn = $('#save');
   btn.disabled = true;
-  $('#save-status').textContent = 'Menyimpan…';
+  $('#save-status').textContent = 'Saving…';
   try {
     await saveDocs([...state.dirty]);
     updateSavebar();
-    toast('Disimpan. Laman awam kini guna kandungan baru.');
+    toast('Saved. The public site now shows the new content.');
   } catch (err) {
-    $('#save-status').textContent = 'Gagal simpan';
+    $('#save-status').textContent = 'Save failed';
     toast(err.message, true);
   } finally {
     btn.disabled = false;
@@ -225,13 +225,13 @@ document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's' && !$('#view-app').hidden) { e.preventDefault(); saveAll(); }
 });
 $('#discard').addEventListener('click', async () => {
-  const ok = await ask({ title: 'Buang semua perubahan?', text: 'Kandungan akan kembali kepada versi terakhir yang disimpan.', ok: 'Buang', danger: true });
+  const ok = await ask({ title: 'Discard all changes?', text: 'Content goes back to the last saved version.', ok: 'Discard', danger: true });
   if (!ok) return;
   state.dirty.clear();
   await loadDocs();
   updateSavebar();
   showTab(state.tab);
-  toast('Perubahan dibuang.');
+  toast('Changes discarded.');
 });
 
 /* ---------- Images: shrink in the browser, upload to Storage ---------- */
@@ -250,7 +250,7 @@ async function toWebp(bitmap, max) {
 }
 
 async function uploadImage(file, folder, alt) {
-  if (DEMO) throw new Error('Mod demo: muat naik perlukan log masuk sebenar.');
+  if (DEMO) throw new Error('Demo mode: uploading needs a real login.');
   const bitmap = await createImageBitmap(file);
   const base = `${folder}/${Date.now().toString(36)}-${slug(file.name.replace(/\.[^.]+$/, ''))}`;
   const out = { alt, dark: false, storage: [] };
@@ -294,13 +294,13 @@ function moveBtns(list, i, doc, rerender) {
     rerender();
   };
   return h('span', { class: 'row-tools' },
-    iconBtn('up', 'Naik', move(-1), { disabled: i === 0 }),
-    iconBtn('down', 'Turun', move(1), { disabled: i === list.length - 1 }));
+    iconBtn('up', 'Move up', move(-1), { disabled: i === 0 }),
+    iconBtn('down', 'Move down', move(1), { disabled: i === list.length - 1 }));
 }
 
-function delBtn(onConfirm, what = 'item ini') {
-  return iconBtn('trash', `Padam ${what}`, async () => {
-    const ok = await ask({ title: `Padam ${what}?`, text: 'Tindakan ini tak boleh dibatalkan selepas disimpan.', ok: 'Padam', danger: true });
+function delBtn(onConfirm, what = 'this item') {
+  return iconBtn('trash', `Delete ${what}`, async () => {
+    const ok = await ask({ title: `Delete ${what}?`, text: 'This cannot be undone once saved.', ok: 'Delete', danger: true });
     if (ok) onConfirm();
   }, { danger: true });
 }
@@ -318,8 +318,8 @@ function listEditor(list, doc, fields, blank, title) {
           ? field(list, i, title, doc)
           : h('div', { class: 'list-fields' }, fields.map(f => f.render ? f.render(item, doc) : field(item, f.key, f.label, doc, f))),
         h('div', { class: 'list-side' }, moveBtns(list, i, doc, draw), delBtn(() => { list.splice(i, 1); markDirty(doc); draw(); }, title.toLowerCase())))),
-      list.length ? null : h('p', { class: 'empty' }, `Belum ada ${title.toLowerCase()}.`),
-      addBtn(`Tambah ${title.toLowerCase()}`, () => { list.push(clone(blank)); markDirty(doc); draw(); }));
+      list.length ? null : h('p', { class: 'empty' }, `No ${title.toLowerCase()} yet.`),
+      addBtn(`Add ${title.toLowerCase()}`, () => { list.push(clone(blank)); markDirty(doc); draw(); }));
   };
   draw();
   return wrap;
@@ -333,7 +333,7 @@ function card(title, where, ...body) {
 
 // Chips that jump to each card of a long tab.
 function jumpNav(cards) {
-  return h('nav', { class: 'jump', 'aria-label': 'Lompat ke bahagian' },
+  return h('nav', { class: 'jump', 'aria-label': 'Jump to section' },
     cards.map(c => h('a', { href: `#${c.id}`, onclick: e => { e.preventDefault(); c.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, c.querySelector('h2').textContent)));
 }
 
@@ -344,50 +344,50 @@ function renderText() {
   const levelSelect = item => {
     const sel = h('select', {}, [1, 2, 3].map(n => h('option', { value: n, selected: Number(item.level) === n }, ['', 'Basic', 'Intermediate', 'Advanced'][n])));
     sel.addEventListener('change', () => { item.level = Number(sel.value); markDirty(d); });
-    return h('label', { class: 'field' }, h('span', {}, 'Tahap'), sel);
+    return h('label', { class: 'field' }, h('span', {}, 'Level'), sel);
   };
   const cards = [
-    card('Hero', 'Bahagian paling atas laman.',
-      h('div', { class: 'grid2' }, field(s.hero, 'hi', 'Salam', d), field(s.hero, 'name', 'Nama (tebal)', d)),
-      field(s.hero, 'title', 'Tajuk besar', d),
-      field(s.hero, 'intro', 'Ayat pendek', d, { multi: true, rows: 2 }),
-      h('div', { class: 'grid2' }, field(s.hero, 'searchPlaceholder', 'Teks dalam kotak carian', d), field(s.hero, 'searchHint', 'Petunjuk selepas "Type /"', d)),
-      field(s.hero, 'seeMore', 'Butang See More', d)),
-    card('Menu & brand', 'Header di atas setiap halaman.',
-      h('div', { class: 'grid3' }, ...[['home', 'Home'], ['about', 'About'], ['education', 'Education'], ['experience', 'Experience'], ['projects', 'Projects'], ['resume', 'Butang Resume']].map(([k, l]) => field(s.nav, k, l, d))),
-      h('div', { class: 'grid2' }, field(s.brand, 'name', 'Brand', d), field(s.brand, 'suffix', 'Brand (bahagian pudar)', d))),
-    card('Preview gallery', 'Nota di bawah 3 baris gambar bergerak.',
-      field(s.gallery, 'note', 'Nota', d, { multi: true, rows: 2, hint: 'Tulis **perkataan** untuk tebal. Tekan Enter untuk pecah baris (desktop sahaja).' })),
-    card('About', 'Bahagian About Me.',
-      h('div', { class: 'grid2' }, field(s.about, 'title', 'Tajuk bahagian', d), field(s.about, 'cardTitle', 'Tajuk kad', d)),
-      field(s.about, 'body', 'Perenggan', d, { multi: true, rows: 4 }),
-      field(s.about, 'availability', 'Pil hijau (status)', d),
-      h('div', { class: 'sub' }, field(s.about, 'languagesTitle', 'Tajuk senarai bahasa', d),
-        listEditor(s.about.languages, d, [{ key: 'name', label: 'Bahasa' }, { key: 'level', label: 'Tahap' }], { name: '', level: '' }, 'Bahasa')),
-      h('div', { class: 'sub' }, field(s.about, 'softwareTitle', 'Tajuk senarai software', d),
+    card('Hero', 'The top of the page.',
+      h('div', { class: 'grid2' }, field(s.hero, 'hi', 'Greeting', d), field(s.hero, 'name', 'Name (bold)', d)),
+      field(s.hero, 'title', 'Big title', d),
+      field(s.hero, 'intro', 'Short line', d, { multi: true, rows: 2 }),
+      h('div', { class: 'grid2' }, field(s.hero, 'searchPlaceholder', 'Search box text', d), field(s.hero, 'searchHint', 'Hint after "Type /"', d)),
+      field(s.hero, 'seeMore', 'See More button', d)),
+    card('Menu & brand', 'The header at the top of every page.',
+      h('div', { class: 'grid3' }, ...[['home', 'Home'], ['about', 'About'], ['education', 'Education'], ['experience', 'Experience'], ['projects', 'Projects'], ['resume', 'Resume button']].map(([k, l]) => field(s.nav, k, l, d))),
+      h('div', { class: 'grid2' }, field(s.brand, 'name', 'Brand', d), field(s.brand, 'suffix', 'Brand (faded part)', d))),
+    card('Preview gallery', 'The note under the 3 moving image rows.',
+      field(s.gallery, 'note', 'Note', d, { multi: true, rows: 2, hint: 'Write **words** for bold. Press Enter for a line break (desktop only).' })),
+    card('About', 'The About Me section.',
+      h('div', { class: 'grid2' }, field(s.about, 'title', 'Section title', d), field(s.about, 'cardTitle', 'Card title', d)),
+      field(s.about, 'body', 'Paragraph', d, { multi: true, rows: 4 }),
+      field(s.about, 'availability', 'Green pill (status)', d),
+      h('div', { class: 'sub' }, field(s.about, 'languagesTitle', 'Languages list title', d),
+        listEditor(s.about.languages, d, [{ key: 'name', label: 'Language' }, { key: 'level', label: 'Level' }], { name: '', level: '' }, 'Language')),
+      h('div', { class: 'sub' }, field(s.about, 'softwareTitle', 'Software list title', d),
         listEditor(s.about.software, d, [{ key: 'name', label: 'Software' }, { render: levelSelect }], { name: '', level: 2 }, 'Software')),
-      h('div', { class: 'sub' }, field(s.about, 'fieldsTitle', 'Tajuk pil fields', d),
+      h('div', { class: 'sub' }, field(s.about, 'fieldsTitle', 'Fields pills title', d),
         listEditor(s.about.fields, d, [], '', 'Field'))),
-    card('Tajuk bahagian', 'Tajuk Education dan Experience.',
+    card('Section titles', 'Education and Experience titles.',
       h('div', { class: 'grid2' },
         field(s.education, 'title', 'Education', d),
         field(s.experience, 'title', 'Experience', d),
-        field(s.experience, 'workTitle', 'Experience: lajur kerja', d),
-        field(s.experience, 'awardsTitle', 'Experience: lajur awards', d))),
-    card('Projects', 'Bahagian senarai projek.',
-      h('div', { class: 'grid2' }, field(s.projects, 'title', 'Tajuk', d), field(s.projects, 'cta', 'Butang pada kad', d)),
-      field(s.projects, 'sub', 'Ayat bawah tajuk', d, { multi: true, rows: 2 }),
-      h('div', { class: 'grid3' }, field(s.projects, 'emptyTitle', 'Tiada hasil: tajuk', d), field(s.projects, 'emptyText', 'Tiada hasil: ayat', d), field(s.projects, 'emptyButton', 'Tiada hasil: butang', d))),
-    card('Contact & footer', 'Bahagian paling bawah laman.',
-      field(s.contact, 'line', 'Ayat besar', d),
-      field(s.contact, 'sub', 'Ayat kecil', d),
-      h('div', { class: 'grid3' }, field(s.contact, 'email', 'Emel', d, { type: 'email' }), field(s.contact, 'linkedin', 'Pautan LinkedIn', d, { type: 'url' }), field(s.contact, 'instagram', 'Instagram (tanpa @)', d)),
-      h('div', { class: 'grid2' }, field(s.footer, 'tagline', 'Footer: ayat', d), field(s.footer, 'copyright', 'Footer: hak cipta', d))),
-    card('Resume', 'Tetingkap pratonton Resume.',
-      h('div', { class: 'grid3' }, field(s.resume, 'dialogTitle', 'Tajuk tetingkap', d), field(s.resume, 'download', 'Butang muat turun', d), field(s.resume, 'pdfName', 'Nama fail PDF', d))),
-    card('Google & tab pelayar', 'Apa yang muncul di tab pelayar dan carian Google.',
-      field(s.meta, 'title', 'Tajuk tab', d),
-      field(s.meta, 'description', 'Penerangan Google', d, { multi: true, rows: 2, hint: 'Sebaiknya bawah 160 aksara.' })),
+        field(s.experience, 'workTitle', 'Experience: work column', d),
+        field(s.experience, 'awardsTitle', 'Experience: awards column', d))),
+    card('Projects', 'The project list section.',
+      h('div', { class: 'grid2' }, field(s.projects, 'title', 'Title', d), field(s.projects, 'cta', 'Card button', d)),
+      field(s.projects, 'sub', 'Line under the title', d, { multi: true, rows: 2 }),
+      h('div', { class: 'grid3' }, field(s.projects, 'emptyTitle', 'No results: title', d), field(s.projects, 'emptyText', 'No results: text', d), field(s.projects, 'emptyButton', 'No results: button', d))),
+    card('Contact & footer', 'The bottom of the page.',
+      field(s.contact, 'line', 'Big line', d),
+      field(s.contact, 'sub', 'Small line', d),
+      h('div', { class: 'grid3' }, field(s.contact, 'email', 'Email', d, { type: 'email' }), field(s.contact, 'linkedin', 'LinkedIn link', d, { type: 'url' }), field(s.contact, 'instagram', 'Instagram (without @)', d)),
+      h('div', { class: 'grid2' }, field(s.footer, 'tagline', 'Footer: tagline', d), field(s.footer, 'copyright', 'Footer: copyright', d))),
+    card('Resume', 'The Resume preview window.',
+      h('div', { class: 'grid3' }, field(s.resume, 'dialogTitle', 'Window title', d), field(s.resume, 'download', 'Download button', d), field(s.resume, 'pdfName', 'PDF file name', d))),
+    card('Google & browser tab', 'What shows in the browser tab and Google search.',
+      field(s.meta, 'title', 'Tab title', d),
+      field(s.meta, 'description', 'Google description', d, { multi: true, rows: 2, hint: 'Best under 160 characters.' })),
   ];
   return [jumpNav(cards), ...cards];
 }
@@ -401,14 +401,14 @@ function renderProjects() {
   const visuals = p => p.sections.reduce((n, s) => n + s.images.length, 0);
 
   const side = h('aside', { class: 'cat-list' },
-    h('p', { class: 'eyebrow' }, `${list.length} kategori`),
+    h('p', { class: 'eyebrow' }, `${list.length} ${list.length === 1 ? 'category' : 'categories'}`),
     ...list.map((p, i) => h('div', { class: `cat-item${i === state.cat ? ' active' : ''}` },
       h('button', { class: 'cat-name', type: 'button', onclick: () => { state.cat = i; rerender(); } },
         h('i', { class: 'swatch', style: `background:${p.accent || '#c9c4d6'}` }),
-        h('span', {}, h('b', {}, p.title || '(tanpa nama)'), h('small', {}, `${p.sections.length} koleksi · ${visuals(p)} gambar`))),
+        h('span', {}, h('b', {}, p.title || '(untitled)'), h('small', {}, `${p.sections.length} collections · ${visuals(p)} images`))),
       moveBtns(list, i, d, () => { state.cat = i + 0; rerender(); }))),
-    addBtn('Kategori baru', async () => {
-      const name = await ask({ title: 'Kategori baru', label: 'Nama kategori', ok: 'Cipta' });
+    addBtn('New category', async () => {
+      const name = await ask({ title: 'New category', label: 'Category name', ok: 'Create' });
       if (!name) return;
       let id = slug(name);
       while (list.some(p => p.id === id)) id += '-2';
@@ -419,39 +419,39 @@ function renderProjects() {
     }));
 
   const p = list[state.cat];
-  if (!p) return [h('div', { class: 'split' }, side, h('div', { class: 'card' }, h('p', { class: 'empty' }, 'Belum ada kategori. Tekan "Kategori baru" untuk mula.')))];
+  if (!p) return [h('div', { class: 'split' }, side, h('div', { class: 'card' }, h('p', { class: 'empty' }, 'No categories yet. Click "New category" to start.')))];
 
   const iconSel = h('select', {}, Object.entries(ICON_NAMES).map(([k, label]) => h('option', { value: k, selected: (p.icon || p.id) === k }, label)));
   iconSel.addEventListener('change', () => { p.icon = iconSel.value; markDirty(d); });
   const swatchRow = h('div', { class: 'swatches' });
   const drawSwatches = () => swatchRow.replaceChildren(
-    ...SWATCHES.map(c => h('button', { type: 'button', class: `swatch-btn${(p.accent || '').toLowerCase() === c ? ' on' : ''}`, style: `background:${c}`, title: c, 'aria-label': `Warna ${c}`,
+    ...SWATCHES.map(c => h('button', { type: 'button', class: `swatch-btn${(p.accent || '').toLowerCase() === c ? ' on' : ''}`, style: `background:${c}`, title: c, 'aria-label': `Colour ${c}`,
       onclick: () => { p.accent = c; markDirty(d); drawSwatches(); } })),
-    h('label', { class: 'swatch-custom', title: 'Warna lain' }, h('input', { type: 'color', value: p.accent || '#b8a0ff', oninput: e => { p.accent = e.target.value; markDirty(d); } }), '+'));
+    h('label', { class: 'swatch-custom', title: 'Other colour' }, h('input', { type: 'color', value: p.accent || '#b8a0ff', oninput: e => { p.accent = e.target.value; markDirty(d); } }), '+'));
   drawSwatches();
 
   const editor = h('div', { class: 'cat-editor' },
-    card(p.title || 'Kategori', `Muncul sebagai kad dan butang penapis dalam Projects. Pautan: #project/${p.id}`,
-      h('div', { class: 'grid2' }, field(p, 'title', 'Nama', d), field(p, 'label', 'Label kecil (atas kad)', d)),
-      field(p, 'desc', 'Penerangan', d, { multi: true, rows: 2 }),
+    card(p.title || 'Category', `Shows as a card and a filter button in Projects. Link: #project/${p.id}`,
+      h('div', { class: 'grid2' }, field(p, 'title', 'Name', d), field(p, 'label', 'Small label (top of card)', d)),
+      field(p, 'desc', 'Description', d, { multi: true, rows: 2 }),
       h('div', { class: 'grid2' },
-        h('div', { class: 'field' }, h('span', {}, 'Warna aksen'), swatchRow),
-        h('label', { class: 'field' }, h('span', {}, 'Ikon penapis'), iconSel)),
+        h('div', { class: 'field' }, h('span', {}, 'Accent colour'), swatchRow),
+        h('label', { class: 'field' }, h('span', {}, 'Filter icon'), iconSel)),
       h('div', { class: 'card-foot' },
         h('button', { class: 'btn ghost danger', type: 'button', onclick: async () => {
-          const ok = await ask({ title: `Padam kategori "${p.title}"?`, text: 'Semua koleksi dan gambar dalam kategori ini akan dibuang.', ok: 'Padam kategori', danger: true });
+          const ok = await ask({ title: `Delete category "${p.title}"?`, text: 'All collections and images in this category will be removed.', ok: 'Delete category', danger: true });
           if (!ok) return;
           await removeStored(p.sections.flatMap(s => s.images));
           list.splice(state.cat, 1);
           state.cat = 0;
           markDirty(d);
           rerender();
-        } }, ico('trash'), 'Padam kategori'))),
-    h('div', { class: 'section-title' }, h('h2', {}, 'Koleksi'), h('span', { class: 'muted' }, `${p.sections.length} koleksi`)),
+        } }, ico('trash'), 'Delete category'))),
+    h('div', { class: 'section-title' }, h('h2', {}, 'Collections'), h('span', { class: 'muted' }, `${p.sections.length} collections`)),
     ...p.sections.map((s, si) => collectionCard(p, s, si, rerender)),
-    p.sections.length ? null : h('p', { class: 'empty card' }, 'Belum ada koleksi dalam kategori ini.'),
-    addBtn('Koleksi baru', async () => {
-      const name = await ask({ title: 'Koleksi baru', label: 'Nama koleksi', ok: 'Cipta' });
+    p.sections.length ? null : h('p', { class: 'empty card' }, 'No collections in this category yet.'),
+    addBtn('New collection', async () => {
+      const name = await ask({ title: 'New collection', label: 'Collection name', ok: 'Create' });
       if (!name) return;
       p.sections.push({ title: name, images: [] });
       markDirty(d);
@@ -462,10 +462,10 @@ function renderProjects() {
 
 function collectionCard(p, s, si, rerender) {
   const d = 'portfolio';
-  const status = h('span', {}, 'Seret gambar ke sini, atau ', h('u', {}, 'pilih fail'));
+  const status = h('span', {}, 'Drag images here, or ', h('u', {}, 'choose files'));
   const drop = h('label', { class: 'drop' },
     h('input', { type: 'file', accept: 'image/*', multiple: true, onchange: e => addFiles(e.target.files) }),
-    ico('upload'), status, h('small', {}, 'JPG, PNG atau WebP. Diperkecil automatik ke WebP.'));
+    ico('upload'), status, h('small', {}, 'JPG, PNG or WebP. Resized to WebP automatically.'));
   ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('over')));
   drop.addEventListener('drop', e => { e.preventDefault(); addFiles(e.dataTransfer.files); });
@@ -476,23 +476,23 @@ function collectionCard(p, s, si, rerender) {
     drop.classList.add('busy');
     let done = 0;
     for (const f of imgs) {
-      status.textContent = `Memuat naik ${done + 1} daripada ${imgs.length}…`;
+      status.textContent = `Uploading ${done + 1} of ${imgs.length}…`;
       try {
         s.images.push(await uploadImage(f, `${p.id}/${slug(s.title)}`, `${s.title} — visual ${s.images.length + 1}`));
         done++;
         markDirty(d);
       } catch (err) {
-        toast(`Gagal muat naik ${f.name}: ${err.message}`, true);
+        toast(`Could not upload ${f.name}: ${err.message}`, true);
       }
     }
-    if (done) toast(`${done} gambar dimuat naik. Tekan Simpan untuk terbitkan.`);
+    if (done) toast(`${done} image${done === 1 ? '' : 's'} uploaded. Click Save to publish.`);
     rerender();
   }
 
   const thumbs = h('div', { class: 'thumbs' }, s.images.map((a, i) => {
     const dark = h('input', { type: 'checkbox', checked: !!a.dark });
     dark.addEventListener('change', () => { a.dark = dark.checked; markDirty(d); });
-    const alt = h('input', { value: a.alt || '', placeholder: 'Penerangan gambar', title: 'Teks alt (untuk pembaca skrin)' });
+    const alt = h('input', { value: a.alt || '', placeholder: 'Image description', title: 'Alt text (for screen readers)' });
     alt.addEventListener('input', () => { a.alt = alt.value; markDirty(d); });
     return h('figure', { class: 'thumb' },
       h('div', { class: 'thumb-img' },
@@ -500,23 +500,23 @@ function collectionCard(p, s, si, rerender) {
         h('span', { class: 'thumb-num' }, String(i + 1)),
         h('div', { class: 'thumb-tools' },
           moveBtns(s.images, i, d, rerender),
-          delBtn(async () => { await removeStored([a]); s.images.splice(i, 1); markDirty(d); rerender(); }, 'gambar ini'))),
+          delBtn(async () => { await removeStored([a]); s.images.splice(i, 1); markDirty(d); rerender(); }, 'this image'))),
       alt,
-      h('label', { class: 'check', title: 'Tanda kalau gambar gelap dan perlu latar terang' }, dark, 'Gambar gelap'));
+      h('label', { class: 'check', title: 'Tick if the image is dark and needs a light background' }, dark, 'Dark image'));
   }));
 
-  const heading = h('b', { class: 'coll-name' }, s.title || '(tanpa nama)');
-  const nameField = field(s, 'title', 'Nama koleksi', d);
-  nameField.querySelector('input').addEventListener('input', e => { heading.textContent = e.target.value || '(tanpa nama)'; });
+  const heading = h('b', { class: 'coll-name' }, s.title || '(untitled)');
+  const nameField = field(s, 'title', 'Collection name', d);
+  nameField.querySelector('input').addEventListener('input', e => { heading.textContent = e.target.value || '(untitled)'; });
 
   return h('details', { class: 'card collection', open: s.images.length < 9 },
     h('summary', {},
       h('span', { class: 'chev', 'aria-hidden': 'true' }),
       heading,
-      h('span', { class: 'count' }, `${s.images.length} gambar`),
+      h('span', { class: 'count' }, `${s.images.length} images`),
       h('span', { class: 'row-tools', onclick: e => e.preventDefault() },
         moveBtns(p.sections, si, d, rerender),
-        delBtn(async () => { await removeStored(s.images); p.sections.splice(si, 1); markDirty(d); rerender(); }, `koleksi "${s.title}"`))),
+        delBtn(async () => { await removeStored(s.images); p.sections.splice(si, 1); markDirty(d); rerender(); }, `collection "${s.title}"`))),
     h('div', { class: 'coll-body' }, nameField, s.images.length ? thumbs : null, drop));
 }
 
@@ -528,11 +528,11 @@ function renderResume() {
   r.experience = r.experience || [];
   r.honors = r.honors || [];
   const pointsField = item => {
-    const ta = h('textarea', { rows: 3, value: (item.points || []).join('\n'), placeholder: 'Satu poin setiap baris' });
+    const ta = h('textarea', { rows: 3, value: (item.points || []).join('\n'), placeholder: 'One point per line' });
     ta.addEventListener('input', () => { item.points = ta.value.split('\n').map(t => t.trim()).filter(Boolean); markDirty(d); });
-    return h('label', { class: 'field wide' }, h('span', {}, 'Butiran (satu baris = satu poin)'), ta);
+    return h('label', { class: 'field wide' }, h('span', {}, 'Details (one line = one point)'), ta);
   };
-  const startField = { key: 'start', label: 'Mula (YYYY-MM)', placeholder: '2024-09' };
+  const startField = { key: 'start', label: 'Start (YYYY-MM)', placeholder: '2024-09' };
   const logoField = item => {
     const preview = h('img', { class: 'logo-preview', src: asset(item.logo), alt: '' });
     const input = h('input', { type: 'file', accept: 'image/*' });
@@ -544,32 +544,32 @@ function renderResume() {
         item.logo = a.display; item.logoW = a.width; item.logoH = a.height; delete item.logoDark;
         preview.src = a.display;
         markDirty(d);
-        toast('Logo dimuat naik. Tekan Simpan.');
+        toast('Logo uploaded. Click Save.');
       } catch (err) { toast(err.message, true); }
     });
-    return h('label', { class: 'field logo-field' }, h('span', {}, 'Logo'), h('span', { class: 'logo-box' }, preview, h('span', { class: 'btn ghost small' }, ico('upload'), 'Tukar')), input);
+    return h('label', { class: 'field logo-field' }, h('span', {}, 'Logo'), h('span', { class: 'logo-box' }, preview, h('span', { class: 'btn ghost small' }, ico('upload'), 'Change')), input);
   };
   const current = r.current || (r.current = { role: '', org: '', date: '', start: '', points: [] });
   return [
-    card('Education', 'Kad sekolah dengan logo. Disusun dari lama ke baru.',
+    card('Education', 'School cards with logos. Ordered oldest to newest.',
       listEditor(r.education, d, [
-        { key: 'school', label: 'Sekolah' }, { key: 'award', label: 'Program' }, { key: 'cgpa', label: 'CGPA' },
-        { key: 'date', label: 'Tarikh' }, startField, { render: logoField }],
-      { school: '', award: '', cgpa: '', date: '', start: '' }, 'Sekolah')),
-    card('Kerja semasa', 'Item paling baru dalam timeline Experience. Kosongkan "Mula" untuk sembunyikan.',
-      h('div', { class: 'grid2' }, field(current, 'role', 'Jawatan', d), field(current, 'org', 'Organisasi', d),
-        field(current, 'date', 'Tarikh', d), field(current, 'start', startField.label, d, { placeholder: '2026-09' }))),
-    card('Work, curricular & leadership', 'Timeline kiri dalam Experience. Susunan ikut tarikh "Mula".',
+        { key: 'school', label: 'School' }, { key: 'award', label: 'Program' }, { key: 'cgpa', label: 'CGPA' },
+        { key: 'date', label: 'Date' }, startField, { render: logoField }],
+      { school: '', award: '', cgpa: '', date: '', start: '' }, 'School')),
+    card('Current job', 'The newest item in the Experience timeline. Leave "Start" empty to hide it.',
+      h('div', { class: 'grid2' }, field(current, 'role', 'Role', d), field(current, 'org', 'Organisation', d),
+        field(current, 'date', 'Date', d), field(current, 'start', startField.label, d, { placeholder: '2026-09' }))),
+    card('Work, curricular & leadership', 'Left timeline in Experience. Ordered by "Start" date.',
       listEditor(r.experience, d, [
-        { key: 'role', label: 'Jawatan' }, { key: 'org', label: 'Organisasi' }, { key: 'date', label: 'Tarikh' }, startField, { render: pointsField }],
-      { role: '', org: '', date: '', start: '', points: [] }, 'Pengalaman')),
-    card('Awards & certificates', 'Timeline kanan dalam Experience.',
+        { key: 'role', label: 'Role' }, { key: 'org', label: 'Organisation' }, { key: 'date', label: 'Date' }, startField, { render: pointsField }],
+      { role: '', org: '', date: '', start: '', points: [] }, 'Experience')),
+    card('Awards & certificates', 'Right timeline in Experience.',
       listEditor(r.honors, d, [
-        { key: 'title', label: 'Anugerah' }, { key: 'org', label: 'Penganjur' }, { key: 'date', label: 'Tarikh' }, startField, { render: pointsField }],
-      { title: '', org: '', date: '', start: '', points: [] }, 'Anugerah')),
-    card('Maklumat Resume', 'Bahagian atas pratonton Resume.',
-      h('div', { class: 'grid2' }, field(r, 'name', 'Nama penuh', d), field(r, 'location', 'Lokasi', d),
-        field(r, 'email', 'Emel', d), field(r, 'availability', 'Availability', d))),
+        { key: 'title', label: 'Award' }, { key: 'org', label: 'Organiser' }, { key: 'date', label: 'Date' }, startField, { render: pointsField }],
+      { title: '', org: '', date: '', start: '', points: [] }, 'Award')),
+    card('Resume details', 'The top of the Resume preview.',
+      h('div', { class: 'grid2' }, field(r, 'name', 'Full name', d), field(r, 'location', 'Location', d),
+        field(r, 'email', 'Email', d), field(r, 'availability', 'Availability', d))),
   ];
 }
 
@@ -577,7 +577,7 @@ function renderResume() {
 function renderPreview() {
   const pv = state.docs.preview;
   const d = 'preview';
-  const rows = [['logo', 'Baris 1 · Logo', 'Logo dalam kotak putih, bergerak ke kanan.'], ['square', 'Baris 2 · Segi empat', 'Poster segi empat, bergerak ke kiri.'], ['portrait', 'Baris 3 · Potret', 'Poster potret, bergerak ke kanan.']];
+  const rows = [['logo', 'Row 1 · Logos', 'Logos in white boxes, moving right.'], ['square', 'Row 2 · Square', 'Square posters, moving left.'], ['portrait', 'Row 3 · Portrait', 'Portrait posters, moving right.']];
   const rerender = () => showTab('preview');
   const ref = a => ({ thumb: a.thumb || a.display || a.src, width: a.width, height: a.height, alt: a.alt });
 
@@ -592,10 +592,10 @@ function renderPreview() {
         markDirty(d);
         dlg.close();
         rerender();
-        toast('Gambar ditambah ke baris.');
+        toast('Image added to the row.');
       } }, h('img', { src: asset(a.thumb || a.display || a.src), alt: a.alt, loading: 'lazy' })))));
     });
-    dlg.append(h('div', { class: 'picker-head' }, h('h2', {}, 'Pilih gambar'), iconBtn('close', 'Tutup', () => dlg.close())), grid);
+    dlg.append(h('div', { class: 'picker-head' }, h('h2', {}, 'Choose an image'), iconBtn('close', 'Close', () => dlg.close())), grid);
     dlg.addEventListener('close', () => dlg.remove());
     document.body.append(dlg);
     dlg.showModal();
@@ -609,9 +609,9 @@ function renderPreview() {
         const a = key === 'logo' ? item.light : item;
         return h('figure', { class: 'thumb' }, h('div', { class: 'thumb-img' }, h('img', { src: asset(a.thumb), alt: '' }),
           h('span', { class: 'thumb-num' }, String(i + 1)),
-          h('div', { class: 'thumb-tools' }, moveBtns(list, i, d, rerender), delBtn(() => { list.splice(i, 1); markDirty(d); rerender(); }, 'gambar ini dari baris'))));
-      })) : h('p', { class: 'empty' }, 'Baris ini kosong.'),
-      addBtn('Tambah gambar', () => picker(key)));
+          h('div', { class: 'thumb-tools' }, moveBtns(list, i, d, rerender), delBtn(() => { list.splice(i, 1); markDirty(d); rerender(); }, 'this image from the row'))));
+      })) : h('p', { class: 'empty' }, 'This row is empty.'),
+      addBtn('Add image', () => picker(key)));
   });
 }
 
@@ -625,42 +625,42 @@ function download(name, text, type = 'application/json') {
 function renderBackup() {
   const imported = DOCS.filter(k => state.remote.has(k));
   return [
-    card('Import kandungan semasa', 'Sekali sahaja, untuk mula guna Supabase.',
+    card('Import current content', 'Once only, to start using Supabase.',
       h('p', {}, imported.length
-        ? `Sudah ada dalam Supabase: ${imported.map(k => DOC_NAMES[k]).join(', ')}. Import akan menggantikannya dengan kandungan fail laman.`
-        : 'Belum ada kandungan dalam Supabase. Import sekali untuk mula.'),
+        ? `Already in Supabase: ${imported.map(k => DOC_NAMES[k]).join(', ')}. Importing replaces it with the content from the site files.`
+        : 'No content in Supabase yet. Import once to start.'),
       h('div', {}, h('button', { class: 'btn primary', type: 'button', onclick: async () => {
-        if (imported.length && !await ask({ title: 'Ganti kandungan dalam Supabase?', text: 'Semua perubahan yang dibuat melalui admin akan diganti dengan kandungan fail laman.', ok: 'Ganti', danger: true })) return;
+        if (imported.length && !await ask({ title: 'Replace the content in Supabase?', text: 'Every change made through the admin will be replaced with the content from the site files.', ok: 'Replace', danger: true })) return;
         Object.assign(state.docs, bundled());
-        try { await saveDocs(DOCS); toast('Import selesai.'); showTab('backup'); }
+        try { await saveDocs(DOCS); toast('Import complete.'); showTab('backup'); }
         catch (err) { toast(err.message, true); }
-      } }, 'Import kandungan semasa'))),
-    card('Muat turun', 'Simpan salinan kandungan di komputer anda.',
+      } }, 'Import current content'))),
+    card('Download', 'Keep a copy of the content on your computer.',
       h('div', { class: 'backup-grid' },
-        h('div', { class: 'backup-item' }, h('b', {}, 'Sandaran JSON'), h('p', { class: 'muted' }, 'Satu fail dengan semua kandungan. Simpan sebagai sandaran.'),
-          h('button', { class: 'btn', type: 'button', onclick: () => download(`portfolio-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(state.docs, null, 2)) }, ico('backup'), 'Muat turun JSON')),
-        h('div', { class: 'backup-item' }, h('b', {}, 'Fail fallback'), h('p', { class: 'muted' }, 'Tiga fail untuk folder dist sebelum deploy. Laman guna fail ini bila Supabase tak menjawab.'),
+        h('div', { class: 'backup-item' }, h('b', {}, 'JSON backup'), h('p', { class: 'muted' }, 'One file with all the content. Keep it as a backup.'),
+          h('button', { class: 'btn', type: 'button', onclick: () => download(`portfolio-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(state.docs, null, 2)) }, ico('backup'), 'Download JSON')),
+        h('div', { class: 'backup-item' }, h('b', {}, 'Fallback files'), h('p', { class: 'muted' }, 'Three files for the dist folder before deploying. The site uses them when Supabase does not answer.'),
           h('button', { class: 'btn', type: 'button', onclick: () => {
             summarise(state.docs.portfolio);
             download('site-data.js', `window.SITE = ${JSON.stringify(state.docs.site, null, 2)};\n`, 'text/javascript');
             setTimeout(() => download('portfolio-data.js', `window.PORTFOLIO_DATA = ${JSON.stringify(state.docs.portfolio)};\n`, 'text/javascript'), 300);
             setTimeout(() => download('resume-data.js', `window.RESUME = ${JSON.stringify(state.docs.resume, null, 2)};\n`, 'text/javascript'), 600);
-          } }, ico('backup'), 'Muat turun fail fallback')))),
+          } }, ico('backup'), 'Download fallback files')))),
   ];
 }
 
 /* ---------- Tabs and views ---------- */
 const TABS = {
-  text: { title: 'Teks laman', desc: 'Ubah ayat di setiap bahagian laman: hero, About, Projects, Contact dan lain-lain.', icon: 'text', doc: 'site', render: renderText },
-  projects: { title: 'Projek', desc: 'Tambah kategori dan koleksi, muat naik gambar, dan susun semula.', icon: 'projects', doc: 'portfolio', render: renderProjects },
-  resume: { title: 'Education & Experience', desc: 'Sekolah, kerja dan anugerah. Juga muncul dalam pratonton Resume.', icon: 'resume', doc: 'resume', render: renderResume },
-  preview: { title: 'Preview gallery', desc: 'Pilih gambar untuk 3 baris gambar bergerak di bawah hero.', icon: 'preview', doc: 'preview', render: renderPreview },
-  backup: { title: 'Sandaran', desc: 'Import kandungan dan muat turun salinan.', icon: 'backup', render: renderBackup },
+  text: { title: 'Site text', desc: 'Edit the text in every part of the site: hero, About, Projects, Contact and more.', icon: 'text', doc: 'site', render: renderText },
+  projects: { title: 'Projects', desc: 'Add categories and collections, upload images and reorder them.', icon: 'projects', doc: 'portfolio', render: renderProjects },
+  resume: { title: 'Education & Experience', desc: 'Schools, work and awards. Also shown in the Resume preview.', icon: 'resume', doc: 'resume', render: renderResume },
+  preview: { title: 'Preview gallery', desc: 'Choose images for the 3 moving rows under the hero.', icon: 'preview', doc: 'preview', render: renderPreview },
+  backup: { title: 'Backup', desc: 'Import content and download copies.', icon: 'backup', render: renderBackup },
 };
 
 $('#side-nav').append(...Object.entries(TABS).map(([key, t]) =>
   h('button', { type: 'button', 'data-tab': key, 'data-doc': t.doc, onclick: () => { showTab(key); window.scrollTo(0, 0); } },
-    ico(t.icon), h('span', {}, t.title), h('i', { class: 'change-dot', title: 'Ada perubahan belum disimpan' }))));
+    ico(t.icon), h('span', {}, t.title), h('i', { class: 'change-dot', title: 'Unsaved changes' }))));
 
 function showTab(tab) {
   state.tab = tab;
@@ -680,7 +680,7 @@ async function enterApp(session) {
   $('#who-email').textContent = 'Admin';
   $('#avatar').textContent = 'A';
   $('#mode-badge').hidden = !DEMO;
-  $('#panel').replaceChildren(h('div', { class: 'loading' }, h('span', { class: 'spinner' }), 'Memuatkan kandungan…'));
+  $('#panel').replaceChildren(h('div', { class: 'loading' }, h('span', { class: 'spinner' }), 'Loading content…'));
   await loadDocs();
   showTab(state.tab);
 }
@@ -695,17 +695,17 @@ $('#login-form').addEventListener('submit', async e => {
   const f = new FormData(e.target);
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true;
-  btn.textContent = 'Sedang log masuk…';
+  btn.textContent = 'Logging in…';
   $('#login-error').textContent = '';
   const { data, error } = await sb.auth.signInWithPassword({ email: toLoginEmail(f.get('email')), password: f.get('password') });
   btn.disabled = false;
-  btn.textContent = 'Log masuk';
-  if (error) { $('#login-error').textContent = 'Emel atau kata laluan salah.'; return; }
+  btn.textContent = 'Log in';
+  if (error) { $('#login-error').textContent = 'Wrong username or password.'; return; }
   enterApp(data.session);
 });
 
 $('#logout').addEventListener('click', async () => {
-  if (state.dirty.size && !await ask({ title: 'Log keluar?', text: 'Ada perubahan belum disimpan. Perubahan itu akan hilang.', ok: 'Log keluar', danger: true })) return;
+  if (state.dirty.size && !await ask({ title: 'Log out?', text: 'You have unsaved changes. They will be lost.', ok: 'Log out', danger: true })) return;
   state.dirty.clear();
   updateSavebar();
   if (sb) await sb.auth.signOut();
