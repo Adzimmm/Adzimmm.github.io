@@ -1019,10 +1019,10 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 .fd-tab::before{content:'';position:absolute;bottom:-2px;left:-2px;right:-2px;height:4px;background:#1b1a21}
 .card.cyber:hover .fd-tab{border-color:color-mix(in srgb,var(--color) 45%,transparent)}
 /* open: papers fan forward, front tips forward (kept small so the text stays readable) */
-.card.cyber:hover .fd-paper:nth-of-type(2),.card.cyber.is-lit .fd-paper:nth-of-type(2){transform:rotateX(-8deg)}
-.card.cyber:hover .fd-paper:nth-of-type(3),.card.cyber.is-lit .fd-paper:nth-of-type(3){transform:rotateX(-15deg)}
-.card.cyber:hover .fd-paper:nth-of-type(4),.card.cyber.is-lit .fd-paper:nth-of-type(4){transform:rotateX(-24deg)}
-.card.cyber:hover .fd-front,.card.cyber.is-lit .fd-front{transform:rotateX(-38deg) translateY(1px)}
+.card.cyber:hover .fd-paper:nth-of-type(2),.card.cyber.is-lit .fd-paper:nth-of-type(2){transform:rotateX(-5deg)}
+.card.cyber:hover .fd-paper:nth-of-type(3),.card.cyber.is-lit .fd-paper:nth-of-type(3){transform:rotateX(-9deg)}
+.card.cyber:hover .fd-paper:nth-of-type(4),.card.cyber.is-lit .fd-paper:nth-of-type(4){transform:rotateX(-13deg)}
+.card.cyber:hover .fd-front,.card.cyber.is-lit .fd-front{transform:rotateX(-20deg) translateY(1px)}
 .card.cyber:hover .cy-card,.card.cyber.is-lit .cy-card{box-shadow:inset 0 20px 40px color-mix(in srgb,var(--color) 16%,transparent),inset 0 -20px 40px rgba(0,0,0,.35),0 0 20px rgba(0,0,0,.3)}
 .card.cyber:active .cy-folder{transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(.98)}
 .card.cyber:active{transform:none}
@@ -1038,3 +1038,11 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 [data-theme="light"] .fd-tab::before{background:#fff}
 [data-theme="light"] .card.cyber:hover .fd-back{box-shadow:0 20px 40px rgba(15,12,21,.14),0 0 30px color-mix(in srgb,var(--color) 30%,transparent)}
 [data-theme="light"] .card.cyber:hover .cy-card,[data-theme="light"] .card.cyber.is-lit .cy-card{box-shadow:inset 0 20px 40px color-mix(in srgb,var(--color) 18%,transparent),0 16px 40px color-mix(in srgb,var(--color) 28%,transparent)}
+/* Folder papers follow the category colour (lighter shades of it) */
+.fd-paper{background-image:repeating-linear-gradient(to bottom,transparent 0 18px,rgba(0,0,0,.08) 18px 19px)}
+.fd-paper:nth-of-type(2){background-color:color-mix(in srgb,var(--color) 45%,#2a2733)}
+.fd-paper:nth-of-type(3){background-color:color-mix(in srgb,var(--color) 65%,#2a2733)}
+.fd-paper:nth-of-type(4){background-color:color-mix(in srgb,var(--color) 85%,#fff)}
+[data-theme="light"] .fd-paper:nth-of-type(2){background-color:color-mix(in srgb,var(--color) 70%,#fff)}
+[data-theme="light"] .fd-paper:nth-of-type(3){background-color:color-mix(in srgb,var(--color) 45%,#fff)}
+[data-theme="light"] .fd-paper:nth-of-type(4){background-color:color-mix(in srgb,var(--color) 22%,#fff)}
