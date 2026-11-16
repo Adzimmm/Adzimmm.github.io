@@ -1,0 +1,34 @@
+# Weekly copy of the site content from Supabase into backup/content.json.
+# If something is deleted by mistake in the admin, an older version is in this file's git history.
+# The content is already public (the site reads it), so keeping it in this public repo exposes nothing new.
+name: Content backup
+
+on:
+  schedule:
+    - cron: '41 4 * * 0'   # Sunday, 04:41 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download content from Supabase
+        run: |
+          mkdir -p backup
+          curl -sf 'https://kizpexgoqssuxoclpozy.supabase.co/rest/v1/content?select=key,data,updated_at&order=key' \
+            -H 'apikey: sb_publishable_3BinoAREe_T6hg_rD3U-ZA_oYpIP-4z' \
+            | python3 -m json.tool --indent 1 > backup/content.json.new
+          test "$(python3 -c 'import json;print(len(json.load(open("backup/content.json.new"))))')" -ge 4
+          mv backup/content.json.new backup/content.json
+      - name: Commit if changed
+        run: |
+          git add backup/content.json
+          if git diff --cached --quiet; then echo "No change since last backup"; exit 0; fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Backup site content $(date -u +%F)"
+          git push
