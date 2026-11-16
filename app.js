@@ -147,7 +147,9 @@
     });
   }, { rootMargin: '80px 0px' });
 
+  let litObserver = null; // set further down on touch screens
   function observeTargets() {
+    if (litObserver) { litObserver.disconnect(); $$('.card.cyber, .tl-card').forEach(el => litObserver.observe(el)); }
     io.disconnect();
     $$('.card, .hero-visual, .marquee, .timeline').forEach(el => io.observe(el));
   }
@@ -159,31 +161,6 @@
   }
 
   const visualCount = p => p.sections.reduce((n, s) => n + s.images.length, 0);
-
-  // Rows are arranged by hand in the data; flex ratios keep every tile in a row the same height.
-  // New categories have no hand-made mosaic: up to nine of their visuals, three per row.
-  function autoMosaic(p) {
-    const all = p.sections.flatMap(s => s.images).slice(0, 9)
-      .map(a => ({ thumb: a.thumb || a.display || a.src, width: a.width, height: a.height, alt: a.alt, plate: false, dark: !!a.dark }));
-    const rows = [];
-    for (let i = 0; i < all.length; i += 3) rows.push(all.slice(i, i + 3));
-    return rows;
-  }
-
-  function artwork(p) {
-    const rows = (p.mosaic && p.mosaic.length ? p.mosaic : autoMosaic(p)).map(row => `<div class="m-row">${row.map(a => {
-      const classes = `m-tile${a.plate ? ' has-plate' : ''}${a.dark ? ' dark-art' : ''}`;
-      return `<span class="${classes}" style="--a:${(a.width / a.height).toFixed(3)}"><img src="${a.thumb}" width="${a.width}" height="${a.height}" alt="${escapeHtml(a.alt)}" loading="lazy" decoding="async"></span>`;
-    }).join('')}</div>`).join('');
-    return `<div class="panel card-mosaic">${rows}</div>`;
-  }
-
-  function collectionList(p) {
-    const top = [...p.sections].sort((a, b) => b.images.length - a.images.length).slice(0, 4);
-    const more = p.sections.length - top.length;
-    const items = top.map(s => `<li><span>${escapeHtml(s.title)}</span><small>${s.images.length}</small></li>`).join('');
-    return `<ul class="hair-list">${items}${more > 0 ? `<li class="more"><span>+${more} more collections</span></li>` : ''}</ul>`;
-  }
 
   // Text-and-icon cards (no artwork) in a 3D "cyber" style; the colour is the category accent.
   const fx = (cls, n) => `<span class="${cls}" aria-hidden="true">${'<i></i>'.repeat(n)}</span>`;
@@ -207,6 +184,11 @@
     $$('.card', grid).forEach(el => cards.set(el.dataset.id, el));
   }
 
+  // Touch screens: light up the card crossing the middle band of the screen (cards are attached in observeTargets).
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches && 'IntersectionObserver' in window) {
+    litObserver = new IntersectionObserver(entries => entries.forEach(({ target, isIntersecting }) => target.classList.toggle('is-lit', isIntersecting)),
+      { rootMargin: '-38% 0px -38% 0px' });
+  }
   // Tilt the card toward the pointer (mouse only, and only when motion is on).
   const tiltTargets = [grid, $('#experience')].filter(Boolean);
   if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) tiltTargets.forEach(zone => {
@@ -283,7 +265,6 @@
 
     // Text and mosaic swap sides on every other visible category.
     const n = shown.length;
-    shown.forEach((p, i) => cards.get(p.id).classList.toggle('is-flip', i % 2 === 1));
 
     empty.hidden = n !== 0;
     const scope = state.filter !== 'all' ? ` · ${CATEGORY_NAMES[state.filter]}` : '';
