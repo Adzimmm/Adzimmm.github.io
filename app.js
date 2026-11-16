@@ -536,6 +536,21 @@
 
   // Marks the header link whose section crosses the reading line of the viewport.
   const spyItems = $$('.nav-pill a').map(link => ({ link, section: $(link.getAttribute('href')) }));
+  // Glass glider that springs behind the current header link (hidden by CSS on mobile).
+  const glider = document.createElement('span');
+  glider.className = 'nav-glider';
+  glider.setAttribute('aria-hidden', 'true');
+  $('.nav-pill').prepend(glider);
+  let gliderLink = null;
+  function moveGlider(link) {
+    gliderLink = link;
+    glider.classList.toggle('on', !!link);
+    if (!link) return;
+    glider.style.width = `${link.offsetWidth}px`;
+    glider.style.transform = `translateX(${link.offsetLeft}px)`;
+  }
+  window.addEventListener('resize', () => moveGlider(gliderLink));
+  if (document.fonts) document.fonts.ready.then(() => moveGlider(gliderLink));
   function updateSpy(y) {
     const line = window.innerHeight * 0.45;
     let current = spyItems.find(({ section }) => {
@@ -547,6 +562,8 @@
       if (item === current) item.link.setAttribute('aria-current', 'location');
       else item.link.removeAttribute('aria-current');
     });
+    const next = current ? current.link : null;
+    if (next !== gliderLink) moveGlider(next);
   }
 
   function onScroll() {
