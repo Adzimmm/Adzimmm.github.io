@@ -525,7 +525,7 @@ export function mountInsights(root, { h, ico, card, switchField, ask, toast, sb,
   function ownCard() {
     const site = new URL('../', location.href);
     const link = `${site.origin}${site.pathname}?notrack`;
-    const hint = on => (on ? 'Your visits from this browser are counted like everyone else’s.' : 'Your visits from this browser are not counted.');
+    const hint = on => (on ? 'Your visits and chat questions from this browser are saved like everyone else’s.' : 'Your visits and chat questions from this browser are not saved.');
     const counted = store.get(NOTRACK) !== '1';
     const sw = switchField('Count my visits on this browser', counted, on => { store.set(NOTRACK, on ? '0' : '1'); sw.setHint(hint(on)); });
     sw.setHint(hint(counted));

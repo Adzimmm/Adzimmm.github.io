@@ -511,3 +511,24 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
   .vt-src{color:var(--muted);font-size:13px}
   .vt-src-pre{display:inline}
 }
+
+/* ---------- FAQ & chat: questions visitors asked (questions.js) ---------- */
+.qs{display:grid;gap:14px}
+.qs-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.qs-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:start;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2)}
+.qs-q{margin:0;font-size:15px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+.qs-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:6px 0 0;color:var(--muted);font-size:12.5px}
+.qs-state{padding:1px 9px;border-radius:999px;background:var(--accent-soft);color:var(--muted);font-size:12px;font-weight:600}
+.qs-state.no{background:var(--danger-soft);color:var(--danger)}
+.qs-actions{display:flex;align-items:center;gap:6px}
+.qs-added{display:inline-flex;align-items:center;gap:6px;padding:0 6px;color:var(--ok);font-size:13px;font-weight:600}
+.qs-added .ico{width:16px;height:16px}
+.qs-answer{grid-column:1/-1}
+.qs-answer summary{width:max-content;color:var(--muted);font-size:13px;cursor:pointer}
+.qs-answer summary:hover{color:var(--text)}
+.qs-answer p{margin:8px 0 0;padding:10px 12px;border-radius:10px;background:var(--surface);font-size:13.5px;line-height:1.55;white-space:pre-line;overflow-wrap:anywhere}
+.qs-note{display:flex;gap:8px;margin:0;color:var(--faint);font-size:12.5px;line-height:1.5}
+.qs-note .ico{width:15px;height:15px;margin-top:1px}
+@media(max-width:700px){
+  .qs-item{grid-template-columns:1fr;padding:12px 14px}
+}

@@ -410,7 +410,7 @@ function renderText() {
       field(s.contact, 'sub', 'Small line', d),
       h('div', { class: 'grid3' }, field(s.contact, 'email', 'Email', d, { type: 'email' }), field(s.contact, 'linkedin', 'LinkedIn link', d, { type: 'url' }), field(s.contact, 'instagram', 'Instagram (without @)', d)),
       h('div', { class: 'grid2' }, field(s.footer, 'tagline', 'Footer: tagline', d), field(s.footer, 'copyright', 'Footer: copyright', d)),
-      field(s.footer, 'privacy', 'Footer: privacy note', d, { multi: true, rows: 2, hint: 'Tells visitors that their visits are recorded for your Insights tab. Leave it empty to hide it.' })),
+      field(s.footer, 'privacy', 'Footer: privacy note', d, { multi: true, rows: 2, hint: 'Tells visitors that their visits and chat questions are recorded. Leave it empty to hide it.' })),
     card('Resume', 'The Resume preview window.',
       h('div', { class: 'grid3' }, field(s.resume, 'dialogTitle', 'Window title', d), field(s.resume, 'download', 'Download button', d), field(s.resume, 'pdfName', 'PDF file name', d))),
     card('Google & browser tab', 'What shows in the browser tab and Google search.',
@@ -1236,6 +1236,37 @@ function renderPreview() {
 /* ---------- Tab: FAQ & chat ---------- */
 // The chatbox on the site (../chat.js) matches a visitor's question to these first, then uses its
 // built-in answers. Both live in the "site" row: site.faq and site.chat.
+// Above them: the questions visitors asked (questions.js, loaded the first time the tab opens).
+let questionsModule;
+function questionsBox() {
+  const root = h('div', { class: 'qs' }, h('div', { class: 'loading' }, h('span', { class: 'spinner' }), 'Loading questions…'));
+  questionsModule = questionsModule || import(`./questions.js${ASSET_V ? `?v=${ASSET_V}` : ''}`);
+  questionsModule
+    .then(m => m.mountQuestions(root, { h, ico, ask, toast, sb, DEMO, inFaq, addToFaq }))
+    .catch(err => {
+      questionsModule = null; // try again next time the tab opens
+      root.replaceChildren(h('p', { class: 'muted' }, `Questions could not load: ${err.message}`));
+    });
+  return root;
+}
+const faqKey = q => String(q || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+const inFaq = question => (state.docs.site.faq || []).some(f => faqKey(f.q) === faqKey(question));
+// A visitor's question becomes a new FAQ entry; the answer field gets the focus.
+function addToFaq(question) {
+  const s = state.docs.site;
+  s.faq = s.faq || [];
+  s.faq.push({ q: question, a: '', keywords: '' });
+  markDirty('site');
+  showTab('faq');
+  const rows = $$('#card-questions-answers .list-row');
+  const row = rows[rows.length - 1];
+  if (!row) return;
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const answer = row.querySelector('textarea');
+  if (answer) answer.focus({ preventScroll: true });
+  toast('Added to the FAQ. Write the answer, then save.');
+}
+
 function renderFaq() {
   const s = state.docs.site;
   const d = 'site';
@@ -1244,6 +1275,7 @@ function renderFaq() {
   const defaults = (window.SITE && window.SITE.chat) || {};
   const chatField = (key, label, opts = {}) => field(s.chat, key, label, d, { placeholder: defaults[key] || '', ...opts });
   return [
+    card('Questions visitors asked', 'What people typed in the chatbox. Give the ones without an answer an FAQ answer.', questionsBox()),
     card('Questions & answers', 'When a visitor asks something in the search box, the chatbox answers with these first.',
       h('p', { class: 'notice faq-note' }, ico('info'), h('span', {},
         'The first 4 questions show as quick buttons when the chat opens. Without an FAQ the chat already answers about ',
@@ -1319,7 +1351,7 @@ const TABS = {
   projects: { title: 'Projects', desc: 'Add folders and collections, upload images and reorder them.', icon: 'projects', doc: 'portfolio', render: renderProjects },
   resume: { title: 'Education & Experience', desc: 'Schools, work and awards. Also shown in the Resume preview.', icon: 'resume', doc: 'resume', render: renderResume },
   preview: { title: 'Preview gallery', desc: 'Choose images for the 3 moving rows under the hero.', icon: 'preview', doc: 'preview', render: renderPreview },
-  faq: { title: 'FAQ & chat', desc: 'Questions people often ask. The chatbox on the site answers with these.', icon: 'chat', doc: 'site', render: renderFaq },
+  faq: { title: 'FAQ & chat', desc: 'What visitors ask in the chatbox, and the answers it gives them.', icon: 'chat', doc: 'site', render: renderFaq },
   backup: { title: 'Backup', desc: 'Import content and download copies.', icon: 'backup', render: renderBackup },
 };
 

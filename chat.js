@@ -1,7 +1,9 @@
 // Chatbox for the hero search: pressing Enter in the search opens it with the question as the first message.
-// No AI and no server. Answers come from the FAQ written in the admin page (site.faq) first, then from the
-// site's own content: contact, availability, resume, education, experience, awards, software, languages,
-// location, About and the project folders.
+// Answers come from the AI in the Cloudflare Worker (window.SUPABASE.chatUrl), which only uses the site's own
+// content. Without it, or when it fails, the built-in answers below are used: the FAQ written in the admin page
+// (site.faq) first, then contact, availability, resume, education, experience, awards, software, languages,
+// location, About and the project folders. The Worker saves each question for the admin's FAQ tab (no IP
+// address), except from the owner's own devices (localStorage "adz:notrack", see visit.js).
 // app.js calls PortfolioChat.init() once the content is loaded and PortfolioChat.open() on search Enter.
 // On phones and tablets the round chat button also shows from the start, so the chat is always one tap away.
 (() => {
@@ -318,6 +320,8 @@
   // The Worker answers only from the content saved in the admin. Empty url = built-in answers only.
   const AI_URL = String((window.SUPABASE && window.SUPABASE.chatUrl) || '').replace(/\/$/, '');
   const history = [];
+  // The owner's own devices are not counted (visit.js), so their questions are not saved either.
+  const tracked = () => { try { return localStorage.getItem('adz:notrack') !== '1'; } catch (_) { return true; } };
   async function aiReply(question) {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 15000);
@@ -325,14 +329,15 @@
       const res = await fetch(AI_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, history: history.slice(-6) }),
+        body: JSON.stringify({ question, history: history.slice(-6), track: tracked() }),
         signal: ctrl.signal,
       });
       if (!res.ok) return null;
       const data = await res.json();
       const text = String((data && data.answer) || '').trim();
       if (!text) return null;
-      // Folders the answer names get their button, like the built-in answers.
+      // No answer in the site's content: offer the email. Otherwise folders the answer names get their button.
+      if (data.known === false) return { text, actions: contactActions(true) };
       const named = ctx.projects.filter(p => p.title && text.toLowerCase().includes(String(p.title).toLowerCase()));
       return { text, actions: folderActions(named) };
     } catch (_) {
