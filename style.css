@@ -118,6 +118,7 @@ html[data-motion="on"] .card:not(.is-visible){opacity:0;transform:translateY(16p
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
 
 .site-footer{max-width:1204px;margin:0 auto;padding:24px 48px 36px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;color:#8f8a99}
+.site-privacy{flex:0 0 100%;margin:0;font-size:12px;line-height:1.55;text-wrap:pretty}
 
 /* Detail modal */
 dialog{position:fixed;width:min(780px,calc(100% - 32px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--line-strong);border-radius:18px;background:var(--surface-raised);color:var(--text);overflow:auto;overscroll-behavior:contain;box-shadow:0 40px 100px rgba(0,0,0,.6)}

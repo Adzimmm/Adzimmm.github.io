@@ -61,7 +61,12 @@ window.SITE = {
     linkedin: 'https://www.linkedin.com/in/ahmad-zaid-adzim',
     instagram: 'adzimmm01',
   },
-  footer: { tagline: 'Design & video portfolio', copyright: '© 2026 Adzim' },
+  footer: {
+    tagline: 'Design & video portfolio',
+    copyright: '© 2026 Adzim',
+    // Under the footer, only while visits are counted for the admin's Insights tab (visit.js). Empty = hidden.
+    privacy: 'This site records visits (IP address, rough location and device) so I can see what people look at. Only I can see them.',
+  },
   resume: { dialogTitle: 'Adzim — Resume', download: 'Download PDF', pdfName: 'Resume ADZIM.pdf' },
   // The chatbox that opens when a visitor presses Enter in the hero search (chat.js).
   chat: {

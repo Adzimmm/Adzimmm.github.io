@@ -753,6 +753,9 @@
       const value = key === 'footer.brand' ? `${t.brand.name}${t.brand.suffix}` : pick(key);
       if (typeof value === 'string') el.textContent = value;
     });
+    // The note about counted visits shows only while visits are counted (visit.js) and it has text.
+    const privacy = $('.site-privacy');
+    if (privacy) privacy.hidden = !privacy.textContent.trim() || !(window.SUPABASE && window.SUPABASE.visitUrl);
     // **words** become bold; everything else is escaped.
     $$('[data-c-rich]').forEach(el => {
       const value = pick(el.dataset.cRich);
