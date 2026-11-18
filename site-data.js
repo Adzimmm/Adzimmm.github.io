@@ -65,7 +65,7 @@ window.SITE = {
     tagline: 'Design & video portfolio',
     copyright: '© 2026 Adzim',
     // Under the footer, only while visits are counted for the admin's Insights tab (visit.js). Empty = hidden.
-    privacy: 'This site records visits (IP address, rough location and device) so I can see what people look at. Only I can see them.',
+    privacy: 'This site records visits (IP address, rough location and device) so I can see what people look at. Only I can see them, and IP addresses are removed after 90 days.',
   },
   resume: { dialogTitle: 'Adzim — Resume', download: 'Download PDF', pdfName: 'Resume ADZIM.pdf' },
   // The chatbox that opens when a visitor presses Enter in the hero search (chat.js).
