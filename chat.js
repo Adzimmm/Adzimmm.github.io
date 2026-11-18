@@ -3,6 +3,7 @@
 // site's own content: contact, availability, resume, education, experience, awards, software, languages,
 // location, About and the project folders.
 // app.js calls PortfolioChat.init() once the content is loaded and PortfolioChat.open() on search Enter.
+// On phones and tablets the round chat button also shows from the start, so the chat is always one tap away.
 (() => {
   'use strict';
 
@@ -15,6 +16,9 @@
   const root = document.documentElement;
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   const narrow = window.matchMedia('(max-width: 640px)');
+  // No "Type / to ask" hint here (style.css hides it up to 700px; touch screens have no / key), so the round
+  // button shows from the start instead of only after the first chat.
+  const noHint = window.matchMedia('(max-width: 700px), (hover: none)');
 
   /* ---------- Text set in the admin (site.chat), with defaults for empty fields ---------- */
   const DEFAULTS = {
@@ -413,6 +417,14 @@
     launcher.addEventListener('click', () => open());
   }
 
+  // The round button, without opening the chat. The class leaves room for it under the footer.
+  function showButton() {
+    if (!ctx || !noHint.matches) return;
+    if (!panel) build();
+    if (panel.hidden) launcher.hidden = false;
+    root.classList.add('has-chat-button');
+  }
+
   function open(question = '') {
     if (!ctx) return;
     if (!panel) build();
@@ -434,6 +446,7 @@
     if (!panel || panel.hidden) return;
     panel.classList.remove('is-open');
     launcher.hidden = false;
+    root.classList.add('has-chat-button');
     launcher.focus({ preventScroll: true });
     const hide = () => { if (!panel.classList.contains('is-open')) panel.hidden = true; };
     if (root.dataset.motion === 'off') hide();
@@ -441,7 +454,11 @@
   }
 
   window.PortfolioChat = {
-    init(options) { ctx = options; },
+    init(options) {
+      ctx = options;
+      showButton();
+      noHint.addEventListener('change', showButton);
+    },
     open,
     close,
   };
