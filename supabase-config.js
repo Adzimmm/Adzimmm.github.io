@@ -6,4 +6,6 @@ window.SUPABASE = {
   anonKey: 'sb_publishable_3BinoAREe_T6hg_rD3U-ZA_oYpIP-4z', // publishable (public) key
   // AI answers for the chatbox (Cloudflare Worker in /worker). Empty = built-in answers only.
   chatUrl: 'https://portfolio-chat.ahmadzaidadzim-work.workers.dev',
+  // Visit counter for the admin's Insights tab (same Worker, see dist/visit.js). Empty = no counting.
+  visitUrl: 'https://portfolio-chat.ahmadzaidadzim-work.workers.dev/visit',
 };

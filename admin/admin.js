@@ -50,6 +50,11 @@ const P = {
   folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
   copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
   chat: '<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12Z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/>',
+  insights: '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/>',
+  refresh: '<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>',
+  phone: '<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/>',
+  tablet: '<rect x="4" y="2" width="16" height="20" rx="2.5"/><path d="M11 18h2"/>',
+  desktop: '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
 };
 const svg = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] || ''}</svg>`;
 function ico(name) { const i = document.createElement('i'); i.className = 'ico'; i.innerHTML = svg(name); return i; }
@@ -136,7 +141,7 @@ $('[data-show-pw]').addEventListener('click', e => {
 });
 
 /* ---------- State ---------- */
-const state = { docs: {}, remote: new Set(), dirty: new Set(), tab: 'text', cat: 0 };
+const state = { docs: {}, remote: new Set(), dirty: new Set(), tab: 'insights', cat: 0 };
 
 function bundled() {
   const portfolio = clone(window.PORTFOLIO_DATA || []).map(p => ({ ...(THEMES[p.id] || {}), ...p }));
@@ -1290,8 +1295,25 @@ function renderBackup() {
   ];
 }
 
+/* ---------- Tab: Insights ---------- */
+// Who visits the site (table "visits", see supabase/insights.sql). The tab lives in insights.js,
+// loaded the first time it opens.
+let insightsModule;
+function renderInsights() {
+  const root = h('div', { class: 'ins' }, h('div', { class: 'loading' }, h('span', { class: 'spinner' }), 'Loading insights…'));
+  insightsModule = insightsModule || import(`./insights.js${ASSET_V ? `?v=${ASSET_V}` : ''}`);
+  insightsModule
+    .then(m => m.mountInsights(root, { h, ico, card, switchField, ask, toast, sb, DEMO }))
+    .catch(err => {
+      insightsModule = null; // try again next time the tab opens
+      root.replaceChildren(card('Insights could not load', 'Check your connection, then open the tab again.', h('p', { class: 'muted' }, err.message)));
+    });
+  return [root];
+}
+
 /* ---------- Tabs and views ---------- */
 const TABS = {
+  insights: { title: 'Insights', desc: 'Who visits your site: when, from where and on which device.', icon: 'insights', render: renderInsights },
   text: { title: 'Site text', desc: 'Edit the text in every part of the site: hero, About, Projects, Contact and more.', icon: 'text', doc: 'site', render: renderText },
   projects: { title: 'Projects', desc: 'Add folders and collections, upload images and reorder them.', icon: 'projects', doc: 'portfolio', render: renderProjects },
   resume: { title: 'Education & Experience', desc: 'Schools, work and awards. Also shown in the Resume preview.', icon: 'resume', doc: 'resume', render: renderResume },
@@ -1322,6 +1344,9 @@ async function enterApp(session) {
   $('#who-email').textContent = 'Admin';
   $('#avatar').textContent = 'A';
   $('#mode-badge').hidden = !DEMO;
+  // The admin's own visits to the site are not counted in Insights on this browser (../visit.js reads
+  // this), unless that was switched back on in the Insights tab.
+  if (!DEMO) { try { if (localStorage.getItem('adz:notrack') === null) localStorage.setItem('adz:notrack', '1'); } catch (_) {} }
   $('#panel').replaceChildren(h('div', { class: 'loading' }, h('span', { class: 'spinner' }), 'Loading content…'));
   await loadDocs();
   showTab(state.tab);
