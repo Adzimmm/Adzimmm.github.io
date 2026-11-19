@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;0,700;1,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=9a735f22e0">
+  <link rel="stylesheet" href="style.css?v=d181871d8a">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -38,8 +38,8 @@
   }
   </script>
   <meta name="twitter:card" content="summary_large_image">
-  <script src="supabase-config.js?v=9a735f22e0"></script>
-  <script src="site-data.js?v=9a735f22e0"></script>
+  <script src="supabase-config.js?v=d181871d8a"></script>
+  <script src="site-data.js?v=d181871d8a"></script>
   <script>
     /* Before first paint: motion follows the OS reduced-motion setting; the theme is the visitor's own choice,
        else the default set in the admin (site.theme.mode); accent colours come from site.theme too. */
@@ -247,8 +247,8 @@
     <p class="site-privacy" data-c="footer.privacy" hidden>This site records visits (IP address, rough location and device) and questions asked in the chat, so I can see what people look for and improve my answers. Only I can see them, and IP addresses are removed after 90 days.</p>
   </footer>
 
-  <dialog id="detail" aria-labelledby="detail-title">
-    <button class="close" type="button" aria-label="Close project details">✕</button>
+  <!-- Project view: full screen under the header, drawn by project-view.js -->
+  <dialog id="detail" class="pv" aria-labelledby="detail-title">
     <div id="detail-content"></div>
   </dialog>
 
@@ -264,10 +264,11 @@
     <div class="resume-pages" id="resume-sheet"></div>
   </dialog>
 
-  <script src="portfolio-data.js?v=9a735f22e0"></script>
-  <script src="resume-data.js?v=9a735f22e0"></script>
-  <script src="chat.js?v=9a735f22e0"></script>
-  <script src="app.js?v=9a735f22e0"></script>
-  <script src="visit.js?v=9a735f22e0"></script>
+  <script src="portfolio-data.js?v=d181871d8a"></script>
+  <script src="resume-data.js?v=d181871d8a"></script>
+  <script src="chat.js?v=d181871d8a"></script>
+  <script src="project-view.js?v=d181871d8a"></script>
+  <script src="app.js?v=d181871d8a"></script>
+  <script src="visit.js?v=d181871d8a"></script>
 </body>
 </html>

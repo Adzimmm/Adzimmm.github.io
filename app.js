@@ -362,97 +362,15 @@
     $('[data-filter="all"]').focus();
   });
 
-  /* ---------- Detail modal: case-study style ---------- */
-  // Featured collection = the section with the most visuals; it leads the gallery.
-  function featuredIndex(p) {
-    let best = 0;
-    p.sections.forEach((s, i) => { if (s.images.length > p.sections[best].images.length) best = i; });
-    return best;
-  }
-
-  // Only facts that can be read from the images themselves (orientation counts).
-  function formatSummary(p) {
-    const counts = { Portrait: 0, Landscape: 0, Square: 0 };
-    p.sections.forEach(s => s.images.forEach(a => {
-      const r = a.width / a.height;
-      if (r > 1.1) counts.Landscape++;
-      else if (r < 0.9) counts.Portrait++;
-      else counts.Square++;
-    }));
-    return Object.entries(counts).filter(([, n]) => n).map(([k, n]) => `${k} ${n}`).join(' · ');
-  }
-
-  // Displays a lighter copy (made from the cleaned file when one exists); "Saiz penuh" always opens the original.
-  function galleryItem(a) {
-    return `<figure class="gallery-item" style="--a:${(a.width / a.height).toFixed(3)}"><a class="gallery-image${a.dark ? ' dark-art' : ''}${a.opaque ? ' is-opaque' : ''}" href="${a.src}" target="_blank" rel="noopener" aria-label="${escapeHtml(a.alt)} — open full size in a new tab"><img src="${a.display || a.clean || a.src}" width="${a.width}" height="${a.height}" alt="${escapeHtml(a.alt)}" loading="lazy" decoding="async"></a><figcaption><a href="${a.src}" target="_blank" rel="noopener" aria-label="${escapeHtml(a.alt)} — full size in a new tab">Full size ↗</a></figcaption></figure>`;
-  }
-
-  // How much width-to-height each gallery row holds at the current screen size.
-  const galleryTarget = () => (window.innerWidth > 900 ? 3.4 : window.innerWidth > 600 ? 2.6 : 1.5);
-
-  function partition(images) {
-    const target = galleryTarget();
-    const rows = [];
-    let row = [];
-    let sum = 0;
-    images.forEach(a => {
-      row.push(a);
-      sum += a.width / a.height;
-      if (sum >= target) { rows.push(row); row = []; sum = 0; }
-    });
-    if (row.length) {
-      if (rows.length && sum < target * 0.5) rows[rows.length - 1].push(...row);
-      else rows.push(row);
-    }
-    return rows;
-  }
-
-  // Row width is capped so images are never enlarged beyond their real pixels.
-  function galleryRow(row, maxHeight) {
-    const sum = row.reduce((n, a) => n + a.width / a.height, 0);
-    const height = Math.min(maxHeight, ...row.map(a => a.height));
-    return `<div class="gallery-row" style="max-width:${Math.round(height * sum + 8 * (row.length - 1))}px">${row.map(galleryItem).join('')}</div>`;
-  }
-
-  function galleryHtml(s, featured) {
-    if (!featured) return partition(s.images).map(row => galleryRow(row, 440)).join('');
-    const [lead, ...rest] = s.images;
-    return galleryRow([lead], 640) + partition(rest).map(row => galleryRow(row, 440)).join('');
-  }
-
-  function sectionHtml(p, s, i, featured) {
-    const badge = featured ? '<span class="featured-badge">Featured collection</span>' : '';
-    const meta = featured
-      ? `<p class="featured-meta"><span>The largest collection in ${escapeHtml(p.title)}</span><span><b>${s.images.length}</b> visual</span>${s.page ? `<span>Page <b>${s.page}</b> of the original portfolio</span>` : ''}</p>`
-      : '';
-    return `<section class="gallery-section${featured ? ' is-featured' : ''}" id="section-${p.id}-${i}" aria-labelledby="heading-${p.id}-${i}">
-      <div class="gallery-heading">
-        <div class="gallery-title">${badge}<h3 id="heading-${p.id}-${i}">${escapeHtml(s.title)}</h3></div>
-        <span class="gallery-count">${s.images.length} visual</span>
-      </div>
-      ${meta}
-      <div class="artwork-gallery">${galleryHtml(s, featured)}</div>
-    </section>`;
-  }
-
-  function detailHtml(p, canStep) {
-    const fi = featuredIndex(p);
-    const order = [fi, ...p.sections.map((_, i) => i).filter(i => i !== fi)];
-    const total = p.sections.reduce((n, s) => n + s.images.length, 0);
-    return `<div class="detail-body collection-detail" data-cat="${p.id}" style="${palette(p)}">
-      <p class="eyebrow"><span aria-hidden="true"></span>${escapeHtml(themeOf(p).label.toUpperCase())} · ${total} VISUALS</p>
-      <h2 id="detail-title">${escapeHtml(p.title)}</h2>
-      <p class="detail-desc">${escapeHtml(p.desc)}</p>
-      <dl class="detail-meta">
-        <div><dt>Collections</dt><dd>${p.sections.length}</dd></div>
-        <div><dt>Visuals</dt><dd>${total}</dd></div>
-        <div><dt>Format</dt><dd>${formatSummary(p)}</dd></div>
-      </dl>
-      <p class="detail-note">Select a visual to see it at full size. Resolution matches the images in the original portfolio.</p>
-      <nav class="collection-jumps" aria-label="Collections in ${escapeHtml(p.title)}">${order.map(i => `<button type="button" data-section="section-${p.id}-${i}"><span>${escapeHtml(p.sections[i].title)}</span><small>${p.sections[i].images.length}</small></button>`).join('')}</nav>
-      ${order.map(i => sectionHtml(p, p.sections[i], i, i === fi)).join('')}
-      <div class="detail-actions"><button class="btn back" type="button">← Back to categories</button><button class="btn btn-solid next" type="button" ${canStep ? '' : 'disabled'}>Next category →</button></div>
-    </div>`;
+  /* ---------- Project view: full screen under the header (project-view.js) ---------- */
+  // app.js keeps the address (#project/<id>), the page lock and focus; project-view.js draws the panel.
+  // The panel is a non-modal dialog under the site header, so the header stays visible and usable;
+  // the rest of the page is made inert while it is open.
+  const pageParts = [$('#main'), $('.site-footer')].filter(Boolean);
+  function lockPage(on) {
+    root.classList.toggle('modal-open', on);
+    root.classList.toggle('pv-open', on);
+    pageParts.forEach(el => { el.inert = on; });
   }
 
   // Next moves only through the currently visible results.
@@ -460,68 +378,58 @@
     const seq = visibleProjects();
     const idx = seq.indexOf(p);
     const next = seq.length > 1 ? seq[(idx + 1) % seq.length] : null;
-
-    if (!modal.open) {
-      state.lastFocus = returnEl || document.activeElement;
-    }
+    const opening = !modal.open;
+    if (opening) state.lastFocus = returnEl || document.activeElement;
     state.active = p;
-    detailContent.innerHTML = detailHtml(p, Boolean(next));
-
-    if (!modal.open) {
-      modal.showModal();
-      root.classList.add('modal-open');
-    }
-    modal.scrollTop = 0;
-    $('.close', modal).focus({ preventScroll: true });
-
-    $$('[data-section]', modal).forEach(btn => btn.addEventListener('click', () => {
-      document.getElementById(btn.dataset.section).scrollIntoView({ behavior: motionOn ? 'smooth' : 'instant', block: 'start' });
-    }));
-    $('.back', modal).addEventListener('click', closeDetail);
-    const nextBtn = $('.next', modal);
-    if (next) {
-      nextBtn.addEventListener('click', () => {
-        history.replaceState(history.state, '', `#project/${next.id}`);
-        openProject(next);
-      });
+    window.ProjectView.show(p, next && next !== p ? next : null);
+    if (opening) {
+      modal.show();
+      lockPage(true);
+      window.ProjectView.enter();
     }
   }
 
-  // Idempotent cleanup: unlock scroll and return focus to the card that opened the dialog.
+  // Idempotent cleanup: unlock the page and return focus to the card that opened the panel.
   function cleanupDetail() {
-    root.classList.remove('modal-open');
+    lockPage(false);
     state.active = null;
     const back = state.lastFocus;
     state.lastFocus = null;
     if (back && back.isConnected) back.focus({ preventScroll: true });
   }
 
+  // Plays the closing animation, then closes (Back, Escape and the browser's back button all end here).
+  function hideDetail() {
+    if (!modal.open || window.ProjectView.isLeaving()) return;
+    window.ProjectView.leave(() => {
+      modal.close();
+      cleanupDetail();
+    });
+  }
+
   function closeDetail() {
     if (!modal.open) return;
     if (history.state?.portfolioDetail) {
-      history.back(); // popstate -> route() closes the dialog
+      history.back(); // popstate -> route() hides the panel
     } else {
       history.replaceState(null, '', '#work');
-      modal.close();
-      cleanupDetail();
+      hideDetail();
     }
   }
 
-  // Backup path for native close; skipped if a new dialog has already opened.
-  modal.addEventListener('close', () => {
-    if (!modal.open) cleanupDetail();
+  window.ProjectView.init({
+    panel: modal,
+    content: detailContent,
+    escapeHtml,
+    icon: p => ICON(FILTER_ICONS[p.icon] || FILTER_ICONS[p.id] || FILTER_ICONS.others),
+    color: p => themeOf(p).color,
+    label: p => themeOf(p).label,
+    onClose: closeDetail,
+    onNext: next => {
+      history.replaceState(history.state, '', `#project/${next.id}`);
+      openProject(next);
+    },
   });
-
-  modal.addEventListener('cancel', e => {
-    e.preventDefault();
-    closeDetail();
-  });
-
-  modal.addEventListener('click', e => {
-    if (e.target === modal) closeDetail(); // backdrop click
-  });
-
-  $('.close', modal).addEventListener('click', closeDetail);
 
   // The hero artwork opens its category gallery the same way a card does.
   document.addEventListener('click', e => {
@@ -550,9 +458,7 @@
       openProject(p);
       return;
     }
-    // The browser may already have closed the dialog on Escape, so unlock either way.
-    if (modal.open) modal.close();
-    if (root.classList.contains('modal-open')) cleanupDetail();
+    if (modal.open) hideDetail();
   }
   window.addEventListener('popstate', route);
 
@@ -627,14 +533,9 @@
   }
 
   window.addEventListener('scroll', onScroll, { passive: true });
-  let lastGalleryTarget = galleryTarget();
   window.addEventListener('resize', () => {
     measure();
     onScroll();
-    const target = galleryTarget();
-    if (target === lastGalleryTarget) return;
-    lastGalleryTarget = target;
-    if (modal.open && state.active) openProject(state.active);
   });
 
   /* ---------- Keyboard and page visibility ---------- */
