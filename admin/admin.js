@@ -288,6 +288,104 @@ async function toWebp(bitmap, max) {
   return { blob, w, h: hgt };
 }
 
+/* ---------- Favicon: any image becomes round tab icons (and a square home-screen icon) ---------- */
+// The picture is cropped to fill a square from its centre; tab icons are clipped to a circle on transparency.
+async function iconPng(bitmap, size, round) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const g = canvas.getContext('2d');
+  g.imageSmoothingQuality = 'high';
+  if (round) {
+    g.beginPath();
+    g.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+    g.clip();
+  } else {
+    g.fillStyle = '#ffffff'; // iPhone home screens show black behind transparency
+    g.fillRect(0, 0, size, size);
+  }
+  const side = Math.min(bitmap.width, bitmap.height);
+  g.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size);
+  return new Promise(res => canvas.toBlob(res, 'image/png'));
+}
+
+async function uploadFavicon(file) {
+  const bitmap = await createImageBitmap(file);
+  const sizes = { icon: [64, true], large: [512, true], apple: [180, false] };
+  const out = { storage: [] };
+  const stamp = Date.now().toString(36);
+  for (const [name, [size, round]] of Object.entries(sizes)) {
+    const blob = await iconPng(bitmap, size, round);
+    if (DEMO) { out[name] = URL.createObjectURL(blob); continue; }
+    const path = `site/favicon-${stamp}-${name}.png`;
+    const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: 'image/png', upsert: false, cacheControl: '31536000' });
+    if (error) throw new Error(error.message);
+    out.storage.push(path);
+    out[name] = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  }
+  bitmap.close();
+  return out;
+}
+
+// Shows the saved icon in the admin's own tab too.
+function setPageIcon(href) {
+  const link = document.querySelector('link[rel="icon"]');
+  if (link) link.href = href || '../assets/favicon-32.png';
+}
+
+function faviconField(meta, doc) {
+  const fallback = '../assets/favicon-32.png';
+  const current = () => (meta.favicon && meta.favicon.large) || fallback;
+  const big = h('img', { class: 'fav-big', alt: '' });
+  const tabIcon = h('img', { class: 'fav-tab-icon', alt: '' });
+  const tabTitle = h('span', {});
+  const status = h('small', {}, 'PNG, JPG or WebP. Square pictures work best; others are cropped from the centre into a circle.');
+  const reset = h('button', { class: 'btn ghost small', type: 'button' }, 'Use default');
+  const draw = () => {
+    big.src = asset(current());
+    tabIcon.src = asset(current());
+    tabTitle.textContent = meta.title || 'Tab title';
+    reset.hidden = !meta.favicon;
+  };
+  const input = h('input', { type: 'file', accept: 'image/*' });
+  input.addEventListener('change', async () => {
+    const f = input.files[0];
+    input.value = '';
+    if (!f) return;
+    status.textContent = 'Making the icon…';
+    try {
+      // The old files stay in Storage (a few KB): the live site uses them until this is saved.
+      meta.favicon = await uploadFavicon(f);
+      markDirty(doc);
+      draw();
+      setPageIcon(meta.favicon.icon);
+      status.textContent = 'New icon ready. Click Save to publish.';
+    } catch (err) {
+      status.textContent = 'Upload failed.';
+      toast(`Could not upload the icon: ${err.message}`, true);
+    }
+  });
+  reset.addEventListener('click', async () => {
+    if (!meta.favicon) return;
+    delete meta.favicon;
+    markDirty(doc);
+    draw();
+    setPageIcon('');
+    status.textContent = 'Back to the default icon. Click Save to publish.';
+  });
+  draw();
+  return h('div', { class: 'field fav-field' },
+    h('span', {}, 'Favicon (tab icon)'),
+    h('div', { class: 'fav-row' },
+      big,
+      h('div', { class: 'fav-side' },
+        h('div', { class: 'fav-tab', 'aria-hidden': 'true' }, tabIcon, tabTitle, h('i', {}, '×')),
+        h('div', { class: 'fav-actions' },
+          h('label', { class: 'btn small' }, ico('upload'), 'Upload icon', input),
+          reset),
+        status)));
+}
+
 async function uploadImage(file, folder, alt) {
   const bitmap = await createImageBitmap(file);
   if (DEMO) { // nothing leaves this computer: the page shows the file itself until reload
@@ -489,6 +587,7 @@ function renderText() {
     card('Resume', 'The Resume preview window.',
       h('div', { class: 'grid3' }, field(s.resume, 'dialogTitle', 'Window title', d), field(s.resume, 'download', 'Download button', d), field(s.resume, 'pdfName', 'PDF file name', d))),
     card('Google & browser tab', 'What shows in the browser tab and Google search.',
+      faviconField(s.meta, d),
       field(s.meta, 'title', 'Tab title', d),
       field(s.meta, 'description', 'Google description', d, { multi: true, rows: 2, hint: 'Best under 160 characters.' })),
   ];
@@ -1458,6 +1557,7 @@ async function enterApp(session) {
   $('#panel').replaceChildren(h('div', { class: 'loading' }, h('span', { class: 'spinner' }), 'Loading content…'));
   await loadDocs();
   applyAdminColors(state.docs.site.theme);
+  setPageIcon(state.docs.site.meta && state.docs.site.meta.favicon && state.docs.site.meta.favicon.icon);
   showTab(state.tab);
 }
 

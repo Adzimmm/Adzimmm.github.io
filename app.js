@@ -669,6 +669,13 @@
       if (typeof value === 'string') el.innerHTML = escapeHtml(value).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br class="desktop"> ');
     });
     document.title = t.meta.title;
+    // Favicon uploaded in the admin (round tab icons and a square home-screen icon); else the bundled ones stay.
+    const fav = t.meta.favicon;
+    if (fav && fav.icon) {
+      $$('link[rel="icon"]').forEach(link => { link.href = link.sizes && String(link.sizes) === '512x512' ? (fav.large || fav.icon) : fav.icon; link.type = 'image/png'; });
+      const apple = $('link[rel="apple-touch-icon"]');
+      if (apple && fav.apple) apple.href = fav.apple;
+    }
     $('meta[name="description"]').content = t.meta.description;
     searchInput.placeholder = t.hero.searchPlaceholder;
 

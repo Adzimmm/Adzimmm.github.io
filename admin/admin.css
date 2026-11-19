@@ -553,3 +553,14 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
 .cp-link{color:var(--a);text-decoration:underline;text-underline-offset:3px}
 .cp-dot{width:12px;height:12px;margin-left:auto;border-radius:50%;background:var(--a);box-shadow:0 0 0 4px color-mix(in srgb,var(--a) 25%,transparent)}
 .colors .seg{justify-self:start}
+
+/* Favicon upload: round preview and a mock browser tab */
+.fav-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.fav-big{flex:none;width:72px;height:72px;border-radius:50%;object-fit:cover;background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/12px 12px;box-shadow:0 0 0 1px var(--line-strong)}
+.fav-side{display:grid;gap:10px;min-width:0;flex:1}
+.fav-tab{display:flex;align-items:center;gap:8px;width:min(260px,100%);padding:8px 12px;border:1px solid var(--line-strong);border-bottom:0;border-radius:12px 12px 0 0;background:var(--surface-2);font-size:13px}
+.fav-tab span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fav-tab i{font-style:normal;color:var(--faint)}
+.fav-tab-icon{flex:none;width:16px;height:16px;border-radius:50%;object-fit:cover}
+.fav-actions{display:flex;gap:8px;flex-wrap:wrap}
+.fav-actions label{cursor:pointer}
