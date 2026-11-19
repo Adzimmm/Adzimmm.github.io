@@ -8,6 +8,8 @@ window.SITE = {
     description: "Adzim's portfolio — UUM Multimedia student: logos, branding, social media, print and UI/UX.",
   },
   brand: { name: 'adzim', suffix: '.portfolio' },
+  // Accent colour for each theme (#rrggbb) and the theme a first-time visitor sees (dark or light).
+  theme: { mode: 'dark', dark: '#b7a0ff', light: '#7250aa' },
   nav: { home: 'Home', about: 'About', education: 'Education', experience: 'Experience', projects: 'Projects', resume: 'Resume' },
   hero: {
     hi: "Hi, I'm",

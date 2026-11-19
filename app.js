@@ -60,6 +60,12 @@
     themeBtn.title = label;
     $('meta[name="theme-color"]').content = theme === 'light' ? '#faf9fc' : '#000000';
   }
+  // The default theme and accent colours saved in the admin (site.theme); a visitor's own choice wins.
+  const siteTheme = (window.SITE && window.SITE.theme) || {};
+  let ownTheme = null;
+  try { ownTheme = localStorage.getItem('adzim-theme'); } catch (_) {}
+  if (ownTheme !== 'light' && ownTheme !== 'dark') root.dataset.theme = siteTheme.mode === 'light' ? 'light' : 'dark';
+  if (window.applySiteColors) window.applySiteColors(siteTheme);
   applyTheme(root.dataset.theme === 'light' ? 'light' : 'dark');
   themeBtn.addEventListener('click', () => {
     const theme = root.dataset.theme === 'light' ? 'dark' : 'light';

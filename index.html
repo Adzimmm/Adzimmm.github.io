@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;0,700;1,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=00571017d2">
+  <link rel="stylesheet" href="style.css?v=bc9b0f01e1">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -38,16 +38,32 @@
   }
   </script>
   <meta name="twitter:card" content="summary_large_image">
+  <script src="supabase-config.js?v=bc9b0f01e1"></script>
+  <script src="site-data.js?v=bc9b0f01e1"></script>
   <script>
-    /* Set the motion state before first paint: animation follows the OS reduced-motion setting. */
+    /* Before first paint: motion follows the OS reduced-motion setting; the theme is the visitor's own choice,
+       else the default set in the admin (site.theme.mode); accent colours come from site.theme too. */
     (function () {
+      var root = document.documentElement;
       var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       try { localStorage.removeItem('adzim-motion'); } catch (e) {} // old toggle choice, no longer used
-      document.documentElement.dataset.motion = reduce ? 'off' : 'on';
-      var theme = 'dark';
-      try { if (localStorage.getItem('adzim-theme') === 'light') theme = 'light'; } catch (e) {}
-      document.documentElement.dataset.theme = theme;
+      root.dataset.motion = reduce ? 'off' : 'on';
+      // Also called by app.js once the text saved in Supabase has loaded.
+      window.applySiteColors = function (t) {
+        t = t || {};
+        var hex = /^#[0-9a-f]{6}$/i, css = '';
+        if (hex.test(t.dark || '')) css += ':root:root{--accent:' + t.dark + ';--accent-purple:' + t.dark + '}';
+        if (hex.test(t.light || '')) css += ':root:root[data-theme="light"]{--accent:' + t.light + ';--accent-purple:' + t.light + '}';
+        var el = document.getElementById('site-colors');
+        if (!el) { el = document.createElement('style'); el.id = 'site-colors'; document.head.appendChild(el); }
+        el.textContent = css;
+      };
+      var t = (window.SITE && window.SITE.theme) || {};
+      var theme = t.mode === 'light' ? 'light' : 'dark';
+      try { var own = localStorage.getItem('adzim-theme'); if (own === 'light' || own === 'dark') theme = own; } catch (e) {}
+      root.dataset.theme = theme;
       document.querySelector('meta[name="theme-color"]').content = theme === 'light' ? '#faf9fc' : '#000000';
+      window.applySiteColors(t);
     })();
   </script>
 </head>
@@ -248,12 +264,10 @@
     <div class="resume-pages" id="resume-sheet"></div>
   </dialog>
 
-  <script src="supabase-config.js?v=00571017d2"></script>
-  <script src="site-data.js?v=00571017d2"></script>
-  <script src="portfolio-data.js?v=00571017d2"></script>
-  <script src="resume-data.js?v=00571017d2"></script>
-  <script src="chat.js?v=00571017d2"></script>
-  <script src="app.js?v=00571017d2"></script>
-  <script src="visit.js?v=00571017d2"></script>
+  <script src="portfolio-data.js?v=bc9b0f01e1"></script>
+  <script src="resume-data.js?v=bc9b0f01e1"></script>
+  <script src="chat.js?v=bc9b0f01e1"></script>
+  <script src="app.js?v=bc9b0f01e1"></script>
+  <script src="visit.js?v=bc9b0f01e1"></script>
 </body>
 </html>

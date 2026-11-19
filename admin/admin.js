@@ -365,6 +365,63 @@ function jumpNav(cards) {
 }
 
 /* ---------- Tab: Teks ---------- */
+/* ---------- Colours & theme (site.theme) ---------- */
+// The site's accent colour for each theme, and the theme a first-time visitor sees. index.html applies them
+// before the first paint; a visitor's own light/dark choice still wins.
+const THEME_DEFAULT = { mode: 'dark', dark: '#b7a0ff', light: '#7250aa' };
+const PRESETS = [
+  ['Purple', '#b7a0ff', '#7250aa'], ['Blue', '#8dbaff', '#2f5fb3'], ['Green', '#7fd6a8', '#1f7a4d'],
+  ['Pink', '#f4a1ba', '#b0386a'], ['Orange', '#f0b37e', '#a8521a'], ['Teal', '#6fd6d0', '#1b6f6b'],
+];
+const HEX = /^#[0-9a-f]{6}$/i;
+function contrast(a, b) {
+  const lum = hex => {
+    const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  };
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+}
+function colorsCard(s, d) {
+  s.theme = { ...THEME_DEFAULT, ...(s.theme || {}) };
+  const t = s.theme;
+  const body = h('div', { class: 'colors' });
+  const set = changes => { Object.assign(t, changes); markDirty(d); draw(); };
+  // One colour: picker + hex box + a warning when buttons and links would be hard to read.
+  const colorField = (key, label, bg, bgName) => {
+    const ok = HEX.test(t[key]) && contrast(t[key], bg) >= 4.5;
+    const picker = h('input', { type: 'color', value: HEX.test(t[key]) ? t[key] : THEME_DEFAULT[key], 'aria-label': `${label} (picker)` });
+    const text = h('input', { type: 'text', value: t[key], maxlength: 7, spellcheck: 'false', 'aria-label': label });
+    picker.addEventListener('change', () => set({ [key]: picker.value }));
+    text.addEventListener('change', () => {
+      const v = text.value.trim().replace(/^([0-9a-f]{6})$/i, '#$1').toLowerCase();
+      if (HEX.test(v)) set({ [key]: v });
+      else { toast('Use a colour like #b7a0ff.', true); text.value = t[key]; }
+    });
+    return h('div', { class: 'field' }, h('span', {}, label),
+      h('div', { class: 'color-row' }, picker, text),
+      h('small', { class: ok ? '' : 'warn' }, ok ? `Easy to read on ${bgName}.` : `Hard to read on ${bgName}: pick a ${key === 'dark' ? 'lighter' : 'darker'} colour.`));
+  };
+  const preview = (mode, accent) => h('div', { class: `color-preview ${mode}`, style: `--a:${accent}` },
+    h('span', { class: 'cp-btn' }, 'Resume'), h('span', { class: 'cp-link' }, 'See More'), h('span', { class: 'cp-dot' }));
+  function draw() {
+    body.replaceChildren(
+      h('div', { class: 'presets', role: 'group', 'aria-label': 'Ready-made colours' }, PRESETS.map(([name, dark, light]) =>
+        h('button', { type: 'button', class: 'preset', 'aria-pressed': String(t.dark === dark && t.light === light), onclick: () => set({ dark, light }) },
+          h('i', { style: `background:linear-gradient(135deg,${dark} 50%,${light} 50%)` }), name))),
+      h('div', { class: 'grid2' },
+        h('div', {}, colorField('dark', 'Accent in the dark theme', '#000000', 'the black background'), preview('dark', t.dark)),
+        h('div', {}, colorField('light', 'Accent in the light theme', '#ffffff', 'white'), preview('light', t.light))),
+      h('div', { class: 'field' }, h('span', {}, 'Theme a first-time visitor sees'),
+        h('div', { class: 'seg', role: 'group', 'aria-label': 'Default theme' }, [['dark', 'Dark'], ['light', 'Light']].map(([k, label]) =>
+          h('button', { type: 'button', 'aria-pressed': String(t.mode === k), onclick: () => { if (t.mode !== k) set({ mode: k }); } }, label))),
+        h('small', {}, 'Visitors who switch the theme themselves keep their choice.')),
+      h('div', {}, h('button', { class: 'btn small ghost', type: 'button', onclick: () => set({ ...THEME_DEFAULT }) }, ico('refresh'), 'Back to the original colours')));
+  }
+  draw();
+  return card('Colours & theme', 'The accent colour of buttons, links and highlights, and the theme new visitors see first.', body);
+}
+
 function renderText() {
   const s = state.docs.site;
   const d = 'site';
@@ -374,6 +431,7 @@ function renderText() {
     return h('label', { class: 'field' }, h('span', {}, 'Level'), sel);
   };
   const cards = [
+    colorsCard(s, d),
     card('Hero', 'The top of the page.',
       h('div', { class: 'grid2' }, field(s.hero, 'hi', 'Greeting', d), field(s.hero, 'name', 'Name (bold)', d)),
       field(s.hero, 'title', 'Big title', d),
