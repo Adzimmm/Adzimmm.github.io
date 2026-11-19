@@ -44,7 +44,74 @@
   const small = a => a.thumb || a.display || a.clean || a.src;
   const medium = a => a.display || a.clean || a.src;
   const dims = a => (a.width > 0 && a.height > 0 ? ` width="${a.width}" height="${a.height}"` : '');
-  const artClass = a => `${a.dark ? ' dark-art' : ''}${a.opaque ? ' is-opaque' : ''}`;
+  // Categories shown as cut-outs straight on the panel, with no coloured box (a category can also set clear: true).
+  const CLEAR = new Set(['logo-folio']);
+  const isClear = () => Boolean(p && (p.clear === true || CLEAR.has(p.id)));
+  const artClass = a => `${a.dark && !isClear() ? ' dark-art' : ''}${a.opaque ? ' is-opaque' : ''}`;
+
+  // Cut-outs: measure how much of a visual stays readable on a dark and on a light background, so only
+  // a visual that would disappear on the current theme gets a soft plate (needs-light / needs-dark).
+  const toneCache = new Map();
+  const lum = (r, g, b) => {
+    const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+  const L_LIGHT = lum(250, 249, 252);
+  function tone(a) {
+    const src = small(a);
+    if (!toneCache.has(src)) {
+      toneCache.set(src, new Promise(resolve => {
+        const none = { light: false, dark: false };
+        const im = new Image();
+        im.crossOrigin = 'anonymous';
+        im.onload = () => {
+          try {
+            const s = 96 / Math.max(im.naturalWidth, im.naturalHeight, 1);
+            const w = Math.max(1, Math.round(im.naturalWidth * s));
+            const h = Math.max(1, Math.round(im.naturalHeight * s));
+            const c = document.createElement('canvas');
+            c.width = w;
+            c.height = h;
+            const g = c.getContext('2d', { willReadFrequently: true });
+            g.drawImage(im, 0, 0, w, h);
+            const d = g.getImageData(0, 0, w, h).data;
+            let solid = 0;
+            let onDark = 0;
+            let onLight = 0;
+            for (let i = 0; i < d.length; i += 4) {
+              if (d[i + 3] < 128) continue;
+              solid++;
+              const L = lum(d[i], d[i + 1], d[i + 2]);
+              if ((L + 0.05) / 0.05 >= 3) onDark++; // readable on black
+              if ((L_LIGHT + 0.05) / (L + 0.05) >= 3) onLight++; // readable on the light background
+            }
+            resolve(solid ? { light: onDark / solid < 0.4, dark: onLight / solid < 0.2 } : none);
+          } catch (_) {
+            resolve(none); // an image from another site without CORS cannot be measured
+          }
+        };
+        im.onerror = () => resolve(none);
+        im.src = src;
+      }));
+    }
+    return toneCache.get(src);
+  }
+  const toneClasses = t => (t ? [t.light ? 'needs-light' : '', t.dark ? 'needs-dark' : ''].filter(Boolean) : []);
+  function applyTones() {
+    if (!isClear()) return;
+    const shell = els.shell;
+    items.forEach((it, i) => tone(it.a).then(measured => {
+      // "Dark" in the admin marks light artwork (often white lettering), so it always gets the dark plate on light.
+      const t = { light: measured.light, dark: measured.dark || Boolean(it.a.dark) };
+      it.tone = t;
+      if (els.shell !== shell || items[i] !== it) return; // redrawn or filtered meanwhile
+      const cls = toneClasses(t);
+      if (!cls.length) return;
+      const slide = els.track.children[i];
+      [els.tiles[i], slide && slide.firstElementChild, els.thumbs.children[i]].forEach(el => el && el.classList.add(...cls));
+      if (zoom.i === i) els.zoomImg.classList.add(...cls);
+    }));
+  }
   const count = () => p.sections.reduce((n, s) => n + s.images.length, 0);
   const how = smooth => (smooth && motion() ? 'smooth' : 'instant');
 
@@ -64,7 +131,7 @@
   function shellHtml() {
     const total = count();
     const format = formats();
-    return `<div class="pv-shell" data-cat="${esc(p.id)}" data-layout="${layout}" style="--color:${esc(ctx.color(p))}">
+    return `<div class="pv-shell${isClear() ? ' pv-clear' : ''}" data-cat="${esc(p.id)}" data-layout="${layout}" style="--color:${esc(ctx.color(p))}">
       <aside class="pv-side" aria-label="About ${esc(p.title)}">
         <div class="pv-side-top">
           <button class="pv-back" type="button" data-pv="close">${I.back}<span>All projects</span></button>
@@ -141,7 +208,7 @@
 
   const slideHtml = (it, i) => `<div class="pv-slide" data-i="${i}"><button type="button" class="pv-frame${artClass(it.a)}" data-zoom="${i}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}" aria-label="${esc(it.a.alt || it.s.title)}. Open full size"><img src="${esc(medium(it.a))}"${dims(it.a)} alt="" loading="lazy" decoding="async" draggable="false"></button></div>`;
 
-  const thumbHtml = (it, i) => `<button type="button" class="pv-thumb${it.a.dark ? ' dark-art' : ''}" data-go="${i}" style="--a:${ratio(it.a).toFixed(4)}" aria-label="Visual ${i + 1} of ${items.length}"><img src="${esc(small(it.a))}" alt="" loading="lazy" decoding="async" draggable="false"></button>`;
+  const thumbHtml = (it, i) => `<button type="button" class="pv-thumb${it.a.dark && !isClear() ? ' dark-art' : ''}" data-go="${i}" style="--a:${ratio(it.a).toFixed(4)}" aria-label="Visual ${i + 1} of ${items.length}"><img src="${esc(small(it.a))}" alt="" loading="lazy" decoding="async" draggable="false"></button>`;
 
   /* ---------- Render ---------- */
   function render() {
@@ -215,6 +282,7 @@
     els.track.innerHTML = items.map(slideHtml).join('');
     els.thumbs.innerHTML = items.map(thumbHtml).join('');
     setCurrent(current, true, false);
+    applyTones();
   }
 
   // Masonry: each visual goes to the shortest column, so the order still reads left to right.
@@ -419,7 +487,7 @@
   function setZoomImage(it, lowSrc) {
     const img = els.zoomImg;
     const token = ++zoom.token;
-    img.className = `pv-zoom-img${artClass(it.a)}`;
+    img.className = `pv-zoom-img${artClass(it.a)}${toneClasses(it.tone).map(c => ` ${c}`).join('')}`;
     img.alt = it.a.alt || it.s.title;
     img.src = lowSrc;
     const full = new URL(it.a.src || medium(it.a), location.href).href;

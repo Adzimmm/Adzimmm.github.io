@@ -1374,3 +1374,14 @@ html.pv-open .chat-launcher{opacity:0;visibility:hidden;pointer-events:none}
   .pv-zoom-btn.is-close{top:10px;right:10px}
   .pv-zoom-img{border-radius:12px}
 }
+
+/* Logo Folio: the logos are cut-outs, so they sit straight on the panel with no coloured box.
+   A soft plate appears only behind a logo that would disappear on the current theme (project-view.js measures it). */
+.pv-clear .pv-tile,.pv-clear .pv-frame{background:transparent;box-shadow:none;transition:background-color .4s ease}
+.pv-clear .pv-zoom-img{background:transparent;box-shadow:none;transition:translate .3s var(--ease),background-color .4s ease}
+.pv-clear .pv-thumb{background:transparent;transition:opacity .3s,outline-color .3s,transform .4s var(--ease),background-color .4s ease}
+.pv-clear .pv-tile::after{box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);transition:box-shadow .3s}
+[data-theme="light"] .pv-clear .pv-tile::after{box-shadow:inset 0 0 0 1px rgba(36,23,57,.1)}
+.pv-clear .pv-tile:hover::after,.pv-clear .pv-tile:focus-visible::after{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--color) 50%,transparent)}
+:root:not([data-theme="light"]) .pv-clear .needs-light{background:#f2efe8}
+[data-theme="light"] .pv-clear .needs-dark{background:#192942}
