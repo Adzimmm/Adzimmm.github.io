@@ -1174,8 +1174,8 @@ html[data-motion="on"] .gallery-row{animation:rise .45s var(--ease) both}
 /* Room under the footer so the round button never covers its text */
 .has-chat-button .site-footer{padding-bottom:104px}
 
-/* Timeline cards: no diagonal shine (the glossy band read as a glare). The soft colour glow and other effects stay. */
-.tl-fx .cy-glare{display:none}
+/* No diagonal shine on project folders or timeline cards (the glossy band read as a glare). The soft colour glow and other effects stay. */
+.cy-glare{display:none}
 
 /* ---------- Project view: full screen under the header (project-view.js) ----------
    Sidebar with the details and collections, a centred pill for Grid / Gallery, a masonry grid,
