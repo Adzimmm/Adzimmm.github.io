@@ -1433,3 +1433,11 @@ html.pv-open .chat-launcher{opacity:0;visibility:hidden;pointer-events:none}
   .ah-photo{max-width:320px}
   .ah-cursor{right:-18px;bottom:-18px;width:24px;height:24px}
 }
+
+/* About pill: smaller, level, with a Figma-style collaborator cursor (glowing) at its top-left corner */
+.ah-pill{margin:0 0 24px 18px}
+.ah-pill-in{padding:.42em .9em .46em;border-radius:10px;font-size:clamp(13px,1.1vw,15px);font-weight:700;transform:none}
+.ah-cursor{left:-20px;right:auto;top:-18px;bottom:auto;width:24px;height:24px;
+  filter:drop-shadow(0 0 6px color-mix(in srgb,var(--ah) 80%,transparent)) drop-shadow(0 0 16px color-mix(in srgb,var(--ah) 55%,transparent));transform-origin:20% 15%}
+@keyframes ah-nudge{0%,100%{transform:none}50%{transform:translate(3px,3px)}}
+@media(max-width:860px){.ah-cursor{left:-18px;top:-16px;right:auto;bottom:auto;width:22px;height:22px}}
