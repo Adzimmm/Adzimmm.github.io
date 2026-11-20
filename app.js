@@ -694,6 +694,9 @@
     $('#about-fields').innerHTML = a.fields.map(f => `<li>${escapeHtml(f)}</li>`).join('');
     // About photo: the cut-out uploaded in the admin (site.about.photo), else the bundled one.
     const photo = $('#about-photo');
+    // The box behind the photo: colour, image, shader or animation chosen in the admin (backdrop.js).
+    const card = $('.ah-card');
+    if (card && window.AboutBackdrop) window.AboutBackdrop.render(card, a.backdrop);
     if (photo && a.photo && a.photo.src) {
       photo.src = a.photo.src;
       if (a.photo.width) photo.width = a.photo.width;

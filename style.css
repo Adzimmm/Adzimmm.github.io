@@ -1466,3 +1466,18 @@ html[data-motion="on"] .about-hero:not(.s-pill) .ah-pill{transform:translate(110
 .ah-pill{margin-left:28px}
 .ah-cursor{left:-30px;top:-27px;width:36px;height:36px}
 @media(max-width:860px){.ah-cursor{left:-26px;top:-24px;width:32px;height:32px}}
+
+/* About pill as a green "online" label right beside the cursor (Figma style), with glow and ripples */
+.about-hero{--live:#16a34a;--live-glow:#22c55e}
+.ah-pill{display:inline-block;margin:0 0 24px;padding:16px 0 0 30px}
+.ah-cursor{left:0;top:0;width:36px;height:36px;color:var(--live);
+  filter:drop-shadow(0 0 6px color-mix(in srgb,var(--live-glow) 85%,transparent)) drop-shadow(0 0 16px color-mix(in srgb,var(--live-glow) 55%,transparent))}
+.ah-pill-in,.about-hero.is-in .ah-pill-in{display:inline-flex;align-items:center;gap:9px;background:var(--live);color:#fff;border-radius:10px;
+  box-shadow:0 0 18px color-mix(in srgb,var(--live-glow) 55%,transparent);animation:ah-ripple 2.2s ease-out infinite}
+.ah-dot{position:relative;flex:none;width:8px;height:8px;border-radius:50%;background:#fff}
+.ah-dot::after{content:'';position:absolute;inset:0;border-radius:50%;background:#fff;animation:ah-ping 1.6s cubic-bezier(0,0,.2,1) infinite}
+@keyframes ah-ping{75%,100%{transform:scale(2.6);opacity:0}}
+@keyframes ah-ripple{0%{box-shadow:0 0 18px color-mix(in srgb,var(--live-glow) 55%,transparent),0 0 0 0 color-mix(in srgb,var(--live-glow) 55%,transparent)}
+  100%{box-shadow:0 0 18px color-mix(in srgb,var(--live-glow) 55%,transparent),0 0 0 14px transparent}}
+@media(max-width:860px){.ah-pill{padding:14px 0 0 26px}.ah-cursor{left:0;top:0;width:30px;height:30px}}
+.ah-word{z-index:1}

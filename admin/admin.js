@@ -495,6 +495,64 @@ function aboutPhotoField(about, doc) {
       h('div', { class: 'fav-side' }, h('div', { class: 'fav-actions' }, h('label', { class: 'btn small' }, ico('upload'), 'Upload photo', input), removeBtn), status)));
 }
 
+// The box behind the About photo: colour, uploaded image, shader or CSS animation (../backdrop.js draws it).
+function backdropField(about, doc) {
+  const BD = window.AboutBackdrop;
+  if (!BD) return null;
+  const b = about.backdrop || (about.backdrop = { type: 'color', colors: BD.DEFAULT_COLORS.slice() });
+  if (!Array.isArray(b.colors)) b.colors = BD.DEFAULT_COLORS.slice();
+  const preview = h('div', { class: 'bd-preview' }, h('span', { class: 'bd-preview-word' }, about.word || ''));
+  const extra = h('div', { class: 'bd-extra' });
+  const changed = () => { markDirty(doc); BD.render(preview, b); };
+  const types = [['color', 'Colour'], ['image', 'Image'], ['shader', 'Shader'], ['animated', 'Animated']];
+  const seg = h('div', { class: 'bd-seg', role: 'group', 'aria-label': 'Backdrop type' });
+  const drawSeg = () => seg.replaceChildren(...types.map(([k, label]) => h('button', {
+    type: 'button', class: 'btn small' + (b.type === k ? ' primary' : ' ghost'), 'aria-pressed': String(b.type === k),
+    onclick: () => { b.type = k; drawSeg(); drawExtra(); changed(); },
+  }, label)));
+  const colorRow = () => h('div', { class: 'bd-colors' }, ...[0, 1, 2].map(i => {
+    if (b.type === 'color' && i > 0) return null;
+    if (b.type === 'image' && i > 0) return null;
+    const input = h('input', { type: 'color', value: b.colors[i] || BD.DEFAULT_COLORS[i], title: `Colour ${i + 1}` });
+    input.addEventListener('input', () => { b.colors[i] = input.value; changed(); });
+    return h('label', { class: 'bd-color' }, input, h('small', {}, b.type === 'image' ? 'Behind the image' : `Colour ${i + 1}`));
+  }));
+  const pick = (key, options) => {
+    const sel = h('select', {}, Object.entries(options).map(([k, label]) => h('option', { value: k, selected: b[key] === k }, label)));
+    if (!options[b[key]]) b[key] = Object.keys(options)[0];
+    sel.addEventListener('change', () => { b[key] = sel.value; changed(); });
+    return h('label', { class: 'field' }, h('span', {}, key === 'shader' ? 'Shader' : 'Animation'), sel);
+  };
+  const imageRow = () => {
+    const status = h('small', {}, b.image && b.image.src ? 'Image set. Upload another to replace it.' : 'JPG, PNG or WebP. It fills the box behind your photo.');
+    const input = h('input', { type: 'file', accept: 'image/*' });
+    input.addEventListener('change', async () => {
+      const f = input.files[0];
+      input.value = '';
+      if (!f) return;
+      status.textContent = 'Uploading…';
+      try {
+        const a = await uploadImage(f, 'about', 'About backdrop');
+        b.image = { src: a.display || a.src, storage: a.storage || [] };
+        changed();
+        status.textContent = 'Image ready. Click Save to publish.';
+      } catch (err) { status.textContent = 'Upload failed.'; toast(err.message, true); }
+    });
+    return h('div', { class: 'fav-actions' }, h('label', { class: 'btn small' }, ico('upload'), 'Upload image', input), status);
+  };
+  const drawExtra = () => extra.replaceChildren(...[
+    b.type === 'image' ? imageRow() : null,
+    b.type === 'shader' ? pick('shader', BD.SHADERS) : null,
+    b.type === 'animated' ? pick('animated', BD.ANIMATED) : null,
+    colorRow()].filter(Boolean));
+  drawSeg();
+  drawExtra();
+  BD.render(preview, b);
+  return h('div', { class: 'field' }, h('span', {}, 'Box behind your photo'),
+    h('div', { class: 'bd-row' }, preview, h('div', { class: 'bd-side' }, seg, extra,
+      h('small', {}, 'Shaders and animations pause when off screen and stay still for visitors who prefer less motion.'))));
+}
+
 async function uploadFavicon(file) {
   const bitmap = await createImageBitmap(file);
   const crop = await cropImage(bitmap);
@@ -825,8 +883,9 @@ function renderText() {
     card('About', 'The About Me section.',
       field(s.about, 'title', 'Section title', d),
       aboutPhotoField(s.about, d),
+      backdropField(s.about, d),
       h('div', { class: 'grid3' }, field(s.about, 'hello', 'Highlighted greeting', d), field(s.about, 'name', 'Big name', d), field(s.about, 'word', 'Big word behind the photo', d)),
-      field(s.about, 'availability', 'Purple pill (Currently…)', d),
+      field(s.about, 'availability', 'Green online pill (Currently…)', d),
       field(s.about, 'body', 'Paragraph', d, { multi: true, rows: 4 }),
       h('div', { class: 'sub' }, field(s.about, 'languagesTitle', 'Languages list title', d),
         listEditor(s.about.languages, d, [{ key: 'name', label: 'Language' }, { key: 'level', label: 'Level' }], { name: '', level: '' }, 'Language')),
