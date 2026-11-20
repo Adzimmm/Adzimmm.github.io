@@ -1563,3 +1563,7 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 @keyframes pp-note{0%{transform:translateY(40%);opacity:0}30%{opacity:1}100%{transform:translateY(-160%) rotate(15deg);opacity:0}}
 [data-motion="off"] .pet *{animation:none!important}
 @media (prefers-reduced-motion:reduce){.pet *{animation:none!important}}
+
+/* Pet: 300-frame canvas at a fixed 240 x 240, drawn smoothly, no shadow */
+.pet-sprite{image-rendering:auto}
+.pet .pp-shadow{display:none}
