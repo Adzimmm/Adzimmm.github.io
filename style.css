@@ -1486,3 +1486,20 @@ html[data-motion="on"] .about-hero:not(.s-pill) .ah-pill{transform:translate(110
 .ah-pill{padding:0 26px 22px 0}
 .ah-cursor{left:auto;top:auto;right:6px;bottom:2px}
 @media(max-width:860px){.ah-pill{padding:0 22px 20px 0}.ah-cursor{left:auto;top:auto;right:4px;bottom:2px}}
+
+/* ---------- Chibi pet (pet.js): replaces the chat button; drag it anywhere, tap it to chat ---------- */
+html.has-pet .chat-launcher{display:none!important}
+.pet{position:fixed;left:0;top:0;z-index:54;width:var(--pet);height:var(--pet);padding:0;border:0;background:none;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;transition:opacity .3s}
+.pet-sprite{position:absolute;inset:0;background-repeat:no-repeat;image-rendering:pixelated;image-rendering:crisp-edges}
+.pet-shadow{position:absolute;left:32%;right:32%;bottom:8%;height:7%;border-radius:50%;background:rgba(0,0,0,.4);filter:blur(3px);transition:transform .25s,opacity .25s}
+[data-theme="light"] .pet-shadow{background:rgba(36,23,57,.25)}
+.pet.is-dragging{cursor:grabbing}
+.pet.is-dragging .pet-shadow{opacity:.2;transform:scale(.6) translateY(10px)}
+.pet::after{content:'Chat with me!';position:absolute;bottom:92%;left:50%;padding:6px 10px;border-radius:12px 12px 12px 4px;background:var(--accent-purple);color:#15121b;font:600 12px/1.2 var(--font-body);white-space:nowrap;
+  opacity:0;transform:translate(-20%,6px) scale(.9);transform-origin:0 100%;transition:opacity .2s,transform .25s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+[data-theme="light"] .pet::after{background:#7650b5;color:#fff}
+.pet:hover::after,.pet:focus-visible::after{opacity:1;transform:translate(-20%,0) scale(1)}
+.pet.is-dragging::after{opacity:0}
+.pet:focus-visible{outline:2px solid var(--accent-purple);outline-offset:2px;border-radius:16px}
+html.pv-open .pet{opacity:0;pointer-events:none}
+@media print{.pet{display:none}}
