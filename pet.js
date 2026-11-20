@@ -12,7 +12,7 @@
     drag_panic: { frames: 8, fps: 9 },
     dance_brazil: { frames: 16, fps: 13 },
   };
-  const SIZE = window.matchMedia('(max-width: 640px)').matches ? 96 : 120; // shown size in px
+  const SIZE = window.matchMedia('(max-width: 640px)').matches ? 140 : 180; // shown size in px
   const STORE = 'adz:pet';
   const root = document.documentElement;
   const still = () => root.dataset.motion === 'off' || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
