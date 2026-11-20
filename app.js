@@ -747,16 +747,59 @@
     }
   }
 
-  /* ---------- About intro: the highlighter, pill and cursor play once when it scrolls into view ---------- */
+  /* ---------- About intro: plays once when it scrolls into view ----------
+     Types "Hello I'm" -> the highlighter sweeps -> types the name -> the Figma cursor drags the pill in
+     from off screen -> types the bio. Each typed line keeps its full size from the start (no jumping). */
   const aboutHero = $('.about-hero');
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  function typeIn(el, perChar) {
+    const text = el.textContent;
+    el.textContent = '';
+    const ghost = document.createElement('span');
+    ghost.className = 'tw-ghost';
+    ghost.textContent = text;
+    const live = document.createElement('span');
+    live.className = 'tw-live';
+    live.setAttribute('aria-hidden', 'true');
+    const caret = document.createElement('i');
+    caret.className = 'tw-caret';
+    el.append(ghost, live);
+    live.append(document.createTextNode(''), caret);
+    el.classList.add('is-typing');
+    return new Promise(resolve => {
+      let n = 0;
+      const step = () => {
+        n++;
+        live.firstChild.textContent = text.slice(0, n);
+        if (n < text.length) setTimeout(step, perChar * (text[n - 1] === ' ' ? 0.6 : 1) * (0.75 + Math.random() * 0.5));
+        else setTimeout(() => { el.classList.remove('is-typing'); el.classList.add('is-typed'); el.textContent = text; resolve(); }, 450);
+      };
+      setTimeout(step, perChar);
+    });
+  }
+  async function playAbout() {
+    if (aboutHero.dataset.played) return; // runs once, even if it is asked twice
+    aboutHero.dataset.played = '1';
+    if (root.dataset.motion === 'off') { aboutHero.classList.add('is-in', 's-hl', 's-pill', 's-done'); return; }
+    aboutHero.classList.add('is-in', 's-typing');
+    await wait(350);
+    await typeIn($('.ah-hl', aboutHero), 95);
+    aboutHero.classList.add('s-hl');
+    await wait(500);
+    await typeIn($('.ah-name', aboutHero), 120);
+    aboutHero.classList.add('s-pill');
+    await wait(1500);
+    await typeIn($('.ah-body', aboutHero), 26);
+    aboutHero.classList.add('s-done');
+  }
   if (aboutHero) {
-    if (!('IntersectionObserver' in window)) aboutHero.classList.add('is-in');
+    if (!('IntersectionObserver' in window)) playAbout();
     else {
       const heroIo = new IntersectionObserver(entries => entries.forEach(e => {
         if (!e.isIntersecting) return;
-        aboutHero.classList.add('is-in');
         heroIo.disconnect();
-      }), { threshold: 0.3 });
+        playAbout();
+      }), { threshold: 0.35 });
       heroIo.observe(aboutHero);
     }
   }

@@ -1441,3 +1441,24 @@ html.pv-open .chat-launcher{opacity:0;visibility:hidden;pointer-events:none}
   filter:drop-shadow(0 0 6px color-mix(in srgb,var(--ah) 80%,transparent)) drop-shadow(0 0 16px color-mix(in srgb,var(--ah) 55%,transparent));transform-origin:20% 15%}
 @keyframes ah-nudge{0%,100%{transform:none}50%{transform:translate(3px,3px)}}
 @media(max-width:860px){.ah-cursor{left:-18px;top:-16px;right:auto;bottom:auto;width:22px;height:22px}}
+
+/* About intro, step by step (app.js playAbout): typewriter text, highlighter, the pill dragged in by the cursor */
+html[data-motion="on"] .about-hero:not(.is-in) :is(.ah-hl,.ah-name,.ah-body){color:transparent}
+.ah-hl.is-typing{display:inline-grid}
+.ah-name.is-typing,.ah-body.is-typing{display:grid}
+.tw-ghost,.tw-live{grid-area:1/1}
+.tw-ghost{visibility:hidden}
+.tw-caret{display:inline-block;width:2px;height:.95em;margin-left:2px;vertical-align:-.1em;background:currentColor;animation:tw-blink .8s steps(1) infinite}
+@keyframes tw-blink{50%{opacity:0}}
+/* highlighter waits for its own step */
+.about-hero.is-in .ah-hl{background-size:0 100%;color:var(--text);transition:background-size .7s cubic-bezier(.65,0,.35,1),color .3s .3s}
+.about-hero.s-hl .ah-hl{background-size:100% 100%;color:#15121b}
+/* pill: purple from the start, waits off screen, then the cursor drags it under the name */
+.ah-pill-in,.about-hero.is-in .ah-pill-in{background-size:100% 100%;color:#fff;transition:none}
+.ah-cursor,.about-hero.is-in .ah-cursor{transform:none;transition:none;animation:none}
+html[data-motion="on"] .about-hero:not(.s-pill) .ah-pill{transform:translate(110vw,-40px) rotate(8deg)}
+.about-hero.s-pill .ah-pill{animation:ah-drag 1.35s cubic-bezier(.22,.85,.25,1) both}
+.about-hero.s-pill .ah-cursor{animation:ah-nudge 2.6s ease-in-out 1.6s infinite}
+@keyframes ah-drag{0%{transform:translate(110vw,-40px) rotate(8deg)}72%{transform:translate(-8px,5px) rotate(-1.5deg)}88%{transform:translate(2px,-1px) rotate(.4deg)}100%{transform:none}}
+[data-motion="off"] .tw-caret{display:none}
+.about-hero.s-typing :is(.ah-hl,.ah-name,.ah-body):not(.is-typing):not(.is-typed){color:transparent}
