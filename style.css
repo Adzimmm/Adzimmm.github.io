@@ -1481,3 +1481,8 @@ html[data-motion="on"] .about-hero:not(.s-pill) .ah-pill{transform:translate(110
   100%{box-shadow:0 0 18px color-mix(in srgb,var(--live-glow) 55%,transparent),0 0 0 14px transparent}}
 @media(max-width:860px){.ah-pill{padding:14px 0 0 26px}.ah-cursor{left:0;top:0;width:30px;height:30px}}
 .ah-word{z-index:1}
+
+/* Cursor holds the pill at its right end, as if dragging it (tip on the pill's lower right) */
+.ah-pill{padding:0 26px 22px 0}
+.ah-cursor{left:auto;top:auto;right:6px;bottom:2px}
+@media(max-width:860px){.ah-pill{padding:0 22px 20px 0}.ah-cursor{left:auto;top:auto;right:4px;bottom:2px}}
