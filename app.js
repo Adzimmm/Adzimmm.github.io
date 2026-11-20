@@ -722,10 +722,11 @@
       const brand = P[item.type];
       const custom = item.type === 'custom' || !brand;
       const name = custom ? (item.label || 'Link') : brand.name;
-      const icon = custom
+      const svgIcon = custom && item.svg && window.cleanSvg ? window.cleanSvg(item.svg) : '';
+      const icon = svgIcon || (custom
         ? `<span class="material-symbols-rounded" aria-hidden="true">${escapeHtml((item.icon || 'link').trim().toLowerCase())}</span>`
-        : `<svg viewBox="${brand.vb}" aria-hidden="true" ${brand.stroke ? 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"' : 'fill="currentColor"'}><path d="${brand.d}"/></svg>`;
-      if (custom) symbols.add((item.icon || 'link').trim().toLowerCase());
+        : `<svg viewBox="${brand.vb}" aria-hidden="true" ${brand.stroke ? 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"' : 'fill="currentColor"'}><path d="${brand.d}"/></svg>`);
+      if (custom && !svgIcon) symbols.add((item.icon || 'link').trim().toLowerCase());
       const out = !href.startsWith('mailto:');
       return `<li><a class="soc soc-${custom ? 'custom' : escapeHtml(item.type)}" href="${escapeHtml(href)}"${out ? ' target="_blank" rel="noopener"' : ''} style="--brand:${custom ? 'var(--accent-purple)' : brand.color}" aria-label="${escapeHtml(name)}"><span class="soc-tip" aria-hidden="true">${escapeHtml(name)}</span>${icon}</a></li>`;
     }).join('');

@@ -574,6 +574,21 @@ function socialsEditor(contact, doc) {
           h('label', { class: 'field' }, h('span', {}, 'Name (tooltip)'), label),
           h('label', { class: 'field' }, h('span', {}, 'Google icon name'), h('div', { class: 'soc-sel' }, prev, icon),
             h('small', {}, 'Pick an icon at ', h('a', { href: 'https://fonts.google.com/icons?icon.style=Rounded', target: '_blank', rel: 'noopener' }, 'Google Fonts › Icons ↗'), ', then copy its name here.')));
+        // Or any SVG: cleaned (shapes only) and coloured to match; it replaces the Google icon when filled.
+        const svgPrev = h('span', { class: 'soc-prev big' });
+        const svgNote = h('small', {}, 'Optional. Paste <svg>…</svg> code; it replaces the Google icon. Colours become the icon colour.');
+        const showSvg = () => {
+          const clean = item.svg ? window.cleanSvg(item.svg) : '';
+          svgPrev.innerHTML = clean;
+          svgPrev.hidden = !clean;
+          prev.style.opacity = clean ? '.3' : '';
+          if (item.svg && !clean) svgNote.textContent = 'That code has no usable SVG shapes.';
+          else svgNote.textContent = 'Optional. Paste <svg>…</svg> code; it replaces the Google icon. Colours become the icon colour.';
+        };
+        const svgInput = h('textarea', { rows: 3, value: item.svg || '', placeholder: '<svg viewBox="0 0 24 24">…</svg>', spellcheck: 'false' });
+        svgInput.addEventListener('input', () => { item.svg = svgInput.value.trim(); markDirty(doc); showSvg(); });
+        parts.push(h('label', { class: 'field soc-svg' }, h('span', {}, 'Or SVG code'), h('div', { class: 'soc-sel' }, svgPrev, svgInput), svgNote));
+        showSvg();
       }
       wrap.replaceChildren(...parts);
     };

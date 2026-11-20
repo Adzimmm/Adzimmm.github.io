@@ -1400,3 +1400,4 @@ html.pv-open .chat-launcher{opacity:0;visibility:hidden;pointer-events:none}
 .soc:hover .soc-tip,.soc:focus-visible .soc-tip{top:-42px;opacity:1}
 .soc:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
 [data-motion="off"] .soc,[data-motion="off"] .soc-tip{transition:none}
+.soc>svg:not([width]){width:20px;height:20px}
