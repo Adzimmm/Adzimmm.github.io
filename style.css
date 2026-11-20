@@ -1513,3 +1513,53 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 .pet-debug input{width:100%}
 .pd-row{display:flex;align-items:center;gap:10px}
 .pet-sprite{display:block;width:100%;height:100%}
+
+/* ---------- Pet v3: the vector chibi (assets/pet/chibi.svg), moved as a whole by CSS ---------- */
+.pet{width:var(--pet-w);height:var(--pet-h)}
+.pet::after{bottom:98%;left:50%}
+.pp-body{position:absolute;inset:0;display:block;transform-origin:50% 100%}
+.pp-img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none;user-select:none;pointer-events:none}
+.pp-shadow{position:absolute;left:18%;right:18%;bottom:-2%;height:5%;border-radius:50%;background:rgba(0,0,0,.35);filter:blur(3px)}
+[data-theme="light"] .pp-shadow{background:rgba(36,23,57,.22)}
+.pp-fx{position:absolute;inset:0;pointer-events:none}
+.pp-fx i{position:absolute;display:none;font-style:normal}
+.pp-tear{top:37%;width:7%;aspect-ratio:2/3;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#7cc8ff;box-shadow:0 0 6px rgba(124,200,255,.7)}
+.pp-tear-l{left:30%}
+.pp-tear-r{left:66%}
+.pp-spark{top:22%;right:-4%;width:16%;aspect-ratio:1;background:#ffd75e;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+.pp-note{top:6%;font:700 calc(var(--pet-h) * .1)/1 Georgia,serif;color:var(--accent-purple)}
+.pp-note-a{left:-6%}
+.pp-note-b{right:-6%;color:#ffd75e}
+/* facing: the figure looks the way it walks */
+.pet[data-dir="left"] .pp-img{transform:scaleX(-1)}
+/* idle: breathing and a slow sway */
+.pet[data-state="idle"] .pp-body{animation:pp-breathe 3.2s ease-in-out infinite}
+@keyframes pp-breathe{0%,100%{transform:none}50%{transform:scale(1.015,.985) rotate(.6deg)}}
+/* walk: bouncy steps with a small rock */
+.pet[data-state="walk"] .pp-body{animation:pp-walk .5s ease-in-out infinite}
+.pet[data-state="walk"] .pp-shadow{animation:pp-shadow .25s ease-in-out infinite alternate}
+@keyframes pp-walk{0%,100%{transform:translateY(0) rotate(-3deg)}25%{transform:translateY(-7%) rotate(0)}50%{transform:translateY(0) rotate(3deg)}75%{transform:translateY(-7%) rotate(0)}}
+@keyframes pp-shadow{to{transform:scaleX(.8);opacity:.6}}
+/* drag: dangles and shakes, tears fly */
+.pet[data-state="drag"] .pp-body{transform-origin:50% 8%;animation:pp-dangle .9s ease-in-out infinite}
+.pet[data-state="drag"] .pp-img{animation:pp-shake .12s linear infinite}
+.pet[data-state="drag"] .pp-shadow{opacity:.15}
+.pet[data-state="drag"] .pp-tear{display:block;animation:pp-tear-l .7s ease-in infinite}
+.pet[data-state="drag"] .pp-tear-r{animation-name:pp-tear-r;animation-delay:-.35s}
+@keyframes pp-dangle{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+@keyframes pp-shake{0%,100%{translate:0 0}25%{translate:-2px 1px}75%{translate:2px -1px}}
+@keyframes pp-tear-l{from{transform:none;opacity:1}to{transform:translate(-140%,160%) scale(.6);opacity:0}}
+@keyframes pp-tear-r{from{transform:none;opacity:1}to{transform:translate(140%,160%) scale(.6);opacity:0}}
+/* hop: a happy jump with a sparkle */
+.pet[data-state="hop"] .pp-body{animation:pp-hop 1.4s cubic-bezier(.3,.7,.4,1) both}
+.pet[data-state="hop"] .pp-spark{display:block;animation:pp-spark 1.4s ease-out both}
+@keyframes pp-hop{0%,100%{transform:none}15%{transform:scale(1.06,.92)}35%{transform:translateY(-14%) scale(.97,1.04)}55%{transform:none}65%{transform:scale(1.04,.96)}75%{transform:none}}
+@keyframes pp-spark{0%{transform:scale(0) rotate(0)}30%{transform:scale(1.2) rotate(90deg)}70%{transform:scale(1) rotate(160deg)}100%{transform:scale(0) rotate(240deg)}}
+/* dance: samba sway and bounce, music notes */
+.pet[data-state="dance"] .pp-body{animation:pp-samba .6s ease-in-out infinite}
+.pet[data-state="dance"] .pp-note{display:block;animation:pp-note 1.2s ease-out infinite}
+.pet[data-state="dance"] .pp-note-b{animation-delay:-.6s}
+@keyframes pp-samba{0%,100%{transform:translateX(-6%) rotate(-6deg)}25%{transform:translateY(-6%)}50%{transform:translateX(6%) rotate(6deg)}75%{transform:translateY(-6%)}}
+@keyframes pp-note{0%{transform:translateY(40%);opacity:0}30%{opacity:1}100%{transform:translateY(-160%) rotate(15deg);opacity:0}}
+[data-motion="off"] .pet *{animation:none!important}
+@media (prefers-reduced-motion:reduce){.pet *{animation:none!important}}
