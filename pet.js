@@ -84,14 +84,14 @@
   let mode = 'idle'; // idle | walk | drag | dance
   let walkTo = 0;
   let nextIdea = performance.now() + 4000;
-  // Left alone it roams the page: walks to a random spot (up and down too), pauses, blinks, sometimes dances.
+  // Left alone it roams left and right, pauses, blinks, sometimes dances.
   let walkY = 0;
   function think(now) {
     if (still() || mode !== 'idle' || now < nextIdea || chatOpen()) return;
     const r = Math.random();
     if (r < 0.72) {
       walkTo = 4 + Math.random() * Math.max(0, window.innerWidth - SIZE - 8);
-      walkY = 70 + Math.random() * Math.max(0, window.innerHeight - SIZE - 74);
+      walkY = y; // left and right only: it stays at the height where it was left
       if (Math.abs(walkTo - x) < 60) walkTo = Math.min(Math.max(4, x + (x > window.innerWidth / 2 ? -1 : 1) * 160), window.innerWidth - SIZE - 4);
       mode = 'walk';
       play(walkTo < x ? 'walk_left' : 'walk_right');
