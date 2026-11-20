@@ -672,9 +672,15 @@
     // Favicon uploaded in the admin (round tab icons and a square home-screen icon); else the bundled ones stay.
     const fav = t.meta.favicon;
     if (fav && fav.icon) {
-      $$('link[rel="icon"]').forEach(link => { link.href = link.sizes && String(link.sizes) === '512x512' ? (fav.large || fav.icon) : fav.icon; link.type = 'image/png'; });
-      const apple = $('link[rel="apple-touch-icon"]');
-      if (apple && fav.apple) apple.href = fav.apple;
+      // New link elements (not a changed href): browsers refresh the tab icon only for a new one.
+      const swap = (link, href) => {
+        if (!link || !href || link.href === href) return;
+        const fresh = link.cloneNode();
+        fresh.href = href;
+        link.replaceWith(fresh);
+      };
+      $$('link[rel="icon"]').forEach(link => swap(link, String(link.sizes) === '512x512' ? (fav.large || fav.icon) : fav.icon));
+      swap($('link[rel="apple-touch-icon"]'), fav.apple);
     }
     $('meta[name="description"]').content = t.meta.description;
     searchInput.placeholder = t.hero.searchPlaceholder;
