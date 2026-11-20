@@ -1462,3 +1462,7 @@ html[data-motion="on"] .about-hero:not(.s-pill) .ah-pill{transform:translate(110
 @keyframes ah-drag{0%{transform:translate(110vw,-40px) rotate(8deg)}72%{transform:translate(-8px,5px) rotate(-1.5deg)}88%{transform:translate(2px,-1px) rotate(.4deg)}100%{transform:none}}
 [data-motion="off"] .tw-caret{display:none}
 .about-hero.s-typing :is(.ah-hl,.ah-name,.ah-body):not(.is-typing):not(.is-typed){color:transparent}
+/* Bigger Figma cursor */
+.ah-pill{margin-left:28px}
+.ah-cursor{left:-30px;top:-27px;width:36px;height:36px}
+@media(max-width:860px){.ah-cursor{left:-26px;top:-24px;width:32px;height:32px}}
