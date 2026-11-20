@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;0,700;1,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=739ec456df">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=739ec456df">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=739ec456df">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=739ec456df">
+  <link rel="stylesheet" href="style.css?v=12c80d8bfc">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=12c80d8bfc">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=12c80d8bfc">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=12c80d8bfc">
   <!-- Link preview (WhatsApp, LinkedIn, X) -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Adzim's Portfolio">
@@ -38,8 +38,8 @@
   }
   </script>
   <meta name="twitter:card" content="summary_large_image">
-  <script src="supabase-config.js?v=739ec456df"></script>
-  <script src="site-data.js?v=739ec456df"></script>
+  <script src="supabase-config.js?v=12c80d8bfc"></script>
+  <script src="site-data.js?v=12c80d8bfc"></script>
   <script>
     /* Before first paint: motion follows the OS reduced-motion setting; the theme is the visitor's own choice,
        else the default set in the admin (site.theme.mode); accent colours come from site.theme too. */
@@ -140,11 +140,21 @@
       <div class="section-head">
         <h2 id="about-title" data-c="about.title">About Me</h2>
       </div>
+      <!-- Intro: cut-out photo on an accent card, highlighted greeting, name, current status (all set in the admin) -->
+      <div class="about-hero">
+        <div class="ah-photo">
+          <div class="ah-card"><span class="ah-word" data-c="about.word" aria-hidden="true">adzim</span></div>
+          <img id="about-photo" src="assets/about/adzim.webp" width="1000" height="1250" alt="Portrait of Adzim" loading="lazy" decoding="async">
+        </div>
+        <div class="ah-text">
+          <p class="ah-hello"><span class="ah-hl" data-c="about.hello">Hello I'm</span></p>
+          <h3 class="ah-name" data-c="about.name">Adzim</h3>
+          <p class="ah-pill"><span class="ah-pill-in" data-c="about.availability">Currently interning at Wiser.MY · 21 Sep 2026 – 21 Jan 2027</span><svg class="ah-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3l16 7.2-6.9 1.9L10.9 19Z" fill="currentColor"/></svg></p>
+          <p class="ah-body" data-c="about.body">My full name is Ahmad Zaid Adzim bin Abdul Rahim. Passionate about learning, with a strong affinity for minimalist aesthetics and visual communication. Constantly creative and evolving to turn complex ideas into clean, impactful digital experiences.</p>
+        </div>
+      </div>
       <div class="about-pair">
         <div class="panel about-me">
-          <h3 data-c="about.cardTitle">Hi, I'm Adzim.</h3>
-          <p data-c="about.body">My full name is Ahmad Zaid Adzim bin Abdul Rahim. Passionate about learning, with a strong affinity for minimalist aesthetics and visual communication. Constantly creative and evolving to turn complex ideas into clean, impactful digital experiences.</p>
-          <p class="availability"><span aria-hidden="true"></span><b data-c="about.availability">Currently interning at Wiser.MY · 21 Sep 2026 – 21 Jan 2027</b></p>
           <div class="list-head"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></b><span data-c="about.languagesTitle">Languages</span></div>
           <ul class="hair-list" id="about-languages">
             <li><span>Bahasa Melayu</span><small>Native</small></li>
@@ -262,12 +272,12 @@
     <div class="resume-pages" id="resume-sheet"></div>
   </dialog>
 
-  <script src="portfolio-data.js?v=739ec456df"></script>
-  <script src="resume-data.js?v=739ec456df"></script>
-  <script src="socials.js?v=739ec456df"></script>
-  <script src="chat.js?v=739ec456df"></script>
-  <script src="project-view.js?v=739ec456df"></script>
-  <script src="app.js?v=739ec456df"></script>
-  <script src="visit.js?v=739ec456df"></script>
+  <script src="portfolio-data.js?v=12c80d8bfc"></script>
+  <script src="resume-data.js?v=12c80d8bfc"></script>
+  <script src="socials.js?v=12c80d8bfc"></script>
+  <script src="chat.js?v=12c80d8bfc"></script>
+  <script src="project-view.js?v=12c80d8bfc"></script>
+  <script src="app.js?v=12c80d8bfc"></script>
+  <script src="visit.js?v=12c80d8bfc"></script>
 </body>
 </html>

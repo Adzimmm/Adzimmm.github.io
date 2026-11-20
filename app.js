@@ -692,6 +692,13 @@
       return `<li><span>${escapeHtml(s.name)}</span><small data-level="${level}">${LEVELS[level]}</small></li>`;
     }).join('');
     $('#about-fields').innerHTML = a.fields.map(f => `<li>${escapeHtml(f)}</li>`).join('');
+    // About photo: the cut-out uploaded in the admin (site.about.photo), else the bundled one.
+    const photo = $('#about-photo');
+    if (photo && a.photo && a.photo.src) {
+      photo.src = a.photo.src;
+      if (a.photo.width) photo.width = a.photo.width;
+      if (a.photo.height) photo.height = a.photo.height;
+    }
 
     renderSocials(t.contact);
     $('.resume-download').setAttribute('download', t.resume.pdfName);
@@ -737,6 +744,20 @@
       link.rel = 'stylesheet';
       link.href = `https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=${[...symbols].filter(n => /^[a-z0-9_]+$/.test(n)).sort().join(',')}&display=block`;
       document.head.append(link);
+    }
+  }
+
+  /* ---------- About intro: the highlighter, pill and cursor play once when it scrolls into view ---------- */
+  const aboutHero = $('.about-hero');
+  if (aboutHero) {
+    if (!('IntersectionObserver' in window)) aboutHero.classList.add('is-in');
+    else {
+      const heroIo = new IntersectionObserver(entries => entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        aboutHero.classList.add('is-in');
+        heroIo.disconnect();
+      }), { threshold: 0.3 });
+      heroIo.observe(aboutHero);
     }
   }
 

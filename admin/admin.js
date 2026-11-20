@@ -312,22 +312,21 @@ async function iconPng(bitmap, size, round, crop) {
 
 // Crop editor: move and zoom the picture under a round frame with a rule-of-thirds grid.
 // Resolves to the chosen square in the picture's own pixels, or null when cancelled.
-function cropFavicon(bitmap) {
-  const V = 300; // frame size on screen
+function cropImage(bitmap, { w: W = 300, h: H = 300, round = true, title = 'Crop your icon' } = {}) {
   const canvas = h('canvas', { class: 'crop-img', width: bitmap.width, height: bitmap.height });
   canvas.getContext('2d').drawImage(bitmap, 0, 0);
-  const minS = V / Math.min(bitmap.width, bitmap.height);
+  const minS = Math.max(W / bitmap.width, H / bitmap.height);
   let s = minS;
-  let ox = (V - bitmap.width * s) / 2;
-  let oy = (V - bitmap.height * s) / 2;
+  let ox = (W - bitmap.width * s) / 2;
+  let oy = (H - bitmap.height * s) / 2;
   const clamp = () => {
-    ox = Math.min(0, Math.max(V - bitmap.width * s, ox));
-    oy = Math.min(0, Math.max(V - bitmap.height * s, oy));
+    ox = Math.min(0, Math.max(W - bitmap.width * s, ox));
+    oy = Math.min(0, Math.max(H - bitmap.height * s, oy));
     canvas.style.width = `${bitmap.width * s}px`;
     canvas.style.height = `${bitmap.height * s}px`;
     canvas.style.transform = `translate(${ox}px, ${oy}px)`;
   };
-  const zoomTo = (next, cx = V / 2, cy = V / 2) => {
+  const zoomTo = (next, cx = W / 2, cy = H / 2) => {
     next = Math.min(minS * 5, Math.max(minS, next));
     ox = cx - (cx - ox) * (next / s);
     oy = cy - (cy - oy) * (next / s);
@@ -337,7 +336,7 @@ function cropFavicon(bitmap) {
   };
   const range = h('input', { type: 'range', min: '1', max: '5', step: '0.01', value: '1', 'aria-label': 'Zoom' });
   range.addEventListener('input', () => zoomTo(minS * Number(range.value)));
-  const stage = h('div', { class: 'crop-stage' }, canvas, h('span', { class: 'crop-mask', 'aria-hidden': 'true' }), h('span', { class: 'crop-grid', 'aria-hidden': 'true' }));
+  const stage = h('div', { class: 'crop-stage', style: `width:${W}px;height:${H}px` }, canvas, round ? h('span', { class: 'crop-mask', 'aria-hidden': 'true' }) : null, h('span', { class: 'crop-grid', 'aria-hidden': 'true' }));
   stage.addEventListener('pointerdown', e => {
     stage.setPointerCapture(e.pointerId);
     const sx = e.clientX - ox;
@@ -357,12 +356,12 @@ function cropFavicon(bitmap) {
   return new Promise(resolve => {
     const done = value => { dlg.close(); dlg.remove(); resolve(value); };
     dlg.append(
-      h('h2', {}, 'Crop your icon'),
+      h('h2', {}, title),
       h('p', { class: 'muted' }, 'Drag to move, use the slider or scroll to zoom. The lines split the frame in thirds.'),
       stage,
       h('label', { class: 'crop-zoom' }, h('span', {}, '−'), range, h('span', {}, '+')),
       h('div', { class: 'ask-actions' },
-        h('button', { class: 'btn primary', type: 'button', onclick: () => done({ x: -ox / s, y: -oy / s, size: V / s }) }, 'Use this crop'),
+        h('button', { class: 'btn primary', type: 'button', onclick: () => done({ x: -ox / s, y: -oy / s, size: W / s, w: W / s, h: H / s }) }, 'Use this crop'),
         h('button', { class: 'btn ghost', type: 'button', onclick: () => done(null) }, 'Cancel')));
     dlg.addEventListener('cancel', e => { e.preventDefault(); done(null); });
     document.body.append(dlg);
@@ -370,9 +369,135 @@ function cropFavicon(bitmap) {
   });
 }
 
+/* ---------- About photo: crop (rule of thirds), remove the background, upload ---------- */
+// Background removal for a person on a plain backdrop: flood-fill the backdrop colour in from the edges
+// (so a white shirt inside the outline stays), then soften the cut edge by one pixel.
+function removeBackground(src, tol) {
+  const { width: w, height: hgt } = src;
+  const out = new ImageData(new Uint8ClampedArray(src.data), w, hgt);
+  const d = out.data;
+  // Backdrop colour: median of the top edge and the upper sides (the bottom edge is usually the body).
+  const rs = [], gs = [], bs = [];
+  const addPx = i => { rs.push(d[i]); gs.push(d[i + 1]); bs.push(d[i + 2]); };
+  for (let x = 0; x < w; x++) addPx(x * 4);
+  for (let y = 0; y < hgt * 0.6; y++) { addPx(y * w * 4); addPx((y * w + w - 1) * 4); }
+  const median = list => list.sort((m, k) => m - k)[list.length >> 1];
+  const r = median(rs), g = median(gs), b = median(bs);
+  const dist = i => Math.hypot(d[i] - r, d[i + 1] - g, d[i + 2] - b);
+  const bg = new Uint8Array(w * hgt);
+  const stack = [];
+  const seed = p => { if (!bg[p] && dist(p * 4) < tol) { bg[p] = 1; stack.push(p); } };
+  for (let x = 0; x < w; x++) { seed(x); seed((hgt - 1) * w + x); }
+  for (let y = 0; y < hgt; y++) { seed(y * w); seed(y * w + w - 1); }
+  while (stack.length) {
+    const p = stack.pop();
+    const x = p % w;
+    if (x > 0) seed(p - 1);
+    if (x < w - 1) seed(p + 1);
+    if (p >= w) seed(p - w);
+    if (p < w * (hgt - 1)) seed(p + w);
+  }
+  // Two rings of pixels along the cut fade by how close they are to the backdrop colour (no light halo).
+  const near = (p, mark) => { const x = p % w; return (x > 0 && mark[p - 1]) || (x < w - 1 && mark[p + 1]) || (p >= w && mark[p - w]) || (p < w * (hgt - 1) && mark[p + w]); };
+  const ring1 = new Uint8Array(w * hgt);
+  for (let p = 0; p < w * hgt; p++) if (!bg[p] && near(p, bg)) ring1[p] = 1;
+  for (let p = 0; p < w * hgt; p++) {
+    if (bg[p]) { d[p * 4 + 3] = 0; continue; }
+    const fade = (dist(p * 4) - tol * 0.8) / (tol * 2.2);
+    if (ring1[p]) d[p * 4 + 3] = Math.round(255 * Math.min(1, Math.max(0, fade)));
+    else if (near(p, ring1)) d[p * 4 + 3] = Math.round(255 * Math.min(1, Math.max(0.6, fade + 0.3)));
+  }
+  return out;
+}
+
+// Crop, then preview the cut-out on a checkerboard with a strength slider. Resolves to a WebP blob (or null).
+async function preparePhoto(file) {
+  const bitmap = await createImageBitmap(file);
+  const crop = await cropImage(bitmap, { w: 280, h: 350, round: false, title: 'Crop your photo' });
+  if (!crop) { bitmap.close(); return null; }
+  const scale = Math.min(1, 1250 / crop.h);
+  const cw = Math.round(crop.w * scale);
+  const ch = Math.round(crop.h * scale);
+  const canvas = h('canvas', { width: cw, height: ch, class: 'cut-canvas' });
+  const g = canvas.getContext('2d', { willReadFrequently: true });
+  g.drawImage(bitmap, crop.x, crop.y, crop.w, crop.h, 0, 0, cw, ch);
+  bitmap.close();
+  const original = g.getImageData(0, 0, cw, ch);
+  const remove = h('input', { type: 'checkbox', checked: true });
+  const tol = h('input', { type: 'range', min: '8', max: '120', step: '1', value: '42', 'aria-label': 'Background strength' });
+  const draw = () => g.putImageData(remove.checked ? removeBackground(original, Number(tol.value)) : original, 0, 0);
+  remove.addEventListener('change', draw);
+  tol.addEventListener('input', draw);
+  draw();
+  const dlg = h('dialog', { class: 'crop-dialog cut-dialog' });
+  return new Promise(resolve => {
+    const done = ok => {
+      dlg.close();
+      dlg.remove();
+      if (!ok) return resolve(null);
+      canvas.toBlob(blob => resolve(blob && { blob, width: cw, height: ch }), 'image/webp', 0.9);
+    };
+    dlg.append(
+      h('h2', {}, 'Remove background'),
+      h('p', { class: 'muted' }, 'Works best on a plain background. Raise the strength if some backdrop is left, lower it if the edge of your hair or clothes is cut.'),
+      h('div', { class: 'cut-stage' }, canvas),
+      h('label', { class: 'check' }, remove, 'Remove background'),
+      h('label', { class: 'crop-zoom' }, h('span', {}, 'Strength'), tol),
+      h('div', { class: 'ask-actions' },
+        h('button', { class: 'btn primary', type: 'button', onclick: () => done(true) }, 'Use this photo'),
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => done(false) }, 'Cancel')));
+    dlg.addEventListener('cancel', e => { e.preventDefault(); done(false); });
+    document.body.append(dlg);
+    dlg.showModal();
+  });
+}
+
+function aboutPhotoField(about, doc) {
+  const img = h('img', { class: 'about-photo-prev', alt: '' });
+  const status = h('small', {}, 'A photo of you on a plain background (portrait). You crop it, then the background is removed.');
+  const removeBtn = h('button', { class: 'btn ghost small', type: 'button' }, 'Remove photo');
+  const draw = () => {
+    img.hidden = !(about.photo && about.photo.src);
+    if (!img.hidden) img.src = asset(about.photo.src);
+    removeBtn.hidden = img.hidden;
+  };
+  const input = h('input', { type: 'file', accept: 'image/*' });
+  input.addEventListener('change', async () => {
+    const f = input.files[0];
+    input.value = '';
+    if (!f) return;
+    try {
+      const made = await preparePhoto(f);
+      if (!made) return;
+      status.textContent = 'Uploading…';
+      let src = URL.createObjectURL(made.blob);
+      const storage = [];
+      if (!DEMO) {
+        const path = `about/photo-${Date.now().toString(36)}.webp`;
+        const { error } = await sb.storage.from(BUCKET).upload(path, made.blob, { contentType: 'image/webp', upsert: false, cacheControl: '31536000' });
+        if (error) throw new Error(error.message);
+        storage.push(path);
+        src = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+      }
+      about.photo = { src, width: made.width, height: made.height, storage };
+      markDirty(doc);
+      draw();
+      status.textContent = 'New photo ready. Click Save to publish.';
+    } catch (err) {
+      status.textContent = 'Upload failed.';
+      toast(`Could not upload the photo: ${err.message}`, true);
+    }
+  });
+  removeBtn.addEventListener('click', () => { delete about.photo; markDirty(doc); draw(); status.textContent = 'Photo removed. Click Save to publish.'; });
+  draw();
+  return h('div', { class: 'field' }, h('span', {}, 'Your photo'),
+    h('div', { class: 'fav-row' }, img,
+      h('div', { class: 'fav-side' }, h('div', { class: 'fav-actions' }, h('label', { class: 'btn small' }, ico('upload'), 'Upload photo', input), removeBtn), status)));
+}
+
 async function uploadFavicon(file) {
   const bitmap = await createImageBitmap(file);
-  const crop = await cropFavicon(bitmap);
+  const crop = await cropImage(bitmap);
   if (!crop) { bitmap.close(); return null; }
   const sizes = { icon: [64, true], large: [512, true], apple: [180, false] };
   const out = { storage: [] };
@@ -698,9 +823,11 @@ function renderText() {
     card('Preview gallery', 'The note under the 3 moving image rows.',
       field(s.gallery, 'note', 'Note', d, { multi: true, rows: 2, hint: 'Write **words** for bold. Press Enter for a line break (desktop only).' })),
     card('About', 'The About Me section.',
-      h('div', { class: 'grid2' }, field(s.about, 'title', 'Section title', d), field(s.about, 'cardTitle', 'Card title', d)),
+      field(s.about, 'title', 'Section title', d),
+      aboutPhotoField(s.about, d),
+      h('div', { class: 'grid3' }, field(s.about, 'hello', 'Highlighted greeting', d), field(s.about, 'name', 'Big name', d), field(s.about, 'word', 'Big word behind the photo', d)),
+      field(s.about, 'availability', 'Purple pill (Currently…)', d),
       field(s.about, 'body', 'Paragraph', d, { multi: true, rows: 4 }),
-      field(s.about, 'availability', 'Green pill (status)', d),
       h('div', { class: 'sub' }, field(s.about, 'languagesTitle', 'Languages list title', d),
         listEditor(s.about.languages, d, [{ key: 'name', label: 'Language' }, { key: 'level', label: 'Level' }], { name: '', level: '' }, 'Language')),
       h('div', { class: 'sub' }, field(s.about, 'softwareTitle', 'Software list title', d),
