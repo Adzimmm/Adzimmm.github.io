@@ -12,7 +12,7 @@
     drag_panic: { frames: 8, fps: 9 },
     dance_brazil: { frames: 16, fps: 13 },
   };
-  const SIZE = window.matchMedia('(max-width: 640px)').matches ? 140 : 180; // shown size in px
+  const SIZE = window.matchMedia('(max-width: 640px)').matches ? 240 : 320; // shown size in px
   const STORE = 'adz:pet';
   const root = document.documentElement;
   const still = () => root.dataset.motion === 'off' || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -53,6 +53,7 @@
   let loop = true;
   let since = 0;
   let onEnd = null;
+  let loopFrom = 0; // after one full play, keep looping from this frame (the crying part of drag_panic)
   const loaded = new Set(['idle']);
   const preload = () => Object.keys(ANIMS).forEach(name => {
     if (loaded.has(name)) return;
@@ -60,12 +61,13 @@
     img.onload = () => loaded.add(name);
     img.src = `assets/pet/${name}.png`;
   });
-  function play(name, { repeat = true, done = null } = {}) {
+  function play(name, { repeat = true, done = null, from = 0 } = {}) {
     if (!loaded.has(name)) name = 'idle';
     anim = name;
     frame = 0;
     loop = repeat;
     onEnd = done;
+    loopFrom = from;
     since = performance.now();
     draw();
   }
@@ -82,21 +84,24 @@
   let mode = 'idle'; // idle | walk | drag | dance
   let walkTo = 0;
   let nextIdea = performance.now() + 4000;
+  // Left alone it roams the page: walks to a random spot (up and down too), pauses, blinks, sometimes dances.
+  let walkY = 0;
   function think(now) {
-    if (still() || mode !== 'idle' || now < nextIdea) return;
+    if (still() || mode !== 'idle' || now < nextIdea || chatOpen()) return;
     const r = Math.random();
-    if (r < 0.55) {
-      play('macho_blink', { repeat: false, done: () => play('idle') });
-      nextIdea = now + 3000 + Math.random() * 3000;
-    } else if (r < 0.88) {
-      const span = Math.min(260, window.innerWidth * 0.35);
-      walkTo = Math.min(Math.max(4, x + (Math.random() < 0.5 ? -1 : 1) * (80 + Math.random() * span)), window.innerWidth - SIZE - 4);
+    if (r < 0.72) {
+      walkTo = 4 + Math.random() * Math.max(0, window.innerWidth - SIZE - 8);
+      walkY = 70 + Math.random() * Math.max(0, window.innerHeight - SIZE - 74);
+      if (Math.abs(walkTo - x) < 60) walkTo = Math.min(Math.max(4, x + (x > window.innerWidth / 2 ? -1 : 1) * 160), window.innerWidth - SIZE - 4);
       mode = 'walk';
       play(walkTo < x ? 'walk_left' : 'walk_right');
+    } else if (r < 0.92) {
+      play('macho_blink', { repeat: false, done: () => play('idle') });
+      nextIdea = now + 1500 + Math.random() * 1500;
     } else {
       mode = 'dance';
       play('dance_brazil');
-      setTimeout(() => { if (mode === 'dance') { mode = 'idle'; play('idle'); } }, 2500 + Math.random() * 1500);
+      setTimeout(() => { if (mode === 'dance') { mode = 'idle'; play('idle'); nextIdea = performance.now() + 1200; } }, 2500 + Math.random() * 1500);
       nextIdea = now + 6000;
     }
   }
@@ -108,6 +113,7 @@
     if (a.frames > 1) {
       const f = Math.floor((now - since) / (1000 / a.fps));
       if (loop) frame = f % a.frames;
+      else if (loopFrom && f >= a.frames) frame = loopFrom + ((f - a.frames) % (a.frames - loopFrom));
       else if (f >= a.frames) {
         frame = a.frames - 1; // hold the last frame (drag panic stays on its last frame)
         if (onEnd) { const cb = onEnd; onEnd = null; cb(); }
@@ -115,13 +121,16 @@
       draw();
     }
     if (mode === 'walk') {
-      const step = 0.06 * dt * (walkTo < x ? -1 : 1);
-      if (Math.abs(walkTo - x) <= Math.abs(step) || chatOpen()) {
+      const speed = 0.09 * (SIZE / 180) * dt; // px per frame, scaled to the pet's size
+      const dx = walkTo - x;
+      const dy = walkY - y;
+      const left = Math.hypot(dx, dy);
+      if (left <= speed || chatOpen()) {
         mode = 'idle';
         play('idle');
-        nextIdea = now + 3000 + Math.random() * 3000;
+        nextIdea = now + 900 + Math.random() * 1800; // short pause, then off again
         remember();
-      } else { x += step; clamp(); place(); }
+      } else { x += dx / left * speed; y += dy / left * speed * 0.6; clamp(); place(); }
     }
     think(now);
     requestAnimationFrame(tick);
@@ -143,7 +152,7 @@
       drag.moved = true;
       mode = 'drag';
       pet.classList.add('is-dragging');
-      play('drag_panic', { repeat: false });
+      play('drag_panic', { repeat: false, from: 4 }); // panic once, then keep crying while held
     }
     if (drag.moved) { x = drag.ox + dx; y = drag.oy + dy; clamp(); place(); }
   });
