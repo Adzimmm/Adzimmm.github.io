@@ -290,7 +290,7 @@ async function toWebp(bitmap, max) {
 
 /* ---------- Favicon: any image becomes round tab icons (and a square home-screen icon) ---------- */
 // The picture is cropped to fill a square from its centre; tab icons are clipped to a circle on transparency.
-async function iconPng(bitmap, size, round) {
+async function iconPng(bitmap, size, round, crop) {
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
@@ -305,17 +305,80 @@ async function iconPng(bitmap, size, round) {
     g.fillRect(0, 0, size, size);
   }
   const side = Math.min(bitmap.width, bitmap.height);
-  g.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size);
+  const c = crop || { x: (bitmap.width - side) / 2, y: (bitmap.height - side) / 2, size: side };
+  g.drawImage(bitmap, c.x, c.y, c.size, c.size, 0, 0, size, size);
   return new Promise(res => canvas.toBlob(res, 'image/png'));
+}
+
+// Crop editor: move and zoom the picture under a round frame with a rule-of-thirds grid.
+// Resolves to the chosen square in the picture's own pixels, or null when cancelled.
+function cropFavicon(bitmap) {
+  const V = 300; // frame size on screen
+  const canvas = h('canvas', { class: 'crop-img', width: bitmap.width, height: bitmap.height });
+  canvas.getContext('2d').drawImage(bitmap, 0, 0);
+  const minS = V / Math.min(bitmap.width, bitmap.height);
+  let s = minS;
+  let ox = (V - bitmap.width * s) / 2;
+  let oy = (V - bitmap.height * s) / 2;
+  const clamp = () => {
+    ox = Math.min(0, Math.max(V - bitmap.width * s, ox));
+    oy = Math.min(0, Math.max(V - bitmap.height * s, oy));
+    canvas.style.width = `${bitmap.width * s}px`;
+    canvas.style.height = `${bitmap.height * s}px`;
+    canvas.style.transform = `translate(${ox}px, ${oy}px)`;
+  };
+  const zoomTo = (next, cx = V / 2, cy = V / 2) => {
+    next = Math.min(minS * 5, Math.max(minS, next));
+    ox = cx - (cx - ox) * (next / s);
+    oy = cy - (cy - oy) * (next / s);
+    s = next;
+    clamp();
+    range.value = String(s / minS);
+  };
+  const range = h('input', { type: 'range', min: '1', max: '5', step: '0.01', value: '1', 'aria-label': 'Zoom' });
+  range.addEventListener('input', () => zoomTo(minS * Number(range.value)));
+  const stage = h('div', { class: 'crop-stage' }, canvas, h('span', { class: 'crop-mask', 'aria-hidden': 'true' }), h('span', { class: 'crop-grid', 'aria-hidden': 'true' }));
+  stage.addEventListener('pointerdown', e => {
+    stage.setPointerCapture(e.pointerId);
+    const sx = e.clientX - ox;
+    const sy = e.clientY - oy;
+    const move = ev => { ox = ev.clientX - sx; oy = ev.clientY - sy; clamp(); };
+    const up = () => { stage.removeEventListener('pointermove', move); stage.removeEventListener('pointerup', up); };
+    stage.addEventListener('pointermove', move);
+    stage.addEventListener('pointerup', up);
+  });
+  stage.addEventListener('wheel', e => {
+    e.preventDefault();
+    const b = stage.getBoundingClientRect();
+    zoomTo(s * (e.deltaY < 0 ? 1.08 : 1 / 1.08), e.clientX - b.left, e.clientY - b.top);
+  }, { passive: false });
+  clamp();
+  const dlg = h('dialog', { class: 'crop-dialog' });
+  return new Promise(resolve => {
+    const done = value => { dlg.close(); dlg.remove(); resolve(value); };
+    dlg.append(
+      h('h2', {}, 'Crop your icon'),
+      h('p', { class: 'muted' }, 'Drag to move, use the slider or scroll to zoom. The lines split the frame in thirds.'),
+      stage,
+      h('label', { class: 'crop-zoom' }, h('span', {}, '−'), range, h('span', {}, '+')),
+      h('div', { class: 'ask-actions' },
+        h('button', { class: 'btn primary', type: 'button', onclick: () => done({ x: -ox / s, y: -oy / s, size: V / s }) }, 'Use this crop'),
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => done(null) }, 'Cancel')));
+    dlg.addEventListener('cancel', e => { e.preventDefault(); done(null); });
+    document.body.append(dlg);
+    dlg.showModal();
+  });
 }
 
 async function uploadFavicon(file) {
   const bitmap = await createImageBitmap(file);
+  const crop = await cropFavicon(bitmap);
+  if (!crop) { bitmap.close(); return null; }
   const sizes = { icon: [64, true], large: [512, true], apple: [180, false] };
   const out = { storage: [] };
   const stamp = Date.now().toString(36);
   for (const [name, [size, round]] of Object.entries(sizes)) {
-    const blob = await iconPng(bitmap, size, round);
+    const blob = await iconPng(bitmap, size, round, crop);
     if (DEMO) { out[name] = URL.createObjectURL(blob); continue; }
     const path = `site/favicon-${stamp}-${name}.png`;
     const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: 'image/png', upsert: false, cacheControl: '31536000' });
@@ -355,7 +418,9 @@ function faviconField(meta, doc) {
     status.textContent = 'Making the icon…';
     try {
       // The old files stay in Storage (a few KB): the live site uses them until this is saved.
-      meta.favicon = await uploadFavicon(f);
+      const made = await uploadFavicon(f);
+      if (!made) { draw(); status.textContent = 'Cancelled.'; return; }
+      meta.favicon = made;
       markDirty(doc);
       draw();
       setPageIcon(meta.favicon.icon);

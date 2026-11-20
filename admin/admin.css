@@ -564,3 +564,17 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
 .fav-tab-icon{flex:none;width:16px;height:16px;border-radius:50%;object-fit:cover}
 .fav-actions{display:flex;gap:8px;flex-wrap:wrap}
 .fav-actions label{cursor:pointer}
+
+/* Favicon crop editor: round frame with rule-of-thirds lines */
+.crop-dialog{width:min(380px,94vw)}
+.crop-dialog[open]{display:grid;gap:14px;padding:22px}
+.crop-dialog h2{font-size:19px}
+.crop-stage{position:relative;width:300px;height:300px;max-width:100%;justify-self:center;overflow:hidden;border-radius:16px;background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/14px 14px;cursor:grab;touch-action:none;user-select:none}
+.crop-stage:active{cursor:grabbing}
+.crop-img{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none}
+.crop-mask{position:absolute;inset:0;background:radial-gradient(circle closest-side,transparent 99%,rgba(5,4,8,.62) 100%);pointer-events:none}
+.crop-grid{position:absolute;inset:0;pointer-events:none;border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);
+  background:linear-gradient(#ffffffbf,#ffffffbf) 33.333% 0/1px 100% no-repeat,linear-gradient(#ffffffbf,#ffffffbf) 66.666% 0/1px 100% no-repeat,
+    linear-gradient(#ffffffbf,#ffffffbf) 0 33.333%/100% 1px no-repeat,linear-gradient(#ffffffbf,#ffffffbf) 0 66.666%/100% 1px no-repeat}
+.crop-zoom{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:700}
+.crop-zoom input{flex:1;min-height:0;padding:0;accent-color:var(--accent)}
