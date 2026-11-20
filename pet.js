@@ -1,5 +1,5 @@
 // Chibi pet that replaces the chat button (300-frame pack: 6 actions x 50 frames, 512x512 cells, 10 x 5 sheets),
-// shown at a fixed 240 x 240 px on every screen, each whole cell scaled down smoothly (never cropped or stretched).
+// shown at a fixed 120 x 120 px on every screen, each whole cell scaled down smoothly (never cropped or stretched).
 // - Tap: open the chat. Double-tap / double-click (or D): Brazil-style dance. Drag (mouse or touch): drag_panic.
 // - Left alone: idle breathing, walks left and right, a macho wink now and then.
 // - prefers-reduced-motion: stands still on its first idle frame (still draggable and tappable).
@@ -18,7 +18,7 @@
     macho_blink: { frames: 50, fps: 16 },
     dance_brazil: { frames: 50, fps: 16 },
   };
-  const SIZE = 240; // fixed on desktop and mobile
+  const SIZE = 120; // fixed on desktop and mobile
   const STORE = 'adz:pet';
   const root = document.documentElement;
   const still = () => root.dataset.motion === 'off' || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
