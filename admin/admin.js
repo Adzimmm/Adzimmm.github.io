@@ -28,6 +28,7 @@ const SWATCHES = ['#b8a0ff', '#8dbaff', '#a2d9ba', '#d7c785', '#ddad82', '#f4a1b
 
 /* ---------- Icons (static, trusted markup) ---------- */
 const P = {
+  pencil: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/>',
   text: '<path d="M4 6h16M4 12h10M4 18h7"/>',
   projects: '<rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/>',
   resume: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>',
@@ -1526,18 +1527,19 @@ function renderProjects() {
       h('div', { class: 'card-foot' },
         h('button', { class: 'btn ghost', type: 'button', onclick: duplicate }, ico('copy'), 'Duplicate folder'),
         h('button', { class: 'btn ghost danger', type: 'button', onclick: remove }, ico('trash'), 'Delete folder'))),
-    h('div', { class: 'section-title' }, h('h2', {}, 'Collections'), h('span', { class: 'muted' }, plural(p.sections.length, 'collection'))),
+    // "New collection" sits at the top, and the new collection is added first, right under it.
+    h('div', { class: 'section-title coll-head' }, h('h2', {}, 'Collections'), h('span', { class: 'muted' }, plural(p.sections.length, 'collection')),
+      addBtn('New collection', async () => {
+        const name = await ask({ title: 'New collection', label: 'Collection name', ok: 'Create' });
+        if (!name) return;
+        const s = { title: name, images: [] };
+        p.sections.unshift(s);
+        openState.set(s, true);
+        markDirty(d);
+        rerender();
+      })),
     ...p.sections.map((s, si) => collectionCard(p, s, si, rerender)),
-    p.sections.length ? null : h('p', { class: 'empty card' }, 'No collections in this folder yet.'),
-    addBtn('New collection', async () => {
-      const name = await ask({ title: 'New collection', label: 'Collection name', ok: 'Create' });
-      if (!name) return;
-      const s = { title: name, images: [] };
-      p.sections.push(s);
-      openState.set(s, true);
-      markDirty(d);
-      rerender();
-    }));
+    p.sections.length ? null : h('p', { class: 'empty card' }, 'No collections in this folder yet.'));
   checkName();
   refresh();
   return [h('div', { class: 'split' }, side, editor)];
@@ -1622,8 +1624,31 @@ function collectionCard(p, s, si, rerender) {
   }));
 
   const heading = h('b', { class: 'coll-name' }, s.title || '(untitled)');
-  const nameField = field(s, 'title', 'Collection name', d);
-  nameField.querySelector('input').addEventListener('input', e => { heading.textContent = e.target.value || '(untitled)'; });
+  // Pencil: rename in place. Enter or clicking away saves, Escape cancels.
+  const rename = () => {
+    const input = h('input', { class: 'coll-rename', value: s.title || '', 'aria-label': 'Collection name' });
+    const stop = e => e.stopPropagation();
+    let done = false;
+    const finish = save => {
+      if (done) return;
+      done = true;
+      const v = input.value.trim();
+      if (save && v && v !== s.title) { s.title = v; markDirty(d); }
+      heading.textContent = s.title || '(untitled)';
+      input.replaceWith(heading);
+    };
+    input.addEventListener('click', e => { e.preventDefault(); stop(e); });
+    input.addEventListener('keydown', e => {
+      stop(e);
+      if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+      if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+    });
+    input.addEventListener('keyup', e => { if (e.key === ' ') e.preventDefault(); stop(e); });
+    input.addEventListener('blur', () => finish(true));
+    heading.replaceWith(input);
+    input.focus();
+    input.select();
+  };
 
   const wrap = h('details', { class: 'card collection', open: openState.has(s) ? openState.get(s) : s.images.length < 9 },
     h('summary', {},
@@ -1631,9 +1656,10 @@ function collectionCard(p, s, si, rerender) {
       heading,
       h('span', { class: 'count' }, plural(s.images.length, 'image')),
       h('span', { class: 'row-tools', onclick: e => e.preventDefault() },
+        iconBtn('pencil', 'Rename collection', rename),
         moveBtns(p.sections, si, d, rerender),
         delBtn(async () => { await removeStored(s.images); p.sections.splice(si, 1); markDirty(d); rerender(); }, `collection "${s.title}"`))),
-    h('div', { class: 'coll-body' }, nameField, s.images.length ? thumbs : null, drop));
+    h('div', { class: 'coll-body' }, s.images.length ? thumbs : null, drop));
   wrap.addEventListener('toggle', () => openState.set(s, wrap.open));
   return wrap;
 }
