@@ -94,7 +94,7 @@
       walkY = y; // left and right only: it stays at the height where it was left
       if (Math.abs(walkTo - x) < 60) walkTo = Math.min(Math.max(4, x + (x > window.innerWidth / 2 ? -1 : 1) * 160), window.innerWidth - SIZE - 4);
       mode = 'walk';
-      play(walkTo < x ? 'walk_left' : 'walk_right');
+      play(walkTo < x ? 'walk_right' : 'walk_left'); // the sheets are named for the way the character faces, the opposite of how they read here
     } else if (r < 0.92) {
       play('macho_blink', { repeat: false, done: () => play('idle') });
       nextIdea = now + 1500 + Math.random() * 1500;
