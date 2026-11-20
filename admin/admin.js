@@ -525,11 +525,70 @@ function listEditor(list, doc, fields, blank, title) {
           ? field(list, i, title, doc)
           : h('div', { class: 'list-fields' }, fields.map(f => f.render ? f.render(item, doc) : field(item, f.key, f.label, doc, f))),
         h('div', { class: 'list-side' }, moveBtns(list, i, doc, draw), delBtn(() => { list.splice(i, 1); markDirty(doc); draw(); }, title.toLowerCase())))),
-      list.length ? null : h('p', { class: 'empty' }, `No ${title.toLowerCase()} yet.`),
+      ...(list.length ? [] : [h('p', { class: 'empty' }, `No ${title.toLowerCase()} yet.`)]),
       addBtn(`Add ${title.toLowerCase()}`, () => { list.push(clone(blank)); markDirty(doc); draw(); }));
   };
   draw();
   return wrap;
+}
+
+/* ---------- Social media list (Contact & footer) ---------- */
+// Brand platforms use their own logo (../socials.js); "Custom link" uses any Google Material Symbol by name.
+function socialsEditor(contact, doc) {
+  const P = window.SOCIALS || {};
+  if (!Array.isArray(contact.socials)) {
+    contact.socials = [
+      { type: 'email', url: '' },
+      contact.linkedin ? { type: 'linkedin', url: contact.linkedin } : null,
+      contact.instagram ? { type: 'instagram', url: contact.instagram } : null,
+    ].filter(Boolean);
+  }
+  ensureSymbolsFont();
+  const preview = item => {
+    const brand = P[item.type];
+    if (item.type === 'custom' || !brand) return h('span', { class: 'material-symbols-rounded soc-prev' }, (item.icon || 'link').trim().toLowerCase());
+    const i = h('span', { class: 'soc-prev', style: `color:${brand.color}` });
+    i.innerHTML = `<svg viewBox="${brand.vb}" width="22" height="22" ${brand.stroke ? 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"' : 'fill="currentColor"'}><path d="${brand.d}"/></svg>`;
+    return i;
+  };
+  const platform = item => {
+    const wrap = h('div', { class: 'soc-edit' });
+    const draw = () => {
+      const sel = h('select', {}, [...Object.entries(P).map(([k, v]) => h('option', { value: k, selected: item.type === k }, v.name)),
+        h('option', { value: 'custom', selected: item.type === 'custom' }, 'Custom link (Google icon)')]);
+      sel.addEventListener('change', () => { item.type = sel.value; markDirty(doc); draw(); });
+      const hint = item.type === 'email' ? 'Leave empty to use the Email above.' : item.type === 'instagram' ? 'Link or @username.' : 'Full link, e.g. https://…';
+      const url = h('input', { value: item.url || '', placeholder: item.type === 'email' ? contact.email || 'you@example.com' : 'https://' });
+      url.addEventListener('input', () => { item.url = url.value; markDirty(doc); });
+      const parts = [
+        h('label', { class: 'field' }, h('span', {}, 'Platform'), h('div', { class: 'soc-sel' }, preview(item), sel)),
+        h('label', { class: 'field' }, h('span', {}, item.type === 'email' ? 'Email (optional)' : 'Link'), url, h('small', {}, hint)),
+      ];
+      if (item.type === 'custom') {
+        const label = h('input', { value: item.label || '', placeholder: 'e.g. Portfolio PDF' });
+        label.addEventListener('input', () => { item.label = label.value; markDirty(doc); });
+        const icon = h('input', { value: item.icon || '', placeholder: 'e.g. language, palette, photo_camera' });
+        const prev = h('span', { class: 'material-symbols-rounded soc-prev big' }, (item.icon || 'link').trim().toLowerCase());
+        icon.addEventListener('input', () => { item.icon = icon.value.trim().toLowerCase().replace(/\s+/g, '_'); prev.textContent = item.icon || 'link'; markDirty(doc); });
+        parts.push(
+          h('label', { class: 'field' }, h('span', {}, 'Name (tooltip)'), label),
+          h('label', { class: 'field' }, h('span', {}, 'Google icon name'), h('div', { class: 'soc-sel' }, prev, icon),
+            h('small', {}, 'Pick an icon at ', h('a', { href: 'https://fonts.google.com/icons?icon.style=Rounded', target: '_blank', rel: 'noopener' }, 'Google Fonts › Icons ↗'), ', then copy its name here.')));
+      }
+      wrap.replaceChildren(...parts);
+    };
+    draw();
+    return wrap;
+  };
+  return h('div', { class: 'sub' },
+    h('div', { class: 'card-head' }, h('h3', {}, 'Social media'), h('p', { class: 'where' }, 'Round icons at the bottom of the page. The name pops up on hover in the platform colour.')),
+    listEditor(contact.socials, doc, [{ render: platform }], { type: 'instagram', url: '' }, 'Social link'));
+}
+
+// The full Material Symbols font (admin only), so any icon name shows while typing.
+function ensureSymbolsFont() {
+  if (document.getElementById('material-symbols')) return;
+  document.head.append(h('link', { id: 'material-symbols', rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=block' }));
 }
 
 function card(title, where, ...body) {
@@ -646,7 +705,8 @@ function renderText() {
     card('Contact & footer', 'The bottom of the page.',
       field(s.contact, 'line', 'Big line', d),
       field(s.contact, 'sub', 'Small line', d),
-      h('div', { class: 'grid3' }, field(s.contact, 'email', 'Email', d, { type: 'email' }), field(s.contact, 'linkedin', 'LinkedIn link', d, { type: 'url' }), field(s.contact, 'instagram', 'Instagram (without @)', d)),
+      field(s.contact, 'email', 'Email', d, { type: 'email', hint: 'Used by the Email icon and the chatbox.' }),
+      socialsEditor(s.contact, d),
       h('div', { class: 'grid2' }, field(s.footer, 'tagline', 'Footer: tagline', d), field(s.footer, 'copyright', 'Footer: copyright', d)),
       field(s.footer, 'privacy', 'Footer: privacy note', d, { multi: true, rows: 2, hint: 'Tells visitors that their visits and chat questions are recorded. Leave it empty to hide it.' })),
     card('Resume', 'The Resume preview window.',

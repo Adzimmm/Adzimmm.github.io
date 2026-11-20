@@ -693,18 +693,50 @@
     }).join('');
     $('#about-fields').innerHTML = a.fields.map(f => `<li>${escapeHtml(f)}</li>`).join('');
 
-    const c = t.contact;
-    const mail = $('[data-contact="email"]');
-    if (mail) mail.href = `mailto:${c.email}`;
-    const li = $('[data-contact="linkedin"]');
-    if (li) li.href = c.linkedin;
-    const ig = $('[data-contact="instagram"]');
-    if (ig) {
-      const handle = String(c.instagram).replace(/^@/, '');
-      ig.href = `https://www.instagram.com/${encodeURIComponent(handle)}`;
-      ig.setAttribute('aria-label', `Instagram @${handle}`);
-    }
+    renderSocials(t.contact);
     $('.resume-download').setAttribute('download', t.resume.pdfName);
+  }
+
+  /* ---------- Contact: social media icons (list edited in the admin, contact.socials) ---------- */
+  // Brand icons come from socials.js; a custom link uses a Google Material Symbol chosen by name.
+  function socialHref(item, c) {
+    const url = String(item.url || '').trim();
+    if (item.type === 'email') return `mailto:${url || c.email}`;
+    if (item.type === 'instagram' && url && !/^https?:/i.test(url)) return `https://www.instagram.com/${encodeURIComponent(url.replace(/^@/, ''))}`;
+    if (!url) return '';
+    return /^(https?:|mailto:)/i.test(url) ? url : `https://${url}`;
+  }
+  function renderSocials(c) {
+    const box = $('#socials');
+    if (!box) return;
+    const P = window.SOCIALS || {};
+    const list = Array.isArray(c.socials) ? c.socials : [
+      { type: 'email' },
+      c.linkedin && { type: 'linkedin', url: c.linkedin },
+      c.instagram && { type: 'instagram', url: c.instagram },
+    ].filter(Boolean);
+    const symbols = new Set();
+    box.innerHTML = list.map(item => {
+      const href = socialHref(item, c);
+      if (!href) return '';
+      const brand = P[item.type];
+      const custom = item.type === 'custom' || !brand;
+      const name = custom ? (item.label || 'Link') : brand.name;
+      const icon = custom
+        ? `<span class="material-symbols-rounded" aria-hidden="true">${escapeHtml((item.icon || 'link').trim().toLowerCase())}</span>`
+        : `<svg viewBox="${brand.vb}" aria-hidden="true" ${brand.stroke ? 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"' : 'fill="currentColor"'}><path d="${brand.d}"/></svg>`;
+      if (custom) symbols.add((item.icon || 'link').trim().toLowerCase());
+      const out = !href.startsWith('mailto:');
+      return `<li><a class="soc soc-${custom ? 'custom' : escapeHtml(item.type)}" href="${escapeHtml(href)}"${out ? ' target="_blank" rel="noopener"' : ''} style="--brand:${custom ? 'var(--accent-purple)' : brand.color}" aria-label="${escapeHtml(name)}"><span class="soc-tip" aria-hidden="true">${escapeHtml(name)}</span>${icon}</a></li>`;
+    }).join('');
+    // Google's icon font, cut down to the icons in use (a few KB).
+    if (symbols.size && !$('#material-symbols')) {
+      const link = document.createElement('link');
+      link.id = 'material-symbols';
+      link.rel = 'stylesheet';
+      link.href = `https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=${[...symbols].filter(n => /^[a-z0-9_]+$/.test(n)).sort().join(',')}&display=block`;
+      document.head.append(link);
+    }
   }
 
   /* ---------- Init ---------- */

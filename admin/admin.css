@@ -578,3 +578,10 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
     linear-gradient(#ffffffbf,#ffffffbf) 0 33.333%/100% 1px no-repeat,linear-gradient(#ffffffbf,#ffffffbf) 0 66.666%/100% 1px no-repeat}
 .crop-zoom{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:700}
 .crop-zoom input{flex:1;min-height:0;padding:0;accent-color:var(--accent)}
+
+/* Social media list */
+.soc-edit{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.soc-sel{display:flex;align-items:center;gap:10px}
+.soc-sel select,.soc-sel input{flex:1;min-width:0}
+.soc-prev{display:grid;place-items:center;flex:none;width:42px;height:42px;border:1px solid var(--line-strong);border-radius:50%;background:var(--surface-2);font-size:22px;line-height:1}
+.material-symbols-rounded{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;-webkit-font-feature-settings:'liga';font-feature-settings:'liga';-webkit-font-smoothing:antialiased;overflow:hidden}
