@@ -1,6 +1,6 @@
 // Chibi pet that replaces the chat button (300-frame pack: 6 actions x 50 frames, 512x512 cells, 10 x 5 sheets),
 // shown at a fixed 120 x 120 px on every screen, each whole cell scaled down smoothly (never cropped or stretched).
-// - Tap: open the chat. Double-tap / double-click (or D): Brazil-style dance. Drag (mouse or touch): drag_panic.
+// - Tap: open the chat. Drag (mouse or touch): drag_panic.
 // - Left alone: idle breathing, walks left and right, a macho wink now and then.
 // - prefers-reduced-motion: stands still on its first idle frame (still draggable and tappable).
 // - Add ?petdebug to the address for a panel that previews all six animations frame by frame.
@@ -16,7 +16,6 @@
     walk_right: { frames: 50, fps: 16 },
     drag_panic: { frames: 50, fps: 16 },
     macho_blink: { frames: 50, fps: 16 },
-    dance_brazil: { frames: 50, fps: 16 },
   };
   const SIZE = 120; // fixed on desktop and mobile
   const STORE = 'adz:pet';
@@ -28,8 +27,8 @@
   const pet = document.createElement('button');
   pet.type = 'button';
   pet.className = 'pet';
-  pet.setAttribute('aria-label', 'Open chat (double-click to make me dance)');
-  pet.title = 'Click to chat · double-click to dance · drag to move';
+  pet.setAttribute('aria-label', 'Open chat');
+  pet.title = 'Click to chat · drag to move';
   // Each frame is copied from its 512x512 cell onto a canvas with smoothing off (no blur, no cropping).
   const sprite = document.createElement('canvas');
   sprite.className = 'pet-sprite';
@@ -121,8 +120,8 @@
     if (debugUi) debugUi.update(f);
   }
 
-  /* ---------- Behaviour: idle, walk left/right, wink, dance ---------- */
-  let mode = 'idle'; // idle | walk | drag | dance | wink | debug
+  /* ---------- Behaviour: idle, walk left/right, wink ---------- */
+  let mode = 'idle'; // idle | walk | drag | wink | debug
   let walkTo = 0;
   let nextIdea = performance.now() + 3000;
   const chatOpen = () => { const c = document.querySelector('.chat'); return Boolean(c && !c.hidden); };
@@ -140,11 +139,6 @@
       play('macho_blink', { onEnd: () => settle(performance.now(), 1500 + Math.random() * 2000) });
     }
   }
-  function dance() {
-    if (mode === 'drag') return;
-    mode = 'dance';
-    play('dance_brazil', { onEnd: () => settle(performance.now(), 2500) }); // one full 50-frame pass (~3 s)
-  }
 
   let last = performance.now();
   function tick(now) {
@@ -161,9 +155,8 @@
     requestAnimationFrame(tick);
   }
 
-  /* ---------- Pointer: drag anywhere, tap = chat, double-tap = dance ---------- */
+  /* ---------- Pointer: drag anywhere, tap = chat ---------- */
   let drag = null;
-  let tapTimer = 0;
   pet.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
     pet.setPointerCapture(e.pointerId);
@@ -196,13 +189,8 @@
   pet.addEventListener('pointercancel', end);
   pet.addEventListener('click', () => {
     if (pet.dataset.justDragged) return;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; dance(); return; } // second tap: dance
-    tapTimer = setTimeout(() => {
-      tapTimer = 0;
-      if (window.PortfolioChat) window.PortfolioChat.open();
-    }, 260);
+    if (window.PortfolioChat) window.PortfolioChat.open();
   });
-  pet.addEventListener('keydown', e => { if (e.key === 'd' || e.key === 'D') { e.preventDefault(); dance(); } });
   window.addEventListener('resize', () => { clamp(); place(); });
 
   /* ---------- Debug panel (?petdebug): preview each animation, scrub the 50 frames ---------- */
@@ -246,12 +234,12 @@
       play('idle');
       requestAnimationFrame(tick);
     });
-    // Walks and the wink after the page settles; drag and dance load on first hover or touch (~1.8 MB each).
+    // Walks and the wink after the page settles; the drag sheet loads on first hover or touch (~1.8 MB).
     (window.requestIdleCallback || (cb => setTimeout(cb, 2000)))(() => {
       ['walk_left', 'walk_right', 'macho_blink'].forEach(sheet);
       if (debug) Object.keys(ANIMS).forEach(sheet);
     });
-    const warm = () => { sheet('drag_panic'); sheet('dance_brazil'); };
+    const warm = () => sheet('drag_panic');
     pet.addEventListener('pointerenter', warm, { once: true });
     pet.addEventListener('pointerdown', warm, { once: true });
     pet.addEventListener('focus', warm, { once: true });
