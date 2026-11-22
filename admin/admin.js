@@ -1688,33 +1688,46 @@ function renderResume() {
     return h('label', { class: 'field wide' }, h('span', {}, 'Details (one line = one point)'), ta);
   };
   const startField = { key: 'start', label: 'Start (YYYY-MM)', placeholder: '2024-09' };
-  // Logo picker for a list row: folder in Storage, the row key used for the alt text, and whether it can be removed.
-  const logoPicker = (folder, altKey, removable) => item => {
-    const preview = h('img', { class: 'logo-preview', src: item.logo ? asset(item.logo) : undefined, alt: '', hidden: !item.logo });
-    const empty = h('span', { class: 'logo-empty', hidden: Boolean(item.logo) }, 'No logo');
+  // Logo pickers for a row: one logo for light mode (logo) and an optional one for dark mode (logoDark).
+  // Each preview sits on the background of its theme. Without a dark logo the site outlines the light one in white.
+  const logoSlot = (item, key, label, folder, altKey, removable) => {
+    const preview = h('img', { class: 'logo-preview', src: item[key] ? asset(item[key]) : undefined, alt: '', hidden: !item[key] });
+    const empty = h('span', { class: 'logo-empty', hidden: Boolean(item[key]) }, 'No logo');
     const input = h('input', { type: 'file', accept: 'image/*' });
-    const remove = removable ? h('button', { class: 'btn ghost small', type: 'button', hidden: !item.logo, onclick: e => {
+    const pick = h('label', { class: 'btn ghost small' }, ico('upload'), item[key] ? 'Change' : 'Upload', input);
+    const show = on => { preview.hidden = !on; empty.hidden = on; if (remove) remove.hidden = !on; };
+    const remove = removable ? h('button', { class: 'btn ghost small', type: 'button', hidden: !item[key], onclick: e => {
       e.preventDefault();
-      delete item.logo; delete item.logoW; delete item.logoH; delete item.logoDark;
-      preview.hidden = true; empty.hidden = false; remove.hidden = true;
+      delete item[key];
+      if (key === 'logo') { delete item.logoW; delete item.logoH; }
+      show(false);
       markDirty(d);
     } }, ico('trash'), 'Remove') : null;
     input.addEventListener('change', async () => {
       const f = input.files[0];
       if (!f) return;
       try {
-        const a = await uploadImage(f, folder, item[altKey] || 'Logo');
-        item.logo = a.display; item.logoW = a.width; item.logoH = a.height; delete item.logoDark;
-        preview.src = a.display; preview.hidden = false; empty.hidden = true;
-        if (remove) remove.hidden = false;
+        const a = await uploadImage(f, folder, `${item[altKey] || 'Logo'}${key === 'logoDark' ? ' (dark mode)' : ''}`);
+        item[key] = a.display;
+        if (key === 'logo' || !item.logoW) { item.logoW = a.width; item.logoH = a.height; }
+        preview.src = a.display;
+        show(true);
         markDirty(d);
         toast('Logo uploaded. Click Save.');
       } catch (err) { toast(err.message, true); }
       input.value = '';
     });
-    return h('div', { class: 'field logo-field' }, h('span', {}, 'Logo'),
-      h('span', { class: 'logo-box' }, preview, empty,
-        h('label', { class: 'btn ghost small' }, ico('upload'), item.logo ? 'Change' : 'Upload', input), remove));
+    return h('div', { class: `field logo-field logo-${key === 'logoDark' ? 'dark' : 'light'}` }, h('span', {}, label),
+      h('span', { class: 'logo-box' }, h('span', { class: 'logo-stage' }, preview, empty), pick, remove));
+  };
+  // The white outline in dark mode is a switch per item (default: on when there is no dark-mode logo).
+  const logoPicker = (folder, altKey, removable) => item => {
+    const outline = switchField('White outline in dark mode', item.logoOutline ?? !item.logoDark, on => { item.logoOutline = on; markDirty(d); });
+    outline.setHint('A thin white edge so a dark logo stays visible on the dark theme.');
+    return h('div', { class: 'logo-pair wide' },
+      logoSlot(item, 'logo', 'Logo · light mode', folder, altKey, removable),
+      logoSlot(item, 'logoDark', 'Logo · dark mode (optional)', folder, altKey, true),
+      h('div', { class: 'logo-outline' }, outline.el));
   };
   const logoField = logoPicker('education', 'school', false);
   const expLogoField = logoPicker('experience', 'org', true);

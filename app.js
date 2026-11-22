@@ -556,6 +556,19 @@
 
   // Vertical timeline, oldest first (newest at the bottom); a year pill opens each new year and cards alternate sides.
   // side: 'left' or 'right' puts the line on that side with every card next to it.
+  // Logo above a timeline title: light-mode logo, plus a dark-mode one when uploaded.
+  // logoOutline (a switch in the admin; default on when there is no dark logo) adds a thin white edge on dark.
+  const logoOutline = it => it.logoOutline ?? !it.logoDark;
+  function tlLogo(it, name) {
+    if (!it.logo && !it.logoDark) return '';
+    const size = it.logoW && it.logoH ? ` width="${Number(it.logoW)}" height="${Number(it.logoH)}"` : '';
+    const img = (src, cls) => `<img class="${cls}" src="${escapeHtml(src)}" alt="${escapeHtml(name)} logo"${size} loading="lazy" decoding="async">`;
+    const wrap = inner => `<span class="tl-logo${logoOutline(it) ? ' is-outlined' : ''}">${inner}</span>`;
+    if (!it.logoDark) return wrap(img(it.logo, 'both'));
+    if (!it.logo) return wrap(img(it.logoDark, 'on-dark only'));
+    return wrap(`${img(it.logo, 'on-light')}${img(it.logoDark, 'on-dark')}`);
+  }
+
   function timeline(items, f, side) {
     const sorted = [...items].sort((x, y) => x.start.localeCompare(y.start));
     let year = '';
@@ -567,7 +580,7 @@
       return `${pill}<div class="tl-item${i % 2 ? ' is-right' : ''}"><article class="tl-card">
         <span class="tl-fx" aria-hidden="true"><span class="cy-glare"></span>${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}${fx('cy-corners', 4)}<span class="cy-scan"></span></span>
         <p class="tl-date">${escapeHtml(f.date(it))}</p>
-        ${it.logo ? `<img class="tl-logo" src="${escapeHtml(it.logo)}" alt="${escapeHtml(f.sub(it))} logo"${it.logoW && it.logoH ? ` width="${Number(it.logoW)}" height="${Number(it.logoH)}"` : ''} loading="lazy" decoding="async">` : ''}
+        ${tlLogo(it, f.sub(it))}
         <h3 class="tl-title">${escapeHtml(f.title(it))}</h3>
         <p class="tl-org">${escapeHtml(f.sub(it))}</p>
         ${text ? `<p class="tl-text">${escapeHtml(text)}</p>` : ''}
@@ -581,8 +594,8 @@
     $('#education-list').innerHTML = `<div class="edu-grid">${[...resume.education].sort((x, y) => x.start.localeCompare(y.start)).map(x => `
       <article class="edu-item">
         ${x.logo ? `<div class="edu-logo">
-          <img class="${x.logoDark ? 'on-light' : 'outline-dark'}" src="${x.logo}" alt="${escapeHtml(x.school)} logo" width="${x.logoW}" height="${x.logoH}" loading="lazy" decoding="async">
-          ${x.logoDark ? `<img class="on-dark" src="${x.logoDark}" alt="${escapeHtml(x.school)} logo" width="${x.logoW}" height="${x.logoH}" loading="lazy" decoding="async">` : ''}
+          <img class="${x.logoDark ? 'on-light' : ''}${logoOutline(x) ? ' outline-dark' : ''}" src="${x.logo}" alt="${escapeHtml(x.school)} logo" width="${x.logoW}" height="${x.logoH}" loading="lazy" decoding="async">
+          ${x.logoDark ? `<img class="on-dark${logoOutline(x) ? ' outline-dark' : ''}" src="${x.logoDark}" alt="${escapeHtml(x.school)} logo" width="${x.logoW}" height="${x.logoH}" loading="lazy" decoding="async">` : ''}
         </div>` : ''}
         <h3>${escapeHtml(x.school)}</h3>
         <p class="edu-award">${escapeHtml(x.award)}</p>

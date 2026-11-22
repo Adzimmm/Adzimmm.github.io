@@ -1605,6 +1605,12 @@ html.pv-open .pet{opacity:0;pointer-events:none}
   .award-item{grid-template-columns:minmax(0,1fr);gap:4px;padding:16px 2px}
 }
 
-/* Experience timeline: an optional logo (uploaded in the admin) above each title, outlined in white on dark */
-.tl-logo{display:block;width:auto;height:auto;max-width:min(100%,160px);max-height:40px;margin:10px 0 8px;object-fit:contain;user-select:none}
-:root:not([data-theme="light"]) .tl-logo{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}
+/* Experience timeline: an optional logo (uploaded in the admin) above each title.
+   A dark-mode logo swaps in on dark; .is-outlined (a switch in the admin) adds a thin white edge on dark. */
+.tl-logo{display:block;margin:10px 0 8px}
+.tl-logo img{display:block;width:auto;height:auto;max-width:min(100%,160px);max-height:40px;object-fit:contain;user-select:none}
+.tl-logo .on-dark{display:none}
+:root:not([data-theme="light"]) .tl-logo .on-light{display:none}
+:root:not([data-theme="light"]) .tl-logo .on-dark{display:block}
+:root:not([data-theme="light"]) .tl-logo.is-outlined img{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}
+[data-theme="light"] .tl-logo:has(.only){display:none}
