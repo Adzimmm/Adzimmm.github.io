@@ -2461,6 +2461,17 @@
     ]
    },
    {
+    "id": "internship",
+    "desc": "My internship work at WISER.MY",
+    "icon": "logo-folio",
+    "type": "0 collections \u00b7 0 visuals",
+    "label": "Internship",
+    "title": "Internship",
+    "accent": "#f5ec00",
+    "category": "internship",
+    "sections": []
+   },
+   {
     "id": "others",
     "desc": "Visuals for study programmes and digital identity exploration.",
     "edge": "#8a64d24a",
@@ -2757,7 +2768,7 @@
     ]
    }
   ],
-  "updated_at": "2026-11-15T17:22:47.902889+00:00"
+  "updated_at": "2026-11-22T04:22:02.803+00:00"
  },
  {
   "key": "preview",
@@ -2837,34 +2848,6 @@
       "thumb": "assets/portfolio/logo-folio/cutouts/preview-image33.webp",
       "width": 400,
       "height": 254
-     }
-    },
-    {
-     "dark": {
-      "alt": "MPP UUM identity \u2014 visual 2",
-      "thumb": "assets/portfolio/logo-folio/cutouts/preview-image36.webp",
-      "width": 400,
-      "height": 306
-     },
-     "light": {
-      "alt": "MPP UUM identity \u2014 visual 4",
-      "thumb": "assets/portfolio/logo-folio/cutouts/preview-image38.webp",
-      "width": 400,
-      "height": 308
-     }
-    },
-    {
-     "dark": {
-      "alt": "MPP UUM identity \u2014 visual 3",
-      "thumb": "assets/portfolio/logo-folio/cutouts/preview-image37.webp",
-      "width": 400,
-      "height": 99
-     },
-     "light": {
-      "alt": "MPP UUM identity \u2014 visual 1",
-      "thumb": "assets/portfolio/logo-folio/cutouts/preview-image35.webp",
-      "width": 400,
-      "height": 101
      }
     }
    ],
@@ -2993,7 +2976,7 @@
     }
    ]
   },
-  "updated_at": "2026-11-15T17:18:25.653832+00:00"
+  "updated_at": "2026-11-20T02:18:12.396+00:00"
  },
  {
   "key": "resume",
@@ -3047,9 +3030,13 @@
    "current": {
     "org": "Wiser.MY",
     "date": "21 Sep 2026 \u2013 21 Jan 2027",
+    "logo": "https://kizpexgoqssuxoclpozy.supabase.co/storage/v1/object/public/portfolio/experience/mwrbsfrk-wiser-logo-blk-display.webp",
     "role": "Internship",
+    "logoH": 353,
+    "logoW": 2400,
     "start": "2026-09",
-    "points": []
+    "points": [],
+    "logoDark": "https://kizpexgoqssuxoclpozy.supabase.co/storage/v1/object/public/portfolio/experience/mwrbsk2f-wiser-logo-w-display.webp"
    },
    "linkedin": "https://www.linkedin.com/in/ahmad-zaid-adzim",
    "location": "Kuala Lumpur, Malaysia",
@@ -3274,11 +3261,12 @@
    "availability": "Availability: 21 September 2026 - 21 January 2027 (4 months internship)",
    "linkedinLabel": "www.linkedin.com/in/ahmad-zaid-adzim"
   },
-  "updated_at": "2026-11-15T17:38:06.41417+00:00"
+  "updated_at": "2026-11-22T04:17:24.209+00:00"
  },
  {
   "key": "site",
   "data": {
+   "faq": [],
    "nav": {
     "home": "Home",
     "about": "About",
@@ -3287,21 +3275,49 @@
     "education": "Education",
     "experience": "Experience"
    },
+   "chat": {
+    "title": "Ask Adzim",
+    "fallback": "I don't have an answer for that yet. Try one of these, or email me and I'll reply myself.",
+    "greeting": "Hi! Ask me about my work, skills, studies or how to reach me.",
+    "subtitle": "Quick answers about my work",
+    "placeholder": "Ask a question\u2026"
+   },
    "hero": {
     "hi": "Hi, I'm",
-    "name": "Adzimmmmm",
+    "name": "Adzim",
     "intro": "This is where I keep my work from static design to stories that move.",
     "title": "Welcome to my Portfolio",
     "seeMore": "See More",
     "searchHint": "to ask",
-    "searchPlaceholder": "Test"
+    "searchPlaceholder": "Type here..."
    },
    "meta": {
     "title": "Adzim's Portfolio",
-    "description": "Adzim's portfolio \u2014 UUM Multimedia student: logos, branding, social media, print and UI/UX."
+    "favicon": {
+     "icon": "https://kizpexgoqssuxoclpozy.supabase.co/storage/v1/object/public/portfolio/site/favicon-mwobq6hd-icon.png",
+     "apple": "https://kizpexgoqssuxoclpozy.supabase.co/storage/v1/object/public/portfolio/site/favicon-mwobq6hd-apple.png",
+     "large": "https://kizpexgoqssuxoclpozy.supabase.co/storage/v1/object/public/portfolio/site/favicon-mwobq6hd-large.png",
+     "storage": [
+      "site/favicon-mwobq6hd-icon.png",
+      "site/favicon-mwobq6hd-large.png",
+      "site/favicon-mwobq6hd-apple.png"
+     ]
+    },
+    "description": "Adzim's portfolio : My personal portfolio of my career"
    },
    "about": {
     "body": "My full name is Ahmad Zaid Adzim bin Abdul Rahim. Passionate about learning, with a strong affinity for minimalist aesthetics and visual communication. Constantly creative and evolving to turn complex ideas into clean, impactful digital experiences.",
+    "name": "Adzim",
+    "word": "adzim",
+    "hello": "Hello I'm",
+    "photo": {
+     "src": "https://kizpexgoqssuxoclpozy.supabase.co/storage/v1/object/public/portfolio/about/photo-mwofnjah.webp",
+     "width": 1000,
+     "height": 1250,
+     "storage": [
+      "about/photo-mwofnjah.webp"
+     ]
+    },
     "title": "About Me",
     "fields": [
      "Graphic design",
@@ -3310,6 +3326,16 @@
      "Videography",
      "Photography"
     ],
+    "backdrop": {
+     "type": "shader",
+     "colors": [
+      "#00c7fc",
+      "#3a88fe",
+      "#e0edd4"
+     ],
+     "shader": "liquid",
+     "animated": "blobs"
+    },
     "software": [
      {
       "name": "Adobe Photoshop",
@@ -3364,19 +3390,46 @@
     "name": "adzim",
     "suffix": ".portfolio"
    },
+   "theme": {
+    "dark": "#6fd6d0",
+    "mode": "light",
+    "light": "#1b6f6b"
+   },
    "footer": {
+    "privacy": "This site records visits (IP address, rough location and device) and questions asked in the chat, so I can see what people look for and improve my answers. Only I can see them, and IP addresses are removed after 90 days.",
     "tagline": "Design & video portfolio",
     "copyright": "\u00a9 2026 Adzim"
    },
    "resume": {
-    "pdfName": "Resume ADZIM.pdf",
+    "pdfName": "Resume_ADZIM.pdf",
     "download": "Download PDF",
-    "dialogTitle": "Adzim \u2014 Resume"
+    "dialogTitle": "Adzim's Resume"
    },
    "contact": {
     "sub": "Have a project, idea or collaboration? Let's talk.",
     "line": "Every visual has a story",
     "email": "ahmadzaidadzim.work@gmail.com",
+    "socials": [
+     {
+      "url": "",
+      "type": "email"
+     },
+     {
+      "url": "https://www.linkedin.com/in/ahmad-zaid-adzim",
+      "type": "linkedin"
+     },
+     {
+      "url": "adzimmm01",
+      "type": "instagram"
+     },
+     {
+      "svg": "",
+      "url": "https://medium.com/@ahmadzaidadzim11",
+      "icon": "book_2",
+      "type": "custom",
+      "label": "Intern Digital Logbook"
+     }
+    ],
     "linkedin": "https://www.linkedin.com/in/ahmad-zaid-adzim",
     "instagram": "adzimmm01"
    },
@@ -3400,6 +3453,6 @@
     "awardsTitle": "Awards & certificates"
    }
   },
-  "updated_at": "2026-11-15T17:47:26.824+00:00"
+  "updated_at": "2026-11-22T02:16:35.566+00:00"
  }
 ]
