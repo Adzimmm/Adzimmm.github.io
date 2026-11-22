@@ -567,6 +567,7 @@
       return `${pill}<div class="tl-item${i % 2 ? ' is-right' : ''}"><article class="tl-card">
         <span class="tl-fx" aria-hidden="true"><span class="cy-glare"></span>${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}${fx('cy-corners', 4)}<span class="cy-scan"></span></span>
         <p class="tl-date">${escapeHtml(f.date(it))}</p>
+        ${it.logo ? `<img class="tl-logo" src="${escapeHtml(it.logo)}" alt="${escapeHtml(f.sub(it))} logo"${it.logoW && it.logoH ? ` width="${Number(it.logoW)}" height="${Number(it.logoH)}"` : ''} loading="lazy" decoding="async">` : ''}
         <h3 class="tl-title">${escapeHtml(f.title(it))}</h3>
         <p class="tl-org">${escapeHtml(f.sub(it))}</p>
         ${text ? `<p class="tl-text">${escapeHtml(text)}</p>` : ''}

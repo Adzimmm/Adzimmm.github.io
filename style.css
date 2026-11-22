@@ -1604,3 +1604,7 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 @media(max-width:600px){
   .award-item{grid-template-columns:minmax(0,1fr);gap:4px;padding:16px 2px}
 }
+
+/* Experience timeline: an optional logo (uploaded in the admin) above each title, outlined in white on dark */
+.tl-logo{display:block;width:auto;height:auto;max-width:min(100%,160px);max-height:40px;margin:10px 0 8px;object-fit:contain;user-select:none}
+:root:not([data-theme="light"]) .tl-logo{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}

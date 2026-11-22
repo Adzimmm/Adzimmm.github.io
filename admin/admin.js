@@ -1688,22 +1688,36 @@ function renderResume() {
     return h('label', { class: 'field wide' }, h('span', {}, 'Details (one line = one point)'), ta);
   };
   const startField = { key: 'start', label: 'Start (YYYY-MM)', placeholder: '2024-09' };
-  const logoField = item => {
-    const preview = h('img', { class: 'logo-preview', src: asset(item.logo), alt: '' });
+  // Logo picker for a list row: folder in Storage, the row key used for the alt text, and whether it can be removed.
+  const logoPicker = (folder, altKey, removable) => item => {
+    const preview = h('img', { class: 'logo-preview', src: item.logo ? asset(item.logo) : undefined, alt: '', hidden: !item.logo });
+    const empty = h('span', { class: 'logo-empty', hidden: Boolean(item.logo) }, 'No logo');
     const input = h('input', { type: 'file', accept: 'image/*' });
+    const remove = removable ? h('button', { class: 'btn ghost small', type: 'button', hidden: !item.logo, onclick: e => {
+      e.preventDefault();
+      delete item.logo; delete item.logoW; delete item.logoH; delete item.logoDark;
+      preview.hidden = true; empty.hidden = false; remove.hidden = true;
+      markDirty(d);
+    } }, ico('trash'), 'Remove') : null;
     input.addEventListener('change', async () => {
       const f = input.files[0];
       if (!f) return;
       try {
-        const a = await uploadImage(f, 'education', item.school);
+        const a = await uploadImage(f, folder, item[altKey] || 'Logo');
         item.logo = a.display; item.logoW = a.width; item.logoH = a.height; delete item.logoDark;
-        preview.src = a.display;
+        preview.src = a.display; preview.hidden = false; empty.hidden = true;
+        if (remove) remove.hidden = false;
         markDirty(d);
         toast('Logo uploaded. Click Save.');
       } catch (err) { toast(err.message, true); }
+      input.value = '';
     });
-    return h('label', { class: 'field logo-field' }, h('span', {}, 'Logo'), h('span', { class: 'logo-box' }, preview, h('span', { class: 'btn ghost small' }, ico('upload'), 'Change')), input);
+    return h('div', { class: 'field logo-field' }, h('span', {}, 'Logo'),
+      h('span', { class: 'logo-box' }, preview, empty,
+        h('label', { class: 'btn ghost small' }, ico('upload'), item.logo ? 'Change' : 'Upload', input), remove));
   };
+  const logoField = logoPicker('education', 'school', false);
+  const expLogoField = logoPicker('experience', 'org', true);
   const current = r.current || (r.current = { role: '', org: '', date: '', start: '', points: [] });
   return [
     card('Education', 'School cards with logos. Ordered oldest to newest.',
@@ -1713,12 +1727,12 @@ function renderResume() {
       { school: '', award: '', cgpa: '', date: '', start: '' }, 'School')),
     card('Current job', 'The newest item in the Experience timeline. Leave "Start" empty to hide it.',
       h('div', { class: 'grid2' }, field(current, 'role', 'Role', d), field(current, 'org', 'Organisation', d),
-        field(current, 'date', 'Date', d), field(current, 'start', startField.label, d, { placeholder: '2026-09' }))),
-    card('Work, curricular & leadership', 'Left timeline in Experience. Ordered by "Start" date.',
+        field(current, 'date', 'Date', d), field(current, 'start', startField.label, d, { placeholder: '2026-09' }), expLogoField(current))),
+    card('Work, curricular & leadership', 'The Experience timeline. Ordered by "Start" date. A logo shows above the title.',
       listEditor(r.experience, d, [
-        { key: 'role', label: 'Role' }, { key: 'org', label: 'Organisation' }, { key: 'date', label: 'Date' }, startField, { render: pointsField }],
+        { key: 'role', label: 'Role' }, { key: 'org', label: 'Organisation' }, { key: 'date', label: 'Date' }, startField, { render: expLogoField }, { render: pointsField }],
       { role: '', org: '', date: '', start: '', points: [] }, 'Experience')),
-    card('Awards & certificates', 'Right timeline in Experience.',
+    card('Awards & certificates', 'The list under the Experience timeline, newest first.',
       listEditor(r.honors, d, [
         { key: 'title', label: 'Award' }, { key: 'org', label: 'Organiser' }, { key: 'date', label: 'Date' }, startField, { render: pointsField }],
       { title: '', org: '', date: '', start: '', points: [] }, 'Award')),
