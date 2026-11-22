@@ -584,7 +584,7 @@
         <h3 class="tl-title">${escapeHtml(f.title(it))}</h3>
         <p class="tl-org">${escapeHtml(f.sub(it))}</p>
         ${text ? `<p class="tl-text">${escapeHtml(text)}</p>` : ''}
-        <span class="tl-dot" aria-hidden="true"></span></article></div>`;
+        </article><span class="tl-dot" aria-hidden="true"></span></div>`;
     }).join('')}</div>`;
   }
 

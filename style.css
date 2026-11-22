@@ -1614,3 +1614,22 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 :root:not([data-theme="light"]) .tl-logo .on-dark{display:block}
 :root:not([data-theme="light"]) .tl-logo.is-outlined img{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)}
 [data-theme="light"] .tl-logo:has(.only){display:none}
+
+/* Timeline dot and dashed connector live beside the card (not inside it), so the card's border and hover tilt
+   never move them off the line. Dot centre = line centre (50% + .5px); dot 8px; card top to dot centre 24px. */
+.tl-card::before{content:none}
+.tl-item::before{content:"";position:absolute;top:24px;left:100%;width:calc(var(--gap) / 2 - 4px);border-top:1px dashed var(--line-strong)}
+.tl-item.is-right::before{left:auto;right:100%}
+.timeline .tl-item .tl-dot{top:20px;left:calc(100% + var(--gap) / 2 - 3.5px);right:auto;z-index:2}
+.timeline .tl-item.is-right .tl-dot{left:auto;right:calc(100% + var(--gap) / 2 - 4.5px)}
+@media(hover:hover) and (pointer:fine){
+  .tl-item:hover .tl-dot{background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 30%,transparent)}
+}
+@media(max-width:700px){
+  .timeline .tl-item::before,.timeline .tl-item.is-right::before{left:auto;right:100%;width:13px}
+  .timeline .tl-item .tl-dot,.timeline .tl-item.is-right .tl-dot{left:auto;right:calc(100% + 16.5px)}
+}
+.timeline--line-left .tl-item::before{left:auto;right:100%;width:13px}
+.timeline--line-right .tl-item::before{right:auto;left:100%;width:13px}
+.timeline.timeline--line-left .tl-item .tl-dot{left:auto;right:calc(100% + 16.5px)}
+.timeline.timeline--line-right .tl-item .tl-dot{right:auto;left:calc(100% + 16.5px)}
