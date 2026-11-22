@@ -62,13 +62,13 @@ function ico(name) { const i = document.createElement('i'); i.className = 'ico';
 const paintIcons = (scope = document) => $$('[data-icon]', scope).forEach(el => { el.className = 'ico'; el.innerHTML = svg(el.dataset.icon); });
 
 /* ---------- Loader ----------
-   From Uiverse.io by david-mohseni - https://uiverse.io/david-mohseni/yellow-cat-24
-   MIT License, Copyright (c) david-mohseni (David Mohseni). Styles: .uv-loader in admin.css. */
+   From Uiverse.io by mobinkakei - https://uiverse.io/mobinkakei/grumpy-turtle-41
+   MIT License, Copyright (c) mobinkakei (Mobeen). Styles: .ball-loader in admin.css. */
 function loaderEl() {
   const el = document.createElement('div');
-  el.className = 'uv-loader';
+  el.className = 'ball-loader';
   el.setAttribute('aria-hidden', 'true');
-  for (let i = 1; i <= 12; i++) { const bar = document.createElement('div'); bar.className = `bar${i}`; el.append(bar); }
+  ['circle', 'circle', 'circle', 'shadow', 'shadow', 'shadow'].forEach(cls => { const d = document.createElement('div'); d.className = cls; el.append(d); });
   return el;
 }
 

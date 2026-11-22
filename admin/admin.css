@@ -617,22 +617,18 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
 .thumb-img.on-dark{background:repeating-conic-gradient(#2a3550 0 25%,#1b2438 0 50%) 0 0/14px 14px}
 .coll-rename{flex:1;min-width:0;min-height:34px;padding:5px 10px;font-weight:700}
 
-/* From Uiverse.io by david-mohseni - https://uiverse.io/david-mohseni/yellow-cat-24
-   MIT License, Copyright (c) david-mohseni (David Mohseni)
-   Loader used wherever something is loading. Scoped: .uv-loader / uv-fade458. */
-.uv-loader{position:relative;width:54px;height:54px;border-radius:10px}
-.uv-loader div{width:8%;height:24%;background:rgb(128,128,128);position:absolute;left:50%;top:30%;opacity:0;border-radius:50px;box-shadow:0 0 3px rgba(0,0,0,.2);animation:uv-fade458 1s linear infinite}
-@keyframes uv-fade458{from{opacity:1}to{opacity:.25}}
-.uv-loader .bar1{transform:rotate(0deg) translate(0,-130%);animation-delay:0s}
-.uv-loader .bar2{transform:rotate(30deg) translate(0,-130%);animation-delay:-1.1s}
-.uv-loader .bar3{transform:rotate(60deg) translate(0,-130%);animation-delay:-1s}
-.uv-loader .bar4{transform:rotate(90deg) translate(0,-130%);animation-delay:-.9s}
-.uv-loader .bar5{transform:rotate(120deg) translate(0,-130%);animation-delay:-.8s}
-.uv-loader .bar6{transform:rotate(150deg) translate(0,-130%);animation-delay:-.7s}
-.uv-loader .bar7{transform:rotate(180deg) translate(0,-130%);animation-delay:-.6s}
-.uv-loader .bar8{transform:rotate(210deg) translate(0,-130%);animation-delay:-.5s}
-.uv-loader .bar9{transform:rotate(240deg) translate(0,-130%);animation-delay:-.4s}
-.uv-loader .bar10{transform:rotate(270deg) translate(0,-130%);animation-delay:-.3s}
-.uv-loader .bar11{transform:rotate(300deg) translate(0,-130%);animation-delay:-.2s}
-.uv-loader .bar12{transform:rotate(330deg) translate(0,-130%);animation-delay:-.1s}
-.loading .uv-loader{flex:none}
+/* From Uiverse.io by mobinkakei - https://uiverse.io/mobinkakei/grumpy-turtle-41
+   MIT License, Copyright (c) mobinkakei (Mobeen)
+   Loader used wherever something is loading. Scoped: .ball-loader, ball-circle7124 / ball-shadow046.
+   The balls take the accent colour (set in the admin), in both themes. */
+.ball-loader{width:200px;height:60px;position:relative;z-index:1}
+.ball-loader .circle{width:20px;height:20px;position:absolute;border-radius:50%;background-color:var(--accent);left:15%;transform-origin:50%;animation:ball-circle7124 .5s alternate infinite ease}
+@keyframes ball-circle7124{0%{top:60px;height:5px;border-radius:50px 50px 25px 25px;transform:scaleX(1.7)}40%{height:20px;border-radius:50%;transform:scaleX(1)}100%{top:0%}}
+.ball-loader .circle:nth-child(2){left:45%;animation-delay:.2s}
+.ball-loader .circle:nth-child(3){left:auto;right:15%;animation-delay:.3s}
+.ball-loader .shadow{width:20px;height:4px;border-radius:50%;background-color:rgba(0,0,0,.9);position:absolute;top:62px;transform-origin:50%;z-index:-1;left:15%;filter:blur(1px);animation:ball-shadow046 .5s alternate infinite ease}
+@keyframes ball-shadow046{0%{transform:scaleX(1.5)}40%{transform:scaleX(1);opacity:.7}100%{transform:scaleX(.2);opacity:.4}}
+.ball-loader .shadow:nth-child(4){left:45%;animation-delay:.2s}
+.ball-loader .shadow:nth-child(5){left:auto;right:15%;animation-delay:.3s}
+[data-theme="light"] .ball-loader .shadow{background-color:rgba(0,0,0,.35)}
+.loading .ball-loader{flex:none;transform:scale(.5);transform-origin:0 50%;margin-right:-100px}
