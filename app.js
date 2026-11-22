@@ -587,8 +587,16 @@
         <p class="edu-award">${escapeHtml(x.award)}</p>
         <p class="edu-meta"><span>${escapeHtml(x.cgpa)}</span><span class="edu-date">${cal}${escapeHtml(x.date)}</span></p>
       </article>`).join('')}</div>`;
-    $('#honors-list').innerHTML = timeline(resume.honors, {
-      title: h => h.title, sub: h => h.org, date: h => h.date, text: h => h.points.join(' ') });
+    // Awards & certificates: a plain list under Work, newest first.
+    $('#honors-list').innerHTML = `<ul class="award-list">${[...resume.honors].sort((x, y) => String(y.start || '').localeCompare(String(x.start || ''))).map(h => `
+      <li class="award-item">
+        <p class="award-date">${escapeHtml(h.date)}</p>
+        <div class="award-body">
+          <h3 class="award-title">${escapeHtml(h.title)}</h3>
+          <p class="award-org">${escapeHtml(h.org)}</p>
+          ${(h.points || []).length ? `<p class="award-text">${escapeHtml(h.points.join(' '))}</p>` : ''}
+        </div>
+      </li>`).join('')}</ul>`;
     $('#experience-grid').innerHTML = timeline([resume.current, ...(resume.experience || [])].filter(x => x && x.start), {
       title: x => x.role, sub: x => x.org, date: x => x.date, text: x => x.points.join(' ') });
 
