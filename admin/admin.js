@@ -673,7 +673,31 @@ async function uploadImage(file, folder, alt) {
 
 // Videos: the file is uploaded as it is (no re-encoding); a frame near the start becomes the poster,
 // stored in src/display/thumb like an image so every image-only place keeps working.
-const VIDEO_MAX_MB = 50; // Supabase free plan: 50 MB per file
+const VIDEO_MAX_MB = 50; // Supabase free plan: 50 MB per stored file
+const VIDEO_INPUT_MAX_MB = 500; // bigger files are compressed in the browser first
+// Mediabunny (MPL-2.0, https://mediabunny.dev) re-encodes with the browser's own WebCodecs encoder. Admin only.
+const MEDIABUNNY = 'https://cdn.jsdelivr.net/npm/mediabunny@1.65.2/+esm';
+const MB = n => `${(n / 1048576).toFixed(n < 10485760 ? 1 : 0)} MB`;
+
+// Re-encodes to H.264 MP4 at a constant high quality, keeping the resolution and frame rate.
+// Returns the smaller of the original and the compressed file.
+async function compressVideo(file, onProgress) {
+  if (!('VideoEncoder' in window)) return file; // no WebCodecs: upload as it is
+  const M = await import(MEDIABUNNY);
+  const input = new M.Input({ source: new M.BlobSource(file), formats: M.ALL_FORMATS });
+  const target = new M.BufferTarget();
+  const output = new M.Output({ format: new M.Mp4OutputFormat({ fastStart: 'in-memory' }), target });
+  const conversion = await M.Conversion.init({
+    input, output, showWarnings: false,
+    video: { codec: 'avc', quality: M.QUALITY_HIGH, keyFrameInterval: 2 },
+    audio: { codec: 'aac' },
+  });
+  if (!conversion.isValid) return file;
+  conversion.onProgress = pr => onProgress && onProgress(pr);
+  await conversion.execute();
+  const out = new File([target.buffer], `${file.name.replace(/\.[^.]+$/, '')}.mp4`, { type: 'video/mp4' });
+  return out.size < file.size ? out : file;
+}
 const fmtDuration = sec => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
 function videoPoster(file) {
   return new Promise((resolve, reject) => {
@@ -702,8 +726,19 @@ function videoPoster(file) {
     v.src = url;
   });
 }
-async function uploadVideo(file, folder, alt) {
-  if (file.size > VIDEO_MAX_MB * 1024 * 1024) throw new Error(`Video is ${(file.size / 1048576).toFixed(0)} MB. The limit is ${VIDEO_MAX_MB} MB; export it smaller (e.g. 1080p H.264).`);
+async function uploadVideo(original, folder, alt, onStatus = () => {}) {
+  if (original.size > VIDEO_INPUT_MAX_MB * 1048576) throw new Error(`Video is ${MB(original.size)}. The most it can take is ${VIDEO_INPUT_MAX_MB} MB.`);
+  let file = original;
+  try {
+    onStatus(`Compressing ${original.name}…`);
+    file = await compressVideo(original, pr => onStatus(`Compressing ${original.name}… ${Math.round(pr * 100)}%`));
+  } catch (err) {
+    console.warn('Video compression failed, using the original file', err);
+  }
+  if (file.size > VIDEO_MAX_MB * 1048576) {
+    throw new Error(`${original.name} is still ${MB(file.size)} after compressing at full quality (limit ${VIDEO_MAX_MB} MB). Trim it shorter, or split it into parts.`);
+  }
+  onStatus(file === original ? `Uploading ${original.name} (${MB(file.size)})…` : `Uploading ${original.name}: ${MB(original.size)} → ${MB(file.size)}…`);
   const { poster, duration } = await videoPoster(file);
   const a = await uploadImage(poster, folder, alt);
   a.duration = Math.round(duration * 10) / 10;
@@ -1614,7 +1649,7 @@ function collectionCard(p, s, si, rerender) {
   const status = h('span', {}, 'Drag images, videos or a folder here, or ', h('u', {}, 'choose files'));
   const drop = h('label', { class: 'drop' },
     h('input', { type: 'file', accept: 'image/*,video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov', multiple: true, onchange: e => { addFiles([...e.target.files]); e.target.value = ''; } }),
-    ico('upload'), status, h('small', {}, `JPG, PNG, WebP or GIF (resized to WebP). Videos: MP4, WebM or MOV up to ${VIDEO_MAX_MB} MB.`));
+    ico('upload'), status, h('small', {}, `JPG, PNG, WebP or GIF (resized to WebP). Videos: MP4, WebM or MOV up to ${VIDEO_INPUT_MAX_MB} MB, compressed here at full resolution and high quality; the result must fit ${VIDEO_MAX_MB} MB.`));
   wireDrop(drop, (entries, files) => readDrop(entries, files, isMediaFile).then(tree => addFiles(allFiles(tree))).catch(err => toast(err.message, true)));
 
   async function addFiles(files) {
@@ -1629,7 +1664,7 @@ function collectionCard(p, s, si, rerender) {
         const alt = `${s.title} — visual ${s.images.length + 1}`;
         let a;
         if (isVideoFile(f)) {
-          a = await uploadVideo(f, folder, alt);
+          a = await uploadVideo(f, folder, alt, text => { status.textContent = `${n + 1} of ${imgs.length}: ${text}`; });
           a.opaque = true;
         } else {
           const info = await analyseImage(f, { preview: false });
