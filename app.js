@@ -606,6 +606,7 @@
       <li class="award-item">
         <p class="award-date">${escapeHtml(h.date)}</p>
         <div class="award-body">
+          ${tlLogo(h, h.org)}
           <h3 class="award-title">${escapeHtml(h.title)}</h3>
           <p class="award-org">${escapeHtml(h.org)}</p>
           ${(h.points || []).length ? `<p class="award-text">${escapeHtml(h.points.join(' '))}</p>` : ''}

@@ -1731,6 +1731,7 @@ function renderResume() {
   };
   const logoField = logoPicker('education', 'school', false);
   const expLogoField = logoPicker('experience', 'org', true);
+  const awardLogoField = logoPicker('awards', 'org', true);
   const current = r.current || (r.current = { role: '', org: '', date: '', start: '', points: [] });
   return [
     card('Education', 'School cards with logos. Ordered oldest to newest.',
@@ -1747,7 +1748,7 @@ function renderResume() {
       { role: '', org: '', date: '', start: '', points: [] }, 'Experience')),
     card('Awards & certificates', 'The list under the Experience timeline, newest first.',
       listEditor(r.honors, d, [
-        { key: 'title', label: 'Award' }, { key: 'org', label: 'Organiser' }, { key: 'date', label: 'Date' }, startField, { render: pointsField }],
+        { key: 'title', label: 'Award' }, { key: 'org', label: 'Organiser' }, { key: 'date', label: 'Date' }, startField, { render: awardLogoField }, { render: pointsField }],
       { title: '', org: '', date: '', start: '', points: [] }, 'Award')),
     card('Resume details', 'The top of the Resume preview.',
       h('div', { class: 'grid2' }, field(r, 'name', 'Full name', d), field(r, 'location', 'Location', d),

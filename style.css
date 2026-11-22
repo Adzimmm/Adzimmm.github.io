@@ -1633,3 +1633,6 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 .timeline--line-right .tl-item::before{right:auto;left:100%;width:13px}
 .timeline.timeline--line-left .tl-item .tl-dot{left:auto;right:calc(100% + 16.5px)}
 .timeline.timeline--line-right .tl-item .tl-dot{right:auto;left:calc(100% + 16.5px)}
+
+/* Awards list: the same optional logo (light / dark / white outline) above the award title */
+.award-body>.tl-logo{margin:0 0 8px}
