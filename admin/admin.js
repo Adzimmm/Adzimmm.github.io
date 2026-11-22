@@ -42,6 +42,7 @@ const P = {
   trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   upload: '<path d="M12 16V4m-5 5 5-5 5 5M5 20h14"/>',
+  play: '<path d="M8 5.5v13l11-6.5Z" fill="currentColor"/>',
   image: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
   check: '<path d="m5 12 5 5 9-10"/>',
   alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
@@ -670,6 +671,53 @@ async function uploadImage(file, folder, alt) {
   return out;
 }
 
+// Videos: the file is uploaded as it is (no re-encoding); a frame near the start becomes the poster,
+// stored in src/display/thumb like an image so every image-only place keeps working.
+const VIDEO_MAX_MB = 50; // Supabase free plan: 50 MB per file
+const fmtDuration = sec => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
+function videoPoster(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement('video');
+    v.muted = true;
+    v.playsInline = true;
+    v.preload = 'auto';
+    const fail = () => { URL.revokeObjectURL(url); reject(new Error('This video could not be read. Try an MP4 (H.264) file.')); };
+    v.onerror = fail;
+    v.onloadedmetadata = () => { v.currentTime = Math.min(1, (v.duration || 0) / 4); };
+    v.onseeked = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = v.videoWidth;
+        c.height = v.videoHeight;
+        if (!c.width || !c.height) { fail(); return; }
+        c.getContext('2d').drawImage(v, 0, 0);
+        c.toBlob(blob => {
+          URL.revokeObjectURL(url);
+          if (!blob) { reject(new Error('Could not make a poster frame.')); return; }
+          resolve({ poster: new File([blob], `${file.name.replace(/\.[^.]+$/, '')}-poster.png`, { type: 'image/png' }), duration: v.duration || 0 });
+        }, 'image/png');
+      } catch (err) { fail(); }
+    };
+    v.src = url;
+  });
+}
+async function uploadVideo(file, folder, alt) {
+  if (file.size > VIDEO_MAX_MB * 1024 * 1024) throw new Error(`Video is ${(file.size / 1048576).toFixed(0)} MB. The limit is ${VIDEO_MAX_MB} MB; export it smaller (e.g. 1080p H.264).`);
+  const { poster, duration } = await videoPoster(file);
+  const a = await uploadImage(poster, folder, alt);
+  a.duration = Math.round(duration * 10) / 10;
+  if (DEMO) { a.video = URL.createObjectURL(file); return a; }
+  const ext = (file.name.match(/\.([a-z0-9]+)$/i) || [0, 'mp4'])[1].toLowerCase();
+  const path = `${folder}/${Date.now().toString(36)}-${slug(file.name.replace(/\.[^.]+$/, ''))}.${ext}`;
+  const type = file.type || (ext === 'webm' ? 'video/webm' : ext === 'mov' ? 'video/quicktime' : 'video/mp4');
+  const { error } = await sb.storage.from(BUCKET).upload(path, file, { contentType: type, upsert: false, cacheControl: '31536000' });
+  if (error) { await removeStored([a]); throw new Error(error.message); }
+  a.storage.push(path);
+  a.video = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  return a;
+}
+
 async function removeStored(images) {
   const paths = images.flatMap(a => a.storage || []);
   if (paths.length && sb) await sb.storage.from(BUCKET).remove(paths);
@@ -1001,6 +1049,9 @@ function guessLabel(name) {
 /* Reading dropped images and Finder folders */
 const IMAGE_EXT = /\.(jpe?g|png|webp|gif|avif|bmp|heic|heif|tiff?)$/i;
 const isImageFile = f => !f.name.startsWith('.') && !/svg/.test(f.type) && (f.type.startsWith('image/') || IMAGE_EXT.test(f.name));
+const VIDEO_EXT = /\.(mp4|m4v|webm|mov)$/i;
+const isVideoFile = f => !f.name.startsWith('.') && (/^video\/(mp4|webm|quicktime)$/.test(f.type) || VIDEO_EXT.test(f.name));
+const isMediaFile = f => isImageFile(f) || isVideoFile(f);
 const byName = (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
 const allFiles = dir => [...dir.files, ...dir.dirs.flatMap(allFiles)];
 const skipName = name => name.startsWith('.') || name === '__MACOSX';
@@ -1011,7 +1062,7 @@ function dropEntries(dt) {
   return entries.length && entries.every(Boolean) ? entries : null;
 }
 const entryFile = entry => new Promise((res, rej) => entry.file(res, rej));
-async function readDir(dirEntry) {
+async function readDir(dirEntry, keep = isImageFile) {
   const reader = dirEntry.createReader();
   const entries = [];
   for (;;) { // readEntries answers in batches until it returns an empty one
@@ -1019,24 +1070,24 @@ async function readDir(dirEntry) {
     if (!batch.length) break;
     entries.push(...batch);
   }
-  return readTree(entries, dirEntry.name);
+  return readTree(entries, dirEntry.name, keep);
 }
 // A drop as a small tree of images, sorted like Finder: { name, files, dirs: [{ name, files, dirs }] }.
-async function readTree(entries, name = '') {
+async function readTree(entries, name = '', keep = isImageFile) {
   const node = { name, files: [], dirs: [] };
   for (const e of entries) {
     if (skipName(e.name)) continue;
-    if (e.isDirectory) node.dirs.push(await readDir(e));
+    if (e.isDirectory) node.dirs.push(await readDir(e, keep));
     else if (e.isFile) {
       const f = await entryFile(e).catch(() => null);
-      if (f && isImageFile(f)) node.files.push(f);
+      if (f && keep(f)) node.files.push(f);
     }
   }
   node.files.sort(byName);
   node.dirs.sort(byName);
   return node;
 }
-const readDrop = (entries, files) => (entries ? readTree(entries) : Promise.resolve({ name: '', files: files.filter(isImageFile).sort(byName), dirs: [] }));
+const readDrop = (entries, files, keep = isImageFile) => (entries ? readTree(entries, '', keep) : Promise.resolve({ name: '', files: files.filter(keep).sort(byName), dirs: [] }));
 
 // <input webkitdirectory> gives a flat list with paths like "Folder/Sub folder/image.png".
 function treeFromPicked(fileList) {
@@ -1560,24 +1611,32 @@ const openState = new WeakMap(); // collection -> open or closed, kept across re
 
 function collectionCard(p, s, si, rerender) {
   const d = 'portfolio';
-  const status = h('span', {}, 'Drag images or a folder here, or ', h('u', {}, 'choose files'));
+  const status = h('span', {}, 'Drag images, videos or a folder here, or ', h('u', {}, 'choose files'));
   const drop = h('label', { class: 'drop' },
-    h('input', { type: 'file', accept: 'image/*', multiple: true, onchange: e => { addFiles([...e.target.files]); e.target.value = ''; } }),
-    ico('upload'), status, h('small', {}, 'JPG, PNG, WebP or GIF. Resized to WebP automatically.'));
-  wireDrop(drop, (entries, files) => readDrop(entries, files).then(tree => addFiles(allFiles(tree))).catch(err => toast(err.message, true)));
+    h('input', { type: 'file', accept: 'image/*,video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov', multiple: true, onchange: e => { addFiles([...e.target.files]); e.target.value = ''; } }),
+    ico('upload'), status, h('small', {}, `JPG, PNG, WebP or GIF (resized to WebP). Videos: MP4, WebM or MOV up to ${VIDEO_MAX_MB} MB.`));
+  wireDrop(drop, (entries, files) => readDrop(entries, files, isMediaFile).then(tree => addFiles(allFiles(tree))).catch(err => toast(err.message, true)));
 
   async function addFiles(files) {
-    const imgs = files.filter(isImageFile).sort(byName);
-    if (!imgs.length) { toast('No images found. Use JPG, PNG, WebP or GIF files.', true); return; }
+    const imgs = files.filter(isMediaFile).sort(byName);
+    if (!imgs.length) { toast('No images or videos found. Use JPG, PNG, WebP, GIF, MP4, WebM or MOV files.', true); return; }
     drop.classList.add('busy');
     let done = 0;
     for (const [n, f] of imgs.entries()) {
       status.textContent = `Uploading ${n + 1} of ${imgs.length}…`;
       try {
-        const info = await analyseImage(f, { preview: false });
-        const a = await uploadImage(f, `${p.id}/${slug(s.title)}`, `${s.title} — visual ${s.images.length + 1}`);
-        a.dark = info.dark;
-        a.opaque = info.opaque;
+        const folder = `${p.id}/${slug(s.title)}`;
+        const alt = `${s.title} — visual ${s.images.length + 1}`;
+        let a;
+        if (isVideoFile(f)) {
+          a = await uploadVideo(f, folder, alt);
+          a.opaque = true;
+        } else {
+          const info = await analyseImage(f, { preview: false });
+          a = await uploadImage(f, folder, alt);
+          a.dark = info.dark;
+          a.opaque = info.opaque;
+        }
         s.images.push(a);
         done++;
         markDirty(d);
@@ -1585,7 +1644,7 @@ function collectionCard(p, s, si, rerender) {
         toast(`Could not upload ${f.name}: ${err.message}`, true);
       }
     }
-    if (done) toast(`${plural(done, 'image')} uploaded. Click Save to publish.`);
+    if (done) toast(`${plural(done, 'file')} uploaded. Click Save to publish.`);
     openState.set(s, true);
     rerender();
   }
@@ -1601,6 +1660,7 @@ function collectionCard(p, s, si, rerender) {
     const frame = h('div', { class: `thumb-img${a.dark ? ' on-dark' : ''}`, draggable: 'true', title: 'Drag to reorder' },
       h('img', { src: asset(a.thumb || a.display || a.src), alt: '', loading: 'lazy', draggable: 'false' }),
       h('span', { class: 'thumb-num' }, String(i + 1)),
+      a.video ? h('span', { class: 'thumb-video', title: 'Video' }, ico('play'), a.duration ? fmtDuration(a.duration) : 'Video') : null,
       h('div', { class: 'thumb-tools' },
         moveBtns(s.images, i, d, rerender),
         delBtn(async () => { await removeStored([a]); s.images.splice(i, 1); markDirty(d); rerender(); }, 'this image')));

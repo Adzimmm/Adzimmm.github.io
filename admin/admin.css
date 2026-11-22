@@ -641,3 +641,5 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
 .logo-light .logo-empty{color:#6d657a}
 .logo-dark .logo-empty{color:#9b97a6}
 .logo-outline{grid-column:1/-1}
+.thumb-video{position:absolute;left:6px;bottom:6px;display:inline-flex;align-items:center;gap:4px;padding:2px 7px 2px 5px;border-radius:999px;background:rgba(10,9,14,.7);color:#fff;font-size:11px;font-weight:600;pointer-events:none}
+.thumb-video svg{width:11px;height:11px}

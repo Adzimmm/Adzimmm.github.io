@@ -28,6 +28,7 @@
 
   const SVG = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const I = {
+    play: SVG('<path d="M8 5.5v13l11-6.5Z" fill="currentColor"/>'),
     back: SVG('<path d="M19 12H5M11 6l-6 6 6 6"/>'),
     info: SVG('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'),
     grid: SVG('<rect x="3.5" y="3.5" width="7" height="9" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.6"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.6"/><rect x="3.5" y="15.5" width="7" height="5" rx="1.6"/>'),
@@ -47,6 +48,9 @@
   const small = a => a.thumb || a.display || a.clean || a.src;
   const medium = a => a.display || a.clean || a.src;
   const dims = a => (a.width > 0 && a.height > 0 ? ` width="${a.width}" height="${a.height}"` : '');
+  // A video item keeps poster images in src/display/thumb (so image-only places still work) and the file in .video.
+  const isVideo = a => Boolean(a && a.video);
+  const PLAY = () => `<span class="pv-play" aria-hidden="true">${I.play}</span>`;
   // Categories shown as cut-outs straight on the panel, with no coloured box (a category can also set clear: true).
   // Every category shows its images as the original files: no box, no padding, never cropped.
   const isClear = () => Boolean(p);
@@ -124,7 +128,7 @@
       </section>
       <div class="pv-zoom" role="dialog" aria-modal="true" aria-label="Visual at full size" hidden>
         <div class="pv-zoom-bg"></div>
-        <div class="pv-zoom-scroll"><img class="pv-zoom-img" alt="" draggable="false"></div>
+        <div class="pv-zoom-scroll"><img class="pv-zoom-img" alt="" draggable="false"><video class="pv-zoom-video" playsinline controls preload="metadata" hidden></video></div>
         <div class="pv-zoom-spin ball-loader" aria-hidden="true">${LOADER}</div>
         <button class="pv-zoom-btn is-close" type="button" data-pv="zoom-close" aria-label="Close full size">${I.close}</button>
         <button class="pv-zoom-btn is-prev" type="button" data-pv="zoom-prev" aria-label="Previous visual">${I.prev}</button>
@@ -142,13 +146,25 @@
     b.style.setProperty('--a', ratio(it.a).toFixed(4));
     b.style.setProperty('--d', String(Math.min(i, 16)));
     b.setAttribute('aria-label', `${it.a.alt || it.s.title}. Open full size`);
-    b.innerHTML = `<img src="${esc(small(it.a))}"${dims(it.a)} alt="" loading="lazy" decoding="async" draggable="false"><span class="pv-tile-info" aria-hidden="true"><span>${esc(it.s.title)}</span>${I.expand}</span>`;
+    const vid = isVideo(it.a);
+    b.innerHTML = `<img src="${esc(small(it.a))}"${dims(it.a)} alt="" loading="lazy" decoding="async" draggable="false">${vid ? `<video class="pv-tile-video" muted loop playsinline preload="none" aria-hidden="true" src="${esc(it.a.video)}"></video>${PLAY()}` : ''}<span class="pv-tile-info" aria-hidden="true"><span>${esc(it.s.title)}</span>${I.expand}</span>`;
+    if (vid) {
+      // Hover plays a silent preview; click opens it full size with sound and controls.
+      b.classList.add('is-video');
+      b.setAttribute('aria-label', `${it.a.alt || it.s.title}. Play video`);
+      const v = b.querySelector('video');
+      v.addEventListener('playing', () => b.classList.add('is-playing'));
+      b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && motion()) v.play().catch(() => {}); });
+      b.addEventListener('pointerleave', () => { v.pause(); b.classList.remove('is-playing'); });
+    }
     return b;
   }
 
-  const slideHtml = (it, i) => `<div class="pv-slide" data-i="${i}"><button type="button" class="pv-frame${artClass(it.a)}" data-zoom="${i}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}" aria-label="${esc(it.a.alt || it.s.title)}. Open full size"><img src="${esc(medium(it.a))}"${dims(it.a)} alt="" loading="lazy" decoding="async" draggable="false"></button></div>`;
+  const slideHtml = (it, i) => (isVideo(it.a)
+    ? `<div class="pv-slide" data-i="${i}"><div class="pv-frame is-video${artClass(it.a)}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}"><video controls playsinline preload="none" poster="${esc(medium(it.a))}" src="${esc(it.a.video)}" aria-label="${esc(it.a.alt || it.s.title)}"></video></div></div>`
+    : `<div class="pv-slide" data-i="${i}"><button type="button" class="pv-frame${artClass(it.a)}" data-zoom="${i}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}" aria-label="${esc(it.a.alt || it.s.title)}. Open full size"><img src="${esc(medium(it.a))}"${dims(it.a)} alt="" loading="lazy" decoding="async" draggable="false"></button></div>`);
 
-  const thumbHtml = (it, i) => `<button type="button" class="pv-thumb${it.a.dark && !isClear() ? ' dark-art' : ''}" data-go="${i}" style="--a:${ratio(it.a).toFixed(4)}" aria-label="Visual ${i + 1} of ${items.length}"><img src="${esc(small(it.a))}" alt="" loading="lazy" decoding="async" draggable="false"></button>`;
+  const thumbHtml = (it, i) => `<button type="button" class="pv-thumb${it.a.dark && !isClear() ? ' dark-art' : ''}" data-go="${i}" style="--a:${ratio(it.a).toFixed(4)}" aria-label="Visual ${i + 1} of ${items.length}"><img src="${esc(small(it.a))}" alt="" loading="lazy" decoding="async" draggable="false">${isVideo(it.a) ? PLAY() : ''}</button>`;
 
   /* ---------- Render ---------- */
   function render() {
@@ -179,6 +195,7 @@
       zoom: q('.pv-zoom'),
       zoomScroll: q('.pv-zoom-scroll'),
       zoomImg: q('.pv-zoom-img'),
+      zoomVideo: q('.pv-zoom-video'),
       zoomCap: q('.pv-zoom-cap'),
       zoomPrev: q('.pv-zoom-btn.is-prev'),
       zoomNext: q('.pv-zoom-btn.is-next'),
@@ -297,6 +314,7 @@
   }
 
   function galleryUi(smooth) {
+    els.track.querySelectorAll('video').forEach(v => { if (!v.paused && v.closest('.pv-slide').dataset.i !== String(current)) v.pause(); });
     [...els.thumbs.children].forEach((t, k) => {
       const on = k === current;
       t.classList.toggle('is-on', on);
@@ -336,7 +354,7 @@
 
   // Mouse drag on the gallery (touch and trackpads scroll natively).
   function dragTrack(e) {
-    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    if (e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('video')) return;
     const tr = els.track;
     const w = tr.clientWidth;
     const startX = e.clientX;
@@ -423,7 +441,32 @@
     els.zoomClose.focus({ preventScroll: true });
   }
 
+  // Full-size video sits exactly over the poster image (same box), with sound and controls.
+  function setZoomVideo(it) {
+    const v = els.zoomVideo;
+    if (!isVideo(it.a)) {
+      if (!v.hidden || v.getAttribute('src')) { v.pause(); v.removeAttribute('src'); v.load(); }
+      v.hidden = true;
+      els.zoom.classList.remove('has-video');
+      return;
+    }
+    v.hidden = false;
+    els.zoom.classList.add('has-video');
+    v.poster = medium(it.a);
+    v.src = it.a.video;
+    v.setAttribute('aria-label', it.a.alt || it.s.title);
+    v.muted = false;
+    v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
+  }
+  const syncZoomVideo = () => {
+    const v = els.zoomVideo;
+    if (v.hidden) return;
+    const st = els.zoomImg.style;
+    Object.assign(v.style, { width: st.width, height: st.height, left: st.left, top: st.top });
+  };
+
   function setZoomImage(it, lowSrc) {
+    setZoomVideo(it);
     const img = els.zoomImg;
     const token = ++zoom.token;
     img.className = `pv-zoom-img${artClass(it.a)}`;
@@ -463,7 +506,7 @@
     const maxH = Math.max(40, H - padTop - padBottom);
     const fitW = Math.min(maxW, maxH * r, natural);
     const wide = Math.min(W - (phone ? 16 : 120), natural);
-    const canFill = Number.isFinite(natural) && wide > fitW * 1.25;
+    const canFill = Number.isFinite(natural) && wide > fitW * 1.25 && !isVideo(it.a);
     els.zoom.classList.toggle('can-fill', canFill);
     if (zoom.fit || !canFill) {
       zoom.fit = true;
@@ -473,6 +516,7 @@
     } else {
       Object.assign(img.style, { width: `${wide}px`, height: `${wide / r}px`, left: '', top: '' });
     }
+    syncZoomVideo();
   }
 
   function toggleFill(e) {
@@ -554,6 +598,7 @@
       z.classList.remove('is-open', 'is-fill', 'is-loading', 'is-closing');
       img.getAnimations().forEach(a => a.cancel());
       img.removeAttribute('src');
+      setZoomVideo({ a: {} });
       if (target) target.style.visibility = '';
       els.side.inert = false;
       els.main.inert = false;
@@ -591,7 +636,7 @@
     let sy = 0;
     sc.addEventListener('pointerdown', e => {
       swiped = false;
-      if (!zoom.fit || e.pointerType === 'mouse') return;
+      if (!zoom.fit || e.pointerType === 'mouse' || e.target.closest('video')) return;
       down = true;
       sx = e.clientX;
       sy = e.clientY;
@@ -629,6 +674,7 @@
         swiped = false;
         return;
       }
+      if (e.target.closest('video')) return; // play, pause and seek stay on the video
       if (e.target === img) toggleFill(e);
       else closeZoom();
     });

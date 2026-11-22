@@ -1636,3 +1636,20 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 
 /* Awards list: the same optional logo (light / dark / white outline) above the award title */
 .award-body>.tl-logo{margin:0 0 8px}
+
+/* Project view videos: poster image with a play badge, silent preview on hover, full player in the gallery and full size */
+.pv-play{position:absolute;top:50%;left:50%;z-index:2;display:grid;place-items:center;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(10,9,14,.55);color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 0 0 1px rgba(255,255,255,.25);pointer-events:none;transition:opacity .3s,transform .3s var(--ease)}
+.pv-play svg{width:20px;height:20px;margin-left:3px}
+.pv-tile-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;pointer-events:none;transition:opacity .3s}
+.pv-tile.is-playing .pv-tile-video{opacity:1}
+.pv-tile.is-playing .pv-play{opacity:0;transform:scale(.8)}
+.pv-thumb{position:relative}
+.pv-thumb .pv-play{width:22px;height:22px;margin:-11px 0 0 -11px}
+.pv-thumb .pv-play svg{width:10px;height:10px;margin-left:1px}
+.pv-frame.is-video{cursor:default}
+.pv-frame.is-video video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+.pv-zoom-video{position:absolute;display:block;max-width:none;object-fit:contain;background:#000;animation:pv-video-in .3s .35s both}
+.pv-zoom.has-video .pv-zoom-img{cursor:default}
+@keyframes pv-video-in{from{opacity:0}}
+[data-motion="off"] .pv-zoom-video{animation:none}
+@media (prefers-reduced-motion:reduce){.pv-zoom-video{animation:none}}
