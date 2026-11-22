@@ -39,6 +39,9 @@
     expand: SVG('<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/>'),
   };
 
+  // Loader from Uiverse.io by david-mohseni - https://uiverse.io/david-mohseni/yellow-cat-24
+  // MIT License, Copyright (c) david-mohseni (David Mohseni). Styles: .uv-loader in style.css.
+  const LOADER_BARS = Array.from({ length: 12 }, (_, i) => `<div class="bar${i + 1}"></div>`).join('');
   const esc = v => ctx.escapeHtml(v == null ? '' : v);
   const ratio = a => (a.width > 0 && a.height > 0 ? a.width / a.height : 1);
   const small = a => a.thumb || a.display || a.clean || a.src;
@@ -185,7 +188,7 @@
       <div class="pv-zoom" role="dialog" aria-modal="true" aria-label="Visual at full size" hidden>
         <div class="pv-zoom-bg"></div>
         <div class="pv-zoom-scroll"><img class="pv-zoom-img" alt="" draggable="false"></div>
-        <span class="pv-zoom-spin" aria-hidden="true"></span>
+        <div class="pv-zoom-spin uv-loader" aria-hidden="true">${LOADER_BARS}</div>
         <button class="pv-zoom-btn is-close" type="button" data-pv="zoom-close" aria-label="Close full size">${I.close}</button>
         <button class="pv-zoom-btn is-prev" type="button" data-pv="zoom-prev" aria-label="Previous visual">${I.prev}</button>
         <button class="pv-zoom-btn is-next" type="button" data-pv="zoom-next" aria-label="Next visual">${I.next}</button>

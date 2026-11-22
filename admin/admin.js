@@ -61,6 +61,17 @@ const svg = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 function ico(name) { const i = document.createElement('i'); i.className = 'ico'; i.innerHTML = svg(name); return i; }
 const paintIcons = (scope = document) => $$('[data-icon]', scope).forEach(el => { el.className = 'ico'; el.innerHTML = svg(el.dataset.icon); });
 
+/* ---------- Loader ----------
+   From Uiverse.io by david-mohseni - https://uiverse.io/david-mohseni/yellow-cat-24
+   MIT License, Copyright (c) david-mohseni (David Mohseni). Styles: .uv-loader in admin.css. */
+function loaderEl() {
+  const el = document.createElement('div');
+  el.className = 'uv-loader';
+  el.setAttribute('aria-hidden', 'true');
+  for (let i = 1; i <= 12; i++) { const bar = document.createElement('div'); bar.className = `bar${i}`; el.append(bar); }
+  return el;
+}
+
 /* ---------- Small DOM helpers (no innerHTML with user text) ---------- */
 function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
@@ -1765,7 +1776,7 @@ function renderPreview() {
 // Above them: the questions visitors asked (questions.js, loaded the first time the tab opens).
 let questionsModule;
 function questionsBox() {
-  const root = h('div', { class: 'qs' }, h('div', { class: 'loading' }, h('span', { class: 'spinner' }), 'Loading questions…'));
+  const root = h('div', { class: 'qs' }, h('div', { class: 'loading' }, loaderEl(), 'Loading questions…'));
   questionsModule = questionsModule || import(`./questions.js${ASSET_V ? `?v=${ASSET_V}` : ''}`);
   questionsModule
     .then(m => m.mountQuestions(root, { h, ico, ask, toast, sb, DEMO, inFaq, addToFaq }))
@@ -1859,7 +1870,7 @@ function renderBackup() {
 // loaded the first time it opens.
 let insightsModule;
 function renderInsights() {
-  const root = h('div', { class: 'ins' }, h('div', { class: 'loading' }, h('span', { class: 'spinner' }), 'Loading insights…'));
+  const root = h('div', { class: 'ins' }, h('div', { class: 'loading' }, loaderEl(), 'Loading insights…'));
   insightsModule = insightsModule || import(`./insights.js${ASSET_V ? `?v=${ASSET_V}` : ''}`);
   insightsModule
     .then(m => m.mountInsights(root, { h, ico, card, switchField, ask, toast, sb, DEMO }))
@@ -1906,7 +1917,7 @@ async function enterApp(session) {
   // The admin's own visits to the site are not counted in Insights on this browser (../visit.js reads
   // this), unless that was switched back on in the Insights tab.
   if (!DEMO) { try { if (localStorage.getItem('adz:notrack') === null) localStorage.setItem('adz:notrack', '1'); } catch (_) {} }
-  $('#panel').replaceChildren(h('div', { class: 'loading' }, h('span', { class: 'spinner' }), 'Loading content…'));
+  $('#panel').replaceChildren(h('div', { class: 'loading' }, loaderEl(), 'Loading content…'));
   await loadDocs();
   applyAdminColors(state.docs.site.theme);
   setPageIcon(state.docs.site.meta && state.docs.site.meta.favicon && state.docs.site.meta.favicon.icon);

@@ -616,3 +616,23 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
 .thumb-img,.wz-thumb .thumb-img,.fav-big,.about-photo-prev,.crop-stage,.picker-grid img{background:repeating-conic-gradient(var(--checker-a) 0 25%,var(--checker-b) 0 50%) 0 0/14px 14px}
 .thumb-img.on-dark{background:repeating-conic-gradient(#2a3550 0 25%,#1b2438 0 50%) 0 0/14px 14px}
 .coll-rename{flex:1;min-width:0;min-height:34px;padding:5px 10px;font-weight:700}
+
+/* From Uiverse.io by david-mohseni - https://uiverse.io/david-mohseni/yellow-cat-24
+   MIT License, Copyright (c) david-mohseni (David Mohseni)
+   Loader used wherever something is loading. Scoped: .uv-loader / uv-fade458. */
+.uv-loader{position:relative;width:54px;height:54px;border-radius:10px}
+.uv-loader div{width:8%;height:24%;background:rgb(128,128,128);position:absolute;left:50%;top:30%;opacity:0;border-radius:50px;box-shadow:0 0 3px rgba(0,0,0,.2);animation:uv-fade458 1s linear infinite}
+@keyframes uv-fade458{from{opacity:1}to{opacity:.25}}
+.uv-loader .bar1{transform:rotate(0deg) translate(0,-130%);animation-delay:0s}
+.uv-loader .bar2{transform:rotate(30deg) translate(0,-130%);animation-delay:-1.1s}
+.uv-loader .bar3{transform:rotate(60deg) translate(0,-130%);animation-delay:-1s}
+.uv-loader .bar4{transform:rotate(90deg) translate(0,-130%);animation-delay:-.9s}
+.uv-loader .bar5{transform:rotate(120deg) translate(0,-130%);animation-delay:-.8s}
+.uv-loader .bar6{transform:rotate(150deg) translate(0,-130%);animation-delay:-.7s}
+.uv-loader .bar7{transform:rotate(180deg) translate(0,-130%);animation-delay:-.6s}
+.uv-loader .bar8{transform:rotate(210deg) translate(0,-130%);animation-delay:-.5s}
+.uv-loader .bar9{transform:rotate(240deg) translate(0,-130%);animation-delay:-.4s}
+.uv-loader .bar10{transform:rotate(270deg) translate(0,-130%);animation-delay:-.3s}
+.uv-loader .bar11{transform:rotate(300deg) translate(0,-130%);animation-delay:-.2s}
+.uv-loader .bar12{transform:rotate(330deg) translate(0,-130%);animation-delay:-.1s}
+.loading .uv-loader{flex:none}
