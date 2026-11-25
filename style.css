@@ -1671,3 +1671,22 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 .sw-logo.is-default{border:1px solid var(--line-strong);background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.02))}
 .sw-logo.is-default b{font:800 12px/1 var(--font-display,inherit);letter-spacing:.02em;color:var(--text)}
 [data-theme="light"] .sw-logo.is-default{background:linear-gradient(135deg,#fff,rgba(36,23,57,.04))}
+
+/* Hero: realistic clouds drifting slowly behind "Welcome to my Portfolio" */
+.hero-clouds{position:absolute;inset:-40px 0 0;z-index:0;overflow:hidden;pointer-events:none;
+  -webkit-mask-image:linear-gradient(#000 55%,transparent 92%);mask-image:linear-gradient(#000 55%,transparent 92%)}
+.cloud-defs{position:absolute;width:0;height:0}
+.cloud{position:absolute;left:0;width:var(--w);height:calc(var(--w) * .42);opacity:var(--o);will-change:transform;
+  animation:cloud-drift var(--t) linear infinite;animation-delay:var(--d)}
+.cloud i{position:absolute;border-radius:50%;background:var(--cloud,#fff)}
+.cloud .cb{inset:22% 10% 18%;filter:url(#cloud-body);box-shadow:0 0 40px 10px var(--cloud,#fff)}
+.cloud .cw{inset:8% 26% 46% 22%;opacity:.75;filter:url(#cloud-wisp)}
+.cloud-1{--w:min(520px,62vw);--o:.16;--t:150s;--d:-30s;top:2%}
+.cloud-2{--w:min(380px,48vw);--o:.11;--t:190s;--d:-120s;top:26%}
+.cloud-3{--w:min(620px,70vw);--o:.09;--t:230s;--d:-170s;top:48%}
+.cloud-4{--w:min(300px,40vw);--o:.13;--t:170s;--d:-75s;top:12%}
+@keyframes cloud-drift{from{transform:translateX(calc(-1 * var(--w) - 10vw))}to{transform:translateX(110vw)}}
+:root[data-theme="light"] .hero-clouds{--cloud:#c9c2dc}
+:root[data-theme="light"] .cloud{opacity:calc(var(--o) * 2.6)}
+html[data-motion="off"] .cloud{animation:cloud-drift var(--t) linear infinite!important;animation-delay:var(--d)!important;animation-play-state:paused!important}
+@media (prefers-reduced-motion:reduce){.cloud{animation-play-state:paused}}
