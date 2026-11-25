@@ -709,10 +709,19 @@
     searchInput.placeholder = t.hero.searchPlaceholder;
 
     const a = t.about;
+    const softwareInitials = name => {
+      const words = String(name || '').replace(/^(adobe|autodesk|microsoft|google|apple)\s+/i, '').split(/\s+/).filter(Boolean);
+      if (!words.length) return '?';
+      return (words.length > 1 ? words[0][0] + words[1][0] : words[0].slice(0, 2)).replace(/^./, c => c.toUpperCase());
+    };
     $('#about-languages').innerHTML = a.languages.map(l => `<li><span>${escapeHtml(l.name)}</span><small>${escapeHtml(l.level)}</small></li>`).join('');
     $('#about-software').innerHTML = a.software.map(s => {
       const level = Math.min(3, Math.max(1, Number(s.level) || 1));
-      return `<li><span>${escapeHtml(s.name)}</span><small data-level="${level}">${LEVELS[level]}</small></li>`;
+      // Logo uploaded in the admin, else a default badge with the initials ("Adobe Photoshop" → "Ph").
+      const logo = s.logo && /^(https:|assets\/)/.test(String(s.logo))
+        ? `<img src="${escapeHtml(s.logo)}" alt="" loading="lazy" decoding="async">`
+        : `<b aria-hidden="true">${escapeHtml(softwareInitials(s.name))}</b>`;
+      return `<li><span class="sw-name"><span class="sw-logo${s.logo ? '' : ' is-default'}">${logo}</span>${escapeHtml(s.name)}</span><small data-level="${level}">${LEVELS[level]}</small></li>`;
     }).join('');
     $('#about-fields').innerHTML = a.fields.map(f => `<li>${escapeHtml(f)}</li>`).join('');
     // About photo: the cut-out uploaded in the admin (site.about.photo), else the bundled one.

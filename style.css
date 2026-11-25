@@ -1662,3 +1662,12 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 .pv-frame.is-video{position:relative}
 .pv-frame.is-video>.pv-full-video{position:absolute;top:12px;right:12px;z-index:2;box-shadow:0 6px 20px rgba(0,0,0,.35)}
 [data-theme="light"] .pv-full-video{color:#fff}
+
+/* About → Software: logo (uploaded in the admin) or a default initials badge */
+.skill-list li{align-items:center}
+.sw-name{display:inline-flex;align-items:center;gap:12px;min-width:0}
+.sw-logo{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:8px;overflow:hidden}
+.sw-logo img{display:block;width:100%;height:100%;object-fit:contain}
+.sw-logo.is-default{border:1px solid var(--line-strong);background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.02))}
+.sw-logo.is-default b{font:800 12px/1 var(--font-display,inherit);letter-spacing:.02em;color:var(--text)}
+[data-theme="light"] .sw-logo.is-default{background:linear-gradient(135deg,#fff,rgba(36,23,57,.04))}

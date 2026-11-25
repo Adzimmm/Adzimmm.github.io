@@ -648,3 +648,30 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
 .video-dialog input[type=range]{min-height:0;padding:0;accent-color:var(--accent)}
 .video-dialog .field span b{font-weight:700;color:var(--text)}
 .video-dialog small.error{color:var(--danger)}
+
+/* Brand mark: the portfolio's own icon */
+img.mark{display:block;padding:0;background:none;border-radius:10px;object-fit:contain}
+
+/* Sidebar: glass pill like the portfolio menubar, with a sliding platinum glider */
+.side-nav{position:relative;isolation:isolate;gap:4px;padding:6px;border:1px solid var(--line-strong);border-radius:26px;background:rgba(255,255,255,.05);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);
+  box-shadow:inset 1px 1px 4px rgba(255,255,255,.2),inset -1px -1px 6px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.15)}
+.side-nav button{z-index:2;border-radius:999px;letter-spacing:.3px;transition:color .3s ease-in-out,background-color .2s}
+.side-nav button:hover{background:none;color:var(--text)}
+.side-nav button[aria-current=true]{background:none;box-shadow:none;color:#fff}
+.side-nav button[aria-current=true] .ico{color:inherit}
+.side-glider{position:absolute;z-index:1;top:0;left:0;width:0;height:0;border-radius:999px;pointer-events:none;opacity:0;
+  background:linear-gradient(135deg,#d0e7ff55,#a0d8ff);box-shadow:0 0 18px rgba(160,216,255,.5),inset 0 0 10px rgba(200,240,255,.4);
+  transition:transform .5s cubic-bezier(.37,1.95,.66,.56),width .5s cubic-bezier(.37,1.95,.66,.56),height .5s cubic-bezier(.37,1.95,.66,.56),opacity .3s ease-in-out}
+.side-glider.on{opacity:1}
+[data-theme="light"] .side-nav{background:rgba(255,255,255,.55);box-shadow:inset 1px 1px 4px rgba(255,255,255,.7),inset -1px -1px 6px rgba(36,23,57,.08),0 4px 12px rgba(36,23,57,.08)}
+[data-theme="light"] .side-glider{background:linear-gradient(135deg,#d0e7ff,#7cc4ff);box-shadow:0 0 18px rgba(100,180,255,.45),inset 0 0 10px rgba(255,255,255,.6)}
+[data-theme="light"] .side-nav button[aria-current=true]{color:#0d2440}
+@media (prefers-reduced-motion:reduce){.side-glider{transition:opacity .2s}}
+@media (max-width:900px){.side-nav{border-radius:999px}}
+
+/* Software logo (Site text → About → Software) */
+.sw-logo-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sw-logo-stage{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;border:1px solid var(--line-strong);background:var(--surface-2);overflow:hidden}
+.sw-logo-img{width:100%;height:100%;object-fit:contain;padding:4px}
+.sw-logo-img[hidden],.sw-logo-default[hidden],.sw-logo-box .btn[hidden]{display:none}
+.sw-logo-default{font:800 15px/1 var(--font-display);color:var(--accent)}

@@ -88,6 +88,12 @@ function h(tag, attrs = {}, ...children) {
   return el;
 }
 const clone = v => JSON.parse(JSON.stringify(v));
+// Default software logo: initials without the maker ("Adobe Photoshop" -> "Ph", "DaVinci Resolve" -> "DR").
+const softwareInitials = name => {
+  const words = String(name || '').replace(/^(adobe|autodesk|microsoft|google|apple)\s+/i, '').split(/\s+/).filter(Boolean);
+  if (!words.length) return '?';
+  return (words.length > 1 ? words[0][0] + words[1][0] : words[0].slice(0, 2)).replace(/^./, c => c.toUpperCase());
+};
 const asset = src => (!src ? '' : /^(https?:|data:|blob:)/.test(src) ? src : `../${src}`);
 const slug = s => String(s).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'item';
@@ -586,11 +592,13 @@ async function uploadFavicon(file) {
   return out;
 }
 
-// Shows the saved icon in the admin's own tab too.
-function setPageIcon(href) {
+// Shows the portfolio's icon (the one uploaded in Site text, else the bundled one) in the admin's tab and brand.
+function setPageIcon(fav) {
   const link = document.querySelector('link[rel="icon"]');
-  if (link) link.href = href || '../assets/favicon-32.png';
+  if (link) link.href = (fav && fav.icon) || '../assets/favicon-32.png';
+  document.querySelectorAll('img.mark').forEach(img => { img.src = (fav && (fav.large || fav.icon)) || '../assets/icon-512.png'; });
 }
+setPageIcon(window.SITE && window.SITE.meta && window.SITE.meta.favicon);
 
 function faviconField(meta, doc) {
   const fallback = '../assets/favicon-32.png';
@@ -619,7 +627,7 @@ function faviconField(meta, doc) {
       meta.favicon = made;
       markDirty(doc);
       draw();
-      setPageIcon(meta.favicon.icon);
+      setPageIcon(meta.favicon);
       status.textContent = 'New icon ready. Click Save to publish.';
     } catch (err) {
       status.textContent = 'Upload failed.';
@@ -631,7 +639,7 @@ function faviconField(meta, doc) {
     delete meta.favicon;
     markDirty(doc);
     draw();
-    setPageIcon('');
+    setPageIcon(null);
     status.textContent = 'Back to the default icon. Click Save to publish.';
   });
   draw();
@@ -1039,6 +1047,42 @@ function renderText() {
     sel.addEventListener('change', () => { item.level = Number(sel.value); markDirty(d); });
     return h('label', { class: 'field' }, h('span', {}, 'Level'), sel);
   };
+  // Software logo: one image for both themes. Without one the site shows a default badge with initials.
+  const softwareLogo = item => {
+    const preview = h('img', { class: 'sw-logo-img', src: item.logo ? asset(item.logo) : undefined, alt: '', hidden: !item.logo });
+    const empty = h('span', { class: 'sw-logo-default', hidden: Boolean(item.logo) }, softwareInitials(item.name));
+    const input = h('input', { type: 'file', accept: 'image/*' });
+    const label = h('span', {}, item.logo ? 'Change' : 'Upload');
+    const show = on => {
+      preview.hidden = !on;
+      empty.hidden = on;
+      remove.hidden = !on;
+      label.textContent = on ? 'Change' : 'Upload';
+      empty.textContent = softwareInitials(item.name);
+    };
+    const remove = h('button', { class: 'btn ghost small', type: 'button', hidden: !item.logo, title: 'Use the default logo', onclick: e => {
+      e.preventDefault();
+      delete item.logo;
+      show(false);
+      markDirty(d);
+    } }, ico('trash'), 'Remove');
+    input.addEventListener('change', async () => {
+      const f = input.files[0];
+      if (!f) return;
+      try {
+        const a = await uploadImage(f, 'software', `${item.name || 'Software'} logo`);
+        item.logo = a.display;
+        preview.src = asset(a.display);
+        show(true);
+        markDirty(d);
+        toast('Logo uploaded. Click Save.');
+      } catch (err) { toast(err.message, true); }
+      input.value = '';
+    });
+    return h('div', { class: 'field sw-logo-field' }, h('span', {}, 'Logo'),
+      h('span', { class: 'sw-logo-box' }, h('span', { class: 'sw-logo-stage' }, preview, empty),
+        h('label', { class: 'btn ghost small' }, ico('upload'), label, input), remove));
+  };
   const cards = [
     colorsCard(s, d),
     card('Hero', 'The top of the page.',
@@ -1062,7 +1106,7 @@ function renderText() {
       h('div', { class: 'sub' }, field(s.about, 'languagesTitle', 'Languages list title', d),
         listEditor(s.about.languages, d, [{ key: 'name', label: 'Language' }, { key: 'level', label: 'Level' }], { name: '', level: '' }, 'Language')),
       h('div', { class: 'sub' }, field(s.about, 'softwareTitle', 'Software list title', d),
-        listEditor(s.about.software, d, [{ key: 'name', label: 'Software' }, { render: levelSelect }], { name: '', level: 2 }, 'Software')),
+        listEditor(s.about.software, d, [{ render: softwareLogo }, { key: 'name', label: 'Software' }, { render: levelSelect }], { name: '', level: 2 }, 'Software')),
       h('div', { class: 'sub' }, field(s.about, 'fieldsTitle', 'Fields pills title', d),
         listEditor(s.about.fields, d, [], '', 'Field'))),
     card('Section titles', 'Education and Experience titles.',
@@ -2103,14 +2147,25 @@ const TABS = {
   backup: { title: 'Backup', desc: 'Import content and download copies.', icon: 'backup', render: renderBackup },
 };
 
-$('#side-nav').append(...Object.entries(TABS).map(([key, t]) =>
+// Same as the portfolio's pill menubar: a platinum glider springs behind the current tab.
+const sideGlider = h('span', { class: 'side-glider', 'aria-hidden': 'true' });
+$('#side-nav').append(sideGlider, ...Object.entries(TABS).map(([key, t]) =>
   h('button', { type: 'button', 'data-tab': key, 'data-doc': t.doc, onclick: () => { showTab(key); window.scrollTo(0, 0); } },
     ico(t.icon), h('span', {}, t.title), h('i', { class: 'change-dot', title: 'Unsaved changes' }))));
+function moveSideGlider() {
+  const b = $('#side-nav [aria-current="true"]');
+  const on = Boolean(b && b.offsetWidth);
+  sideGlider.classList.toggle('on', on);
+  if (!on) return;
+  Object.assign(sideGlider.style, { width: `${b.offsetWidth}px`, height: `${b.offsetHeight}px`, transform: `translate(${b.offsetLeft}px, ${b.offsetTop}px)` });
+}
+new ResizeObserver(moveSideGlider).observe($('#side-nav'));
 
 function showTab(tab) {
   state.tab = tab;
   const t = TABS[tab];
   $$('#side-nav [data-tab]').forEach(b => b.setAttribute('aria-current', String(b.dataset.tab === tab)));
+  moveSideGlider();
   $('#page-title').textContent = t.title;
   $('#page-desc').textContent = t.desc;
   const y = window.scrollY;
@@ -2131,13 +2186,21 @@ async function enterApp(session) {
   $('#panel').replaceChildren(h('div', { class: 'loading' }, loaderEl(), 'Loading content…'));
   await loadDocs();
   applyAdminColors(state.docs.site.theme);
-  setPageIcon(state.docs.site.meta && state.docs.site.meta.favicon && state.docs.site.meta.favicon.icon);
+  setPageIcon(state.docs.site.meta && state.docs.site.meta.favicon);
   showTab(state.tab);
 }
 
 function showLogin() {
   $('#view-app').hidden = true;
   $('#view-login').hidden = false;
+}
+
+// The live favicon (public read), so the login page shows the same icon as the portfolio before logging in.
+if (sb) {
+  sb.from('content').select('data').eq('key', 'site').maybeSingle().then(({ data }) => {
+    const fav = data && data.data && data.data.meta && data.data.meta.favicon;
+    if (fav && fav.icon && $('#view-app').hidden) setPageIcon(fav);
+  }, () => {});
 }
 
 $('#login-form').addEventListener('submit', async e => {
