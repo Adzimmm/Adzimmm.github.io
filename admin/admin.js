@@ -727,7 +727,8 @@ function videoPreviewDialog(file) {
       if (Number(start.value) > Number(start.max)) start.value = start.max;
       const a = Number(start.value);
       startLabel.textContent = fmtDuration(a);
-      info.textContent = l >= dur ? `The whole video (${fmtDuration(dur)}) shows on the site.` : `Shows ${fmtDuration(a)} to ${fmtDuration(a + l)} of ${fmtDuration(dur)} on the site.`;
+      const shape = videoShape(video.videoWidth, video.videoHeight);
+      info.textContent = (shape ? `${shape} video, ${video.videoWidth} × ${video.videoHeight}. ` : '') + (l >= dur ? `The whole video (${fmtDuration(dur)}) shows on the site.` : `Shows ${fmtDuration(a)} to ${fmtDuration(a + l)} of ${fmtDuration(dur)} on the site.`);
     };
     video.addEventListener('loadedmetadata', () => {
       dur = video.duration || 0;
@@ -767,6 +768,7 @@ function videoPreviewDialog(file) {
     dlg.showModal();
   });
 }
+const videoShape = (w, h) => (!(w > 0 && h > 0) ? '' : w / h > 1.05 ? 'Horizontal' : w / h < 0.95 ? 'Vertical' : 'Square');
 const fmtDuration = sec => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
 function videoPoster(file) {
   return new Promise((resolve, reject) => {
@@ -1771,7 +1773,7 @@ function collectionCard(p, s, si, rerender) {
     const frame = h('div', { class: `thumb-img${a.dark ? ' on-dark' : ''}`, draggable: 'true', title: 'Drag to reorder' },
       h('img', { src: asset(a.thumb || a.display || a.src), alt: '', loading: 'lazy', draggable: 'false' }),
       h('span', { class: 'thumb-num' }, String(i + 1)),
-      a.video ? h('span', { class: 'thumb-video', title: 'Video' }, ico('play'), a.duration ? fmtDuration(a.duration) : 'Video') : null,
+      a.video ? h('span', { class: 'thumb-video', title: 'Video' }, ico('play'), [videoShape(a.width, a.height), a.duration ? fmtDuration(a.duration) : ''].filter(Boolean).join(' · ') || 'Video') : null,
       h('div', { class: 'thumb-tools' },
         moveBtns(s.images, i, d, rerender),
         delBtn(async () => { await removeStored([a]); s.images.splice(i, 1); markDirty(d); rerender(); }, 'this image')));

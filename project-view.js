@@ -50,6 +50,11 @@
   const dims = a => (a.width > 0 && a.height > 0 ? ` width="${a.width}" height="${a.height}"` : '');
   // A video item keeps poster images in src/display/thumb (so image-only places still work) and the file in .video.
   const isVideo = a => Boolean(a && a.video);
+  // Horizontal, vertical or square: from the stored size, then checked against the video file itself.
+  const known = a => a.width > 0 && a.height > 0;
+  const orient = a => { const r = ratio(a); return r > 1.05 ? 'landscape' : r < 0.95 ? 'portrait' : 'square'; };
+  const ORIENTS = ['is-landscape', 'is-portrait', 'is-square'];
+  const setOrient = (el, a) => { el.classList.remove(...ORIENTS); el.classList.add(`is-${orient(a)}`); };
   const PLAY = () => `<span class="pv-play" aria-hidden="true">${I.play}</span>`;
   // "See full video": the site plays a short preview; the full video opens on Google Drive (or any https link).
   const fullLink = a => (a && /^https:\/\/\S+$/i.test(String(a.full || '')) ? String(a.full) : '');
@@ -151,12 +156,16 @@
     b.style.setProperty('--d', String(Math.min(i, 16)));
     b.setAttribute('aria-label', `${it.a.alt || it.s.title}. Open full size`);
     const vid = isVideo(it.a);
-    b.innerHTML = `<img src="${esc(small(it.a))}"${dims(it.a)} alt="" loading="lazy" decoding="async" draggable="false">${vid ? `<video class="pv-tile-video" muted loop playsinline preload="none" aria-hidden="true" src="${esc(it.a.video)}"></video>${PLAY()}` : ''}<span class="pv-tile-info" aria-hidden="true"><span>${esc(it.s.title)}</span>${I.expand}</span>`;
+    b.innerHTML = `<img src="${esc(small(it.a))}"${dims(it.a)} alt="" loading="lazy" decoding="async" draggable="false">${vid ? `<video class="pv-tile-video" muted loop playsinline preload="${known(it.a) ? 'none' : 'metadata'}" aria-hidden="true" src="${esc(it.a.video)}"></video>${PLAY()}` : ''}<span class="pv-tile-info" aria-hidden="true"><span>${esc(it.s.title)}</span>${I.expand}</span>`;
     if (vid) {
       // Hover plays a silent preview; click opens it full size with sound and controls.
       b.classList.add('is-video');
+      setOrient(b, it.a);
       b.setAttribute('aria-label', `${it.a.alt || it.s.title}. Play video`);
       const v = b.querySelector('video');
+      v.addEventListener('loadedmetadata', () => learnShape(it.a, v.videoWidth, v.videoHeight));
+      const poster = b.querySelector('img');
+      poster.addEventListener('load', () => learnShape(it.a, poster.naturalWidth, poster.naturalHeight, true));
       v.addEventListener('playing', () => b.classList.add('is-playing'));
       b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && motion()) v.play().catch(() => {}); });
       b.addEventListener('pointerleave', () => { v.pause(); b.classList.remove('is-playing'); });
@@ -164,8 +173,33 @@
     return b;
   }
 
+  // The file's real frame size wins over the stored one (missing, or wrong for a rotated phone video):
+  // the tile, gallery frame, thumbnail and full-size view take its shape.
+  // `fromPoster`: the poster may be a smaller copy, so only its shape is used (same pixel count).
+  function learnShape(a, w, h, fromPoster = false) {
+    if (!w || !h || (known(a) && Math.abs(w / h - ratio(a)) < 0.01)) return;
+    if (fromPoster && known(a)) {
+      const px = a.width * a.height;
+      w = Math.round(Math.sqrt(px * w / h));
+      h = Math.round(px / w);
+    }
+    a.width = w;
+    a.height = h;
+    const i = items.findIndex(x => x.a === a);
+    if (i < 0) return;
+    const r = ratio(a).toFixed(4);
+    const t = els.tiles[i];
+    if (t) { t.style.setProperty('--a', r); setOrient(t, a); }
+    const f = els.track.querySelector(`.pv-slide[data-i="${i}"] .pv-frame`);
+    if (f) { f.style.setProperty('--a', r); f.style.setProperty('--nw', `${w}px`); setOrient(f, a); }
+    const th = els.thumbs.querySelector(`[data-go="${i}"]`);
+    if (th) th.style.setProperty('--a', r);
+    layoutGrid(true);
+    if (!els.zoom.hidden && zoom.i === i) { setOrient(els.zoom, a); layoutZoom(); }
+  }
+
   const slideHtml = (it, i) => (isVideo(it.a)
-    ? `<div class="pv-slide" data-i="${i}"><div class="pv-frame is-video${artClass(it.a)}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}"><video controls playsinline preload="none" poster="${esc(medium(it.a))}" src="${esc(it.a.video)}" aria-label="${esc(it.a.alt || it.s.title)}"></video>${FULL(it.a)}</div></div>`
+    ? `<div class="pv-slide" data-i="${i}"><div class="pv-frame is-video is-${orient(it.a)}${artClass(it.a)}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}"><video controls playsinline preload="${known(it.a) ? 'none' : 'metadata'}" poster="${esc(medium(it.a))}" src="${esc(it.a.video)}" aria-label="${esc(it.a.alt || it.s.title)}"></video>${FULL(it.a)}</div></div>`
     : `<div class="pv-slide" data-i="${i}"><button type="button" class="pv-frame${artClass(it.a)}" data-zoom="${i}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}" aria-label="${esc(it.a.alt || it.s.title)}. Open full size"><img src="${esc(medium(it.a))}"${dims(it.a)} alt="" loading="lazy" decoding="async" draggable="false"></button></div>`);
 
   const thumbHtml = (it, i) => `<button type="button" class="pv-thumb${it.a.dark && !isClear() ? ' dark-art' : ''}" data-go="${i}" style="--a:${ratio(it.a).toFixed(4)}" aria-label="Visual ${i + 1} of ${items.length}"><img src="${esc(small(it.a))}" alt="" loading="lazy" decoding="async" draggable="false">${isVideo(it.a) ? PLAY() : ''}</button>`;
@@ -241,6 +275,10 @@
     // Entrance done: tiles that move between columns later (resize) do not replay it.
     settleTimer = setTimeout(() => els.masonry.classList.add('is-settled'), 1200);
     els.track.innerHTML = items.map(slideHtml).join('');
+    els.track.querySelectorAll('video').forEach(v => {
+      const it = items[Number(v.closest('.pv-slide').dataset.i)];
+      v.addEventListener('loadedmetadata', () => learnShape(it.a, v.videoWidth, v.videoHeight));
+    });
     els.thumbs.innerHTML = items.map(thumbHtml).join('');
     setCurrent(current, true, false);
   }
@@ -451,11 +489,13 @@
     if (!isVideo(it.a)) {
       if (!v.hidden || v.getAttribute('src')) { v.pause(); v.removeAttribute('src'); v.load(); }
       v.hidden = true;
-      els.zoom.classList.remove('has-video');
+      els.zoom.classList.remove('has-video', ...ORIENTS);
       return;
     }
     v.hidden = false;
     els.zoom.classList.add('has-video');
+    setOrient(els.zoom, it.a);
+    v.onloadedmetadata = () => learnShape(it.a, v.videoWidth, v.videoHeight);
     v.poster = medium(it.a);
     v.src = it.a.video;
     v.setAttribute('aria-label', it.a.alt || it.s.title);
