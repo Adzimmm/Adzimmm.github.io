@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;0,700;1,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=a18456f328">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=a18456f328">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=a18456f328">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=a18456f328">
+  <link rel="stylesheet" href="style.css?v=2b554012f1">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=2b554012f1">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=2b554012f1">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=2b554012f1">
   <!-- Link preview (WhatsApp, LinkedIn, X) -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Adzim's Portfolio">
@@ -38,8 +38,8 @@
   }
   </script>
   <meta name="twitter:card" content="summary_large_image">
-  <script src="supabase-config.js?v=a18456f328"></script>
-  <script src="site-data.js?v=a18456f328"></script>
+  <script src="supabase-config.js?v=2b554012f1"></script>
+  <script src="site-data.js?v=2b554012f1"></script>
   <script>
     /* Before first paint: motion follows the OS reduced-motion setting; the theme is the visitor's own choice,
        else the default set in the admin (site.theme.mode); accent colours come from site.theme too. */
@@ -107,30 +107,13 @@
   <main id="main">
     <!-- HOME -->
     <section class="hero hero-min" id="top" aria-labelledby="hero-title">
-      <!-- Realistic clouds drifting slowly behind the welcome text. Each cloud is a few soft puffs; one SVG filter
-           breaks the outline with fractal noise and lights it from above (bright tops, grey undersides). -->
+      <!-- Realistic clouds drifting slowly over the welcome section (top layer; they never take clicks).
+           assets/clouds/*.webp are volumetric renders made for this site. -->
       <div class="hero-clouds" aria-hidden="true">
-        <svg class="cloud-defs" width="0" height="0" focusable="false">
-          <filter id="cumulus" x="-30%" y="-40%" width="160%" height="180%" color-interpolation-filters="sRGB">
-            <feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="4" seed="4" result="n"/>
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="55" xChannelSelector="R" yChannelSelector="G" result="shape"/>
-            <feGaussianBlur in="shape" stdDeviation="5" result="base"/>
-            <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="3" seed="9" result="n2"/>
-            <feComposite in="base" in2="n2" operator="arithmetic" k2="1" k3=".16" result="bump"/>
-            <feDiffuseLighting in="bump" surfaceScale="16" diffuseConstant="1.05" lighting-color="#fff" result="lit"><feDistantLight azimuth="270" elevation="42"/></feDiffuseLighting>
-            <feComponentTransfer in="lit" result="tone"><feFuncR type="linear" slope=".6" intercept=".44"/><feFuncG type="linear" slope=".6" intercept=".45"/><feFuncB type="linear" slope=".57" intercept=".5"/></feComponentTransfer>
-            <feGaussianBlur in="shape" stdDeviation="2" result="edge"/>
-            <feComponentTransfer in="edge" result="mask"><feFuncA type="linear" slope="2.4" intercept="-.12"/></feComponentTransfer>
-            <feComposite in="tone" in2="mask" operator="in" result="body"/>
-            <feGaussianBlur in="mask" stdDeviation="12" result="glow"/>
-            <feComponentTransfer in="glow" result="haze"><feFuncR type="linear" slope="0" intercept="1"/><feFuncG type="linear" slope="0" intercept="1"/><feFuncB type="linear" slope="0" intercept="1"/><feFuncA type="linear" slope=".35"/></feComponentTransfer>
-            <feMerge><feMergeNode in="haze"/><feMergeNode in="body"/></feMerge>
-          </filter>
-        </svg>
-        <div class="cloud cloud-1"><div class="cloud-puffs"><i style="left:8%;top:48%;width:34%;height:34%"></i><i style="left:24%;top:26%;width:30%;height:52%"></i><i style="left:42%;top:14%;width:30%;height:60%"></i><i style="left:60%;top:36%;width:28%;height:40%"></i><i style="left:14%;top:58%;width:72%;height:24%"></i></div></div>
-        <div class="cloud cloud-2"><div class="cloud-puffs"><i style="left:6%;top:52%;width:30%;height:30%"></i><i style="left:22%;top:30%;width:36%;height:50%"></i><i style="left:50%;top:24%;width:28%;height:52%"></i><i style="left:66%;top:46%;width:24%;height:34%"></i><i style="left:12%;top:60%;width:76%;height:22%"></i></div></div>
-        <div class="cloud cloud-3"><div class="cloud-puffs"><i style="left:4%;top:50%;width:26%;height:30%"></i><i style="left:18%;top:34%;width:26%;height:44%"></i><i style="left:36%;top:22%;width:26%;height:56%"></i><i style="left:54%;top:30%;width:24%;height:46%"></i><i style="left:70%;top:46%;width:24%;height:32%"></i><i style="left:8%;top:62%;width:84%;height:20%"></i></div></div>
-        <div class="cloud cloud-4"><div class="cloud-puffs"><i style="left:14%;top:44%;width:32%;height:38%"></i><i style="left:34%;top:22%;width:34%;height:58%"></i><i style="left:58%;top:40%;width:28%;height:40%"></i><i style="left:16%;top:60%;width:70%;height:22%"></i></div></div>
+        <img class="cloud cloud-1" src="assets/clouds/cloud-1.webp" alt="" decoding="async" draggable="false">
+        <img class="cloud cloud-2" src="assets/clouds/cloud-2.webp" alt="" decoding="async" draggable="false">
+        <img class="cloud cloud-3" src="assets/clouds/cloud-3.webp" alt="" decoding="async" draggable="false">
+        <img class="cloud cloud-4" src="assets/clouds/cloud-4.webp" alt="" decoding="async" draggable="false">
       </div>
       <div class="hero-copy">
         <p class="hero-hi"><span data-c="hero.hi">Hi, I'm</span> <strong data-c="hero.name">Adzim.</strong></p>
@@ -297,14 +280,14 @@
     <div class="resume-pages" id="resume-sheet"></div>
   </dialog>
 
-  <script src="portfolio-data.js?v=a18456f328"></script>
-  <script src="resume-data.js?v=a18456f328"></script>
-  <script src="backdrop.js?v=a18456f328"></script>
-  <script src="socials.js?v=a18456f328"></script>
-  <script src="chat.js?v=a18456f328"></script>
-  <script src="project-view.js?v=a18456f328"></script>
-  <script src="app.js?v=a18456f328"></script>
-  <script src="pet.js?v=a18456f328"></script>
-  <script src="visit.js?v=a18456f328"></script>
+  <script src="portfolio-data.js?v=2b554012f1"></script>
+  <script src="resume-data.js?v=2b554012f1"></script>
+  <script src="backdrop.js?v=2b554012f1"></script>
+  <script src="socials.js?v=2b554012f1"></script>
+  <script src="chat.js?v=2b554012f1"></script>
+  <script src="project-view.js?v=2b554012f1"></script>
+  <script src="app.js?v=2b554012f1"></script>
+  <script src="pet.js?v=2b554012f1"></script>
+  <script src="visit.js?v=2b554012f1"></script>
 </body>
 </html>
