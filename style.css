@@ -1672,21 +1672,3 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 .sw-logo.is-default b{font:800 12px/1 var(--font-display,inherit);letter-spacing:.02em;color:var(--text)}
 [data-theme="light"] .sw-logo.is-default{background:linear-gradient(135deg,#fff,rgba(36,23,57,.04))}
 
-/* Hero: realistic clouds drifting slowly over "Welcome to my Portfolio" (top layer, no clicks) */
-.hero-clouds{position:absolute;inset:-40px 0 0;z-index:3;overflow:hidden;pointer-events:none;
-  /* fade out at the bottom, and thin the clouds right over the text so it stays easy to read */
-  -webkit-mask-image:linear-gradient(#000 60%,transparent 96%),radial-gradient(ellipse 38% 32% at 50% 50%,rgba(0,0,0,.42) 35%,#000);
-  -webkit-mask-composite:source-in;mask-image:linear-gradient(#000 60%,transparent 96%),radial-gradient(ellipse 38% 32% at 50% 50%,rgba(0,0,0,.42) 35%,#000);mask-composite:intersect}
-.cloud{position:absolute;left:0;width:var(--w);height:auto;opacity:var(--o);user-select:none;will-change:transform;
-  animation:cloud-drift var(--t) linear infinite;animation-delay:var(--d)}
-.cloud-1{--w:min(460px,66vw);--o:.95;--t:170s;--d:-45s;top:2%}
-.cloud-2{--w:min(400px,58vw);--o:.9;--t:220s;--d:-160s;top:36%}
-.cloud-3{--w:min(300px,44vw);--o:.7;--t:260s;--d:-215s;top:16%}
-.cloud-4{--w:min(260px,40vw);--o:.75;--t:240s;--d:-100s;top:52%}
-.cloud-1,.cloud-2{z-index:1} /* the big, closest clouds pass in front of the small far ones */
-@keyframes cloud-drift{from{transform:translateX(calc(-1 * var(--w) - 4vw))}to{transform:translateX(104vw)}}
-html[data-motion="off"] .cloud{animation:cloud-drift var(--t) linear infinite!important;animation-delay:var(--d)!important;animation-play-state:paused!important}
-@media (prefers-reduced-motion:reduce){.cloud{animation-play-state:paused}}
-/* Text over the clouds: a soft dark halo keeps it crisp in the dark theme, a pale one in the light theme */
-.hero-min .hero-hi,.hero-min h1,.hero-min .hero-intro{text-shadow:0 2px 18px rgba(9,9,12,.75),0 0 4px rgba(9,9,12,.5)}
-:root[data-theme="light"] .hero-min .hero-hi,:root[data-theme="light"] .hero-min h1,:root[data-theme="light"] .hero-min .hero-intro{text-shadow:0 2px 18px rgba(246,244,250,.9),0 0 4px rgba(246,244,250,.8)}
