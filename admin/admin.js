@@ -681,14 +681,18 @@ const MB = n => `${(n / 1048576).toFixed(n < 10485760 ? 1 : 0)} MB`;
 
 // Re-encodes to H.264 MP4 at a constant high quality, keeping the resolution and frame rate.
 // Returns the smaller of the original and the compressed file.
-async function compressVideo(file, onProgress) {
-  if (!('VideoEncoder' in window)) return file; // no WebCodecs: upload as it is
+async function compressVideo(file, onProgress, trim = null) {
+  if (!('VideoEncoder' in window)) { // no WebCodecs: upload as it is (a preview cannot be cut)
+    if (trim) throw new Error('This browser cannot cut a preview. Use the latest Chrome, Edge or Safari.');
+    return file;
+  }
   const M = await import(MEDIABUNNY);
   const input = new M.Input({ source: new M.BlobSource(file), formats: M.ALL_FORMATS });
   const target = new M.BufferTarget();
   const output = new M.Output({ format: new M.Mp4OutputFormat({ fastStart: 'in-memory' }), target });
   const conversion = await M.Conversion.init({
     input, output, showWarnings: false,
+    ...(trim ? { trim } : {}),
     video: { codec: 'avc', quality: M.QUALITY_HIGH, keyFrameInterval: 2 },
     audio: { codec: 'aac' },
   });
@@ -696,7 +700,72 @@ async function compressVideo(file, onProgress) {
   conversion.onProgress = pr => onProgress && onProgress(pr);
   await conversion.execute();
   const out = new File([target.buffer], `${file.name.replace(/\.[^.]+$/, '')}.mp4`, { type: 'video/mp4' });
-  return out.size < file.size ? out : file;
+  return trim || out.size < file.size ? out : file;
+}
+
+// A safe link for "See full video": https only (Google Drive, YouTube or any other host).
+const fullVideoLink = v => (/^https:\/\/\S+$/i.test(String(v || '').trim()) ? String(v).trim() : '');
+
+// Before a video uploads: choose the short part shown on the site and paste the full video's link.
+// Resolves to { trim: { start, end } | null, full, fullDuration } or null when skipped.
+function videoPreviewDialog(file) {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file);
+    const video = h('video', { class: 'vp-video', src: url, muted: true, playsInline: true, controls: true, preload: 'metadata' });
+    const LENGTHS = [[10, '10 seconds'], [15, '15 seconds'], [30, '30 seconds'], [60, '1 minute'], [0, 'Whole video']];
+    const length = h('select', {}, LENGTHS.map(([v, t]) => h('option', { value: String(v) }, t)));
+    const start = h('input', { type: 'range', min: '0', max: '0', step: '0.1', value: '0', 'aria-label': 'Preview start' });
+    const startLabel = h('b', {}, '0:00');
+    const info = h('small', { class: 'muted' });
+    const full = h('input', { type: 'url', placeholder: 'https://drive.google.com/file/d/…/view', 'aria-label': 'Full video link' });
+    let dur = 0;
+    const len = () => (Number(length.value) && Number(length.value) < dur ? Number(length.value) : dur);
+    const sync = () => {
+      const l = len();
+      start.max = String(Math.max(0, dur - l));
+      start.disabled = l >= dur;
+      if (Number(start.value) > Number(start.max)) start.value = start.max;
+      const a = Number(start.value);
+      startLabel.textContent = fmtDuration(a);
+      info.textContent = l >= dur ? `The whole video (${fmtDuration(dur)}) shows on the site.` : `Shows ${fmtDuration(a)} to ${fmtDuration(a + l)} of ${fmtDuration(dur)} on the site.`;
+    };
+    video.addEventListener('loadedmetadata', () => {
+      dur = video.duration || 0;
+      length.value = dur <= 15 ? '0' : '15';
+      sync();
+    });
+    length.addEventListener('change', sync);
+    start.addEventListener('input', () => { sync(); video.currentTime = Number(start.value); });
+    // Playing loops inside the chosen part, so it can be checked before uploading.
+    video.addEventListener('timeupdate', () => {
+      const a = Number(start.value);
+      if (len() < dur && video.currentTime > a + len()) video.currentTime = a;
+    });
+    const dlg = h('dialog', { class: 'crop-dialog video-dialog' });
+    const done = value => { video.pause(); URL.revokeObjectURL(url); dlg.close(); dlg.remove(); resolve(value); };
+    const use = () => {
+      const link = full.value.trim();
+      if (link && !fullVideoLink(link)) { info.textContent = 'The full video link must start with https://'; info.classList.add('error'); full.focus(); return; }
+      const l = len();
+      done({ trim: l < dur ? { start: Number(start.value), end: Number(start.value) + l } : null, full: fullVideoLink(link), fullDuration: Math.round(dur * 10) / 10 });
+    };
+    dlg.append(
+      h('h2', {}, 'Video preview'),
+      h('p', { class: 'muted' }, `Only a short part of ${file.name} is shown on the site. Visitors can open the full video from your link.`),
+      video,
+      h('div', { class: 'grid2' },
+        h('label', { class: 'field' }, h('span', {}, 'Preview length'), length),
+        h('label', { class: 'field' }, h('span', {}, 'Starts at ', startLabel), start)),
+      info,
+      h('label', { class: 'field' }, h('span', {}, 'Full video link (Google Drive, optional)'), full,
+        h('small', {}, 'In Drive: Share, set to "Anyone with the link", then Copy link.')),
+      h('div', { class: 'ask-actions' },
+        h('button', { class: 'btn primary', type: 'button', onclick: use }, 'Upload preview'),
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => done(null) }, 'Skip this video')));
+    dlg.addEventListener('cancel', e => { e.preventDefault(); done(null); });
+    document.body.append(dlg);
+    dlg.showModal();
+  });
 }
 const fmtDuration = sec => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
 function videoPoster(file) {
@@ -728,20 +797,26 @@ function videoPoster(file) {
 }
 async function uploadVideo(original, folder, alt, onStatus = () => {}) {
   if (original.size > VIDEO_INPUT_MAX_MB * 1048576) throw new Error(`Video is ${MB(original.size)}. The most it can take is ${VIDEO_INPUT_MAX_MB} MB.`);
+  onStatus(`Choose the preview for ${original.name}…`);
+  const choice = await videoPreviewDialog(original);
+  if (!choice) return null; // skipped
   let file = original;
   try {
     onStatus(`Compressing ${original.name}…`);
-    file = await compressVideo(original, pr => onStatus(`Compressing ${original.name}… ${Math.round(pr * 100)}%`));
+    file = await compressVideo(original, pr => onStatus(`Compressing ${original.name}… ${Math.round(pr * 100)}%`), choice.trim);
   } catch (err) {
+    if (choice.trim) throw err; // a preview that cannot be cut must not upload the whole video
     console.warn('Video compression failed, using the original file', err);
   }
   if (file.size > VIDEO_MAX_MB * 1048576) {
-    throw new Error(`${original.name} is still ${MB(file.size)} after compressing at full quality (limit ${VIDEO_MAX_MB} MB). Trim it shorter, or split it into parts.`);
+    throw new Error(`${original.name} is still ${MB(file.size)} after compressing at full quality (limit ${VIDEO_MAX_MB} MB). Choose a shorter preview.`);
   }
   onStatus(file === original ? `Uploading ${original.name} (${MB(file.size)})…` : `Uploading ${original.name}: ${MB(original.size)} → ${MB(file.size)}…`);
   const { poster, duration } = await videoPoster(file);
   const a = await uploadImage(poster, folder, alt);
   a.duration = Math.round(duration * 10) / 10;
+  if (choice.full) a.full = choice.full;
+  if (choice.trim) a.fullDuration = choice.fullDuration;
   if (DEMO) { a.video = URL.createObjectURL(file); return a; }
   const ext = (file.name.match(/\.([a-z0-9]+)$/i) || [0, 'mp4'])[1].toLowerCase();
   const path = `${folder}/${Date.now().toString(36)}-${slug(file.name.replace(/\.[^.]+$/, ''))}.${ext}`;
@@ -1649,7 +1724,7 @@ function collectionCard(p, s, si, rerender) {
   const status = h('span', {}, 'Drag images, videos or a folder here, or ', h('u', {}, 'choose files'));
   const drop = h('label', { class: 'drop' },
     h('input', { type: 'file', accept: 'image/*,video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov', multiple: true, onchange: e => { addFiles([...e.target.files]); e.target.value = ''; } }),
-    ico('upload'), status, h('small', {}, `JPG, PNG, WebP or GIF (resized to WebP). Videos: MP4, WebM or MOV up to ${VIDEO_INPUT_MAX_MB} MB, compressed here at full resolution and high quality; the result must fit ${VIDEO_MAX_MB} MB.`));
+    ico('upload'), status, h('small', {}, `JPG, PNG, WebP or GIF (resized to WebP). Videos: MP4, WebM or MOV up to ${VIDEO_INPUT_MAX_MB} MB; you pick a short preview for the site (full resolution, high quality) and can link the full video on Google Drive.`));
   wireDrop(drop, (entries, files) => readDrop(entries, files, isMediaFile).then(tree => addFiles(allFiles(tree))).catch(err => toast(err.message, true)));
 
   async function addFiles(files) {
@@ -1665,6 +1740,7 @@ function collectionCard(p, s, si, rerender) {
         let a;
         if (isVideoFile(f)) {
           a = await uploadVideo(f, folder, alt, text => { status.textContent = `${n + 1} of ${imgs.length}: ${text}`; });
+          if (!a) continue; // skipped in the preview dialog
           a.opaque = true;
         } else {
           const info = await analyseImage(f, { preview: false });
@@ -1700,7 +1776,17 @@ function collectionCard(p, s, si, rerender) {
         moveBtns(s.images, i, d, rerender),
         delBtn(async () => { await removeStored([a]); s.images.splice(i, 1); markDirty(d); rerender(); }, 'this image')));
     dark.addEventListener('change', () => { a.dark = dark.checked; frame.classList.toggle('on-dark', a.dark); markDirty(d); });
-    const fig = h('figure', { class: 'thumb' }, frame, alt, h('label', { class: 'check', title: LIGHT_ART_TIP }, dark, 'Light artwork'));
+    let fullField = null;
+    if (a.video) {
+      fullField = h('input', { type: 'url', value: a.full || '', placeholder: 'Full video link (Google Drive)', title: 'Opens from "See full video" on the site' });
+      fullField.addEventListener('change', () => {
+        const link = fullVideoLink(fullField.value);
+        if (fullField.value.trim() && !link) { toast('The full video link must start with https://', true); return; }
+        if (link) a.full = link; else delete a.full;
+        markDirty(d);
+      });
+    }
+    const fig = h('figure', { class: 'thumb' }, frame, alt, fullField, h('label', { class: 'check', title: LIGHT_ART_TIP }, dark, 'Light artwork'));
     frame.addEventListener('dragstart', e => {
       dragFrom = i;
       e.dataTransfer.effectAllowed = 'move';

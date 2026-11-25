@@ -51,6 +51,10 @@
   // A video item keeps poster images in src/display/thumb (so image-only places still work) and the file in .video.
   const isVideo = a => Boolean(a && a.video);
   const PLAY = () => `<span class="pv-play" aria-hidden="true">${I.play}</span>`;
+  // "See full video": the site plays a short preview; the full video opens on Google Drive (or any https link).
+  const fullLink = a => (a && /^https:\/\/\S+$/i.test(String(a.full || '')) ? String(a.full) : '');
+  const mins = sec => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
+  const FULL = a => (fullLink(a) ? `<a class="pv-full-video" href="${esc(fullLink(a))}" target="_blank" rel="noopener noreferrer">See full video${a.fullDuration ? ` · ${mins(a.fullDuration)}` : ''} <span aria-hidden="true">↗</span></a>` : '');
   // Categories shown as cut-outs straight on the panel, with no coloured box (a category can also set clear: true).
   // Every category shows its images as the original files: no box, no padding, never cropped.
   const isClear = () => Boolean(p);
@@ -161,7 +165,7 @@
   }
 
   const slideHtml = (it, i) => (isVideo(it.a)
-    ? `<div class="pv-slide" data-i="${i}"><div class="pv-frame is-video${artClass(it.a)}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}"><video controls playsinline preload="none" poster="${esc(medium(it.a))}" src="${esc(it.a.video)}" aria-label="${esc(it.a.alt || it.s.title)}"></video></div></div>`
+    ? `<div class="pv-slide" data-i="${i}"><div class="pv-frame is-video${artClass(it.a)}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}"><video controls playsinline preload="none" poster="${esc(medium(it.a))}" src="${esc(it.a.video)}" aria-label="${esc(it.a.alt || it.s.title)}"></video>${FULL(it.a)}</div></div>`
     : `<div class="pv-slide" data-i="${i}"><button type="button" class="pv-frame${artClass(it.a)}" data-zoom="${i}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}" aria-label="${esc(it.a.alt || it.s.title)}. Open full size"><img src="${esc(medium(it.a))}"${dims(it.a)} alt="" loading="lazy" decoding="async" draggable="false"></button></div>`);
 
   const thumbHtml = (it, i) => `<button type="button" class="pv-thumb${it.a.dark && !isClear() ? ' dark-art' : ''}" data-go="${i}" style="--a:${ratio(it.a).toFixed(4)}" aria-label="Visual ${i + 1} of ${items.length}"><img src="${esc(small(it.a))}" alt="" loading="lazy" decoding="async" draggable="false">${isVideo(it.a) ? PLAY() : ''}</button>`;
@@ -547,7 +551,7 @@
     if (!it) return;
     els.zoomPrev.disabled = zoom.i <= 0;
     els.zoomNext.disabled = zoom.i >= items.length - 1;
-    els.zoomCap.innerHTML = `<span>${esc(it.s.title)}</span><b>${zoom.i + 1} / ${items.length}</b>`;
+    els.zoomCap.innerHTML = `<span>${esc(it.s.title)}</span><b>${zoom.i + 1} / ${items.length}</b>${FULL(it.a)}`;
   }
 
   function stepZoom(d) {

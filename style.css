@@ -1653,3 +1653,12 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 @keyframes pv-video-in{from{opacity:0}}
 [data-motion="off"] .pv-zoom-video{animation:none}
 @media (prefers-reduced-motion:reduce){.pv-zoom-video{animation:none}}
+
+/* "See full video" opens the whole video (Google Drive) in a new tab; the site plays a short preview */
+.pv-full-video{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--accent);color:#16111f;font:600 12.5px/1.2 var(--font-body);text-decoration:none;white-space:nowrap;transition:filter .2s,transform .2s var(--ease)}
+.pv-full-video:hover{filter:brightness(1.1)}
+.pv-full-video:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.pv-zoom-cap .pv-full-video{margin:-3px -10px -3px 2px}
+.pv-frame.is-video{position:relative}
+.pv-frame.is-video>.pv-full-video{position:absolute;top:12px;right:12px;z-index:2;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+[data-theme="light"] .pv-full-video{color:#fff}
