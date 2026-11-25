@@ -1674,19 +1674,23 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 
 /* Hero: realistic clouds drifting slowly behind "Welcome to my Portfolio" */
 .hero-clouds{position:absolute;inset:-40px 0 0;z-index:0;overflow:hidden;pointer-events:none;
-  -webkit-mask-image:linear-gradient(#000 55%,transparent 92%);mask-image:linear-gradient(#000 55%,transparent 92%)}
+  /* fade out at the bottom, and dim (not hide) the clouds right behind the text so it stays easy to read */
+  -webkit-mask-image:linear-gradient(#000 60%,transparent 96%),radial-gradient(ellipse 40% 34% at 50% 50%,rgba(0,0,0,.26) 30%,#000);
+  -webkit-mask-composite:source-in;mask-image:linear-gradient(#000 60%,transparent 96%),radial-gradient(ellipse 40% 34% at 50% 50%,rgba(0,0,0,.26) 30%,#000);mask-composite:intersect}
 .cloud-defs{position:absolute;width:0;height:0}
-.cloud{position:absolute;left:0;width:var(--w);height:calc(var(--w) * .42);opacity:var(--o);will-change:transform;
+.cloud{position:absolute;left:0;width:var(--w);height:calc(var(--w) * .5);opacity:var(--o);will-change:transform;
   animation:cloud-drift var(--t) linear infinite;animation-delay:var(--d)}
-.cloud i{position:absolute;border-radius:50%;background:var(--cloud,#fff)}
-.cloud .cb{inset:22% 10% 18%;filter:url(#cloud-body);box-shadow:0 0 40px 10px var(--cloud,#fff)}
-.cloud .cw{inset:8% 26% 46% 22%;opacity:.75;filter:url(#cloud-wisp)}
-.cloud-1{--w:min(520px,62vw);--o:.16;--t:150s;--d:-30s;top:2%}
-.cloud-2{--w:min(380px,48vw);--o:.11;--t:190s;--d:-120s;top:26%}
-.cloud-3{--w:min(620px,70vw);--o:.09;--t:230s;--d:-170s;top:48%}
-.cloud-4{--w:min(300px,40vw);--o:.13;--t:170s;--d:-75s;top:12%}
-@keyframes cloud-drift{from{transform:translateX(calc(-1 * var(--w) - 10vw))}to{transform:translateX(110vw)}}
-:root[data-theme="light"] .hero-clouds{--cloud:#c9c2dc}
-:root[data-theme="light"] .cloud{opacity:calc(var(--o) * 2.6)}
+.cloud-puffs{position:absolute;inset:0;filter:url(#cumulus)}
+.cloud-puffs i{position:absolute;border-radius:50%;background:radial-gradient(closest-side,#fff,rgba(255,255,255,.75) 55%,rgba(255,255,255,0))}
+.cloud-1{--w:min(500px,64vw);--o:.92;--t:160s;--d:-40s;top:0}
+.cloud-2{--w:min(360px,50vw);--o:.75;--t:210s;--d:-150s;top:30%}
+.cloud-3{--w:min(560px,72vw);--o:.6;--t:250s;--d:-200s;top:50%}
+.cloud-4{--w:min(280px,42vw);--o:.85;--t:185s;--d:-90s;top:8%}
+@keyframes cloud-drift{from{transform:translateX(calc(-1 * var(--w) - 6vw))}to{transform:translateX(106vw)}}
+/* Light theme: a touch of grey-blue so white clouds still read on the pale page */
+:root[data-theme="light"] .cloud-puffs{filter:url(#cumulus) drop-shadow(0 10px 18px rgba(70,80,120,.22)) brightness(.97)}
 html[data-motion="off"] .cloud{animation:cloud-drift var(--t) linear infinite!important;animation-delay:var(--d)!important;animation-play-state:paused!important}
 @media (prefers-reduced-motion:reduce){.cloud{animation-play-state:paused}}
+/* Text over the clouds: a soft dark halo keeps it crisp in the dark theme, a pale one in the light theme */
+.hero-min .hero-hi,.hero-min h1,.hero-min .hero-intro{text-shadow:0 2px 18px rgba(9,9,12,.75),0 0 4px rgba(9,9,12,.5)}
+:root[data-theme="light"] .hero-min .hero-hi,:root[data-theme="light"] .hero-min h1,:root[data-theme="light"] .hero-min .hero-intro{text-shadow:0 2px 18px rgba(246,244,250,.9),0 0 4px rgba(246,244,250,.8)}
