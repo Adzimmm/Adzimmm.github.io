@@ -598,7 +598,6 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
 /* About backdrop setting */
 .bd-row{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
 .bd-preview{position:relative;flex:none;width:150px;height:170px;overflow:hidden;border-radius:18px;box-shadow:0 0 0 1px var(--line-strong)}
-.bd-preview-word{position:absolute;left:-6%;top:28%;z-index:1;color:#fff;font:800 64px/.8 var(--font-display);letter-spacing:-.06em;transform:rotate(-9deg);white-space:nowrap}
 .bd-side{display:grid;gap:12px;flex:1;min-width:220px}
 .bd-seg{display:flex;flex-wrap:wrap;gap:6px}
 .bd-extra{display:grid;gap:12px}

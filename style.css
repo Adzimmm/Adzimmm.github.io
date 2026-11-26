@@ -1405,7 +1405,6 @@ html.pv-open .chat-launcher{opacity:0;visibility:hidden;pointer-events:none}
   margin-bottom:24px;padding:clamp(28px,4vw,48px);border:1px solid var(--line);border-radius:28px;background:var(--surface-raised)}
 .ah-photo{position:relative;width:100%;max-width:440px;aspect-ratio:4/5;justify-self:center}
 .ah-card{position:absolute;inset:16% 0 0;overflow:hidden;border-radius:28px;background:var(--ah)}
-.ah-word{position:absolute;left:-6%;top:22%;color:#fff;font:800 clamp(110px,13vw,190px)/.8 var(--font-display);letter-spacing:-.06em;white-space:nowrap;transform:rotate(-9deg)}
 .ah-photo img{position:relative;z-index:1;display:block;width:100%;height:100%;object-fit:cover;object-position:50% 100%;clip-path:inset(0 round 0 0 28px 28px)}
 .ah-hello{margin:0}
 .ah-hl{display:inline-block;padding:.08em .38em .12em;border-radius:12px;color:var(--text);font:700 clamp(24px,2.6vw,36px)/1.2 var(--font-display);letter-spacing:-.02em;
@@ -1421,11 +1420,9 @@ html.pv-open .chat-launcher{opacity:0;visibility:hidden;pointer-events:none}
 .about-hero.is-in .ah-cursor{transform:none;animation:ah-nudge 2.6s ease-in-out 1.8s infinite}
 @keyframes ah-nudge{0%,100%{transform:none}50%{transform:translate(-4px,-4px)}}
 .ah-photo{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .8s var(--ease)}
-.ah-word{opacity:0;transition:opacity .8s ease .3s,transform 1s var(--ease) .3s;transform:rotate(-9deg) translateX(-24px)}
 .about-hero.is-in .ah-photo{opacity:1;transform:none}
-.about-hero.is-in .ah-word{opacity:1;transform:rotate(-9deg)}
 [data-motion="off"] .about-hero *{transition:none!important;animation:none!important}
-[data-motion="off"] .ah-photo,[data-motion="off"] .ah-word{opacity:1}
+[data-motion="off"] .ah-photo{opacity:1}
 @media(max-width:860px){
   .about-hero{grid-template-columns:minmax(0,1fr);text-align:left}
   .ah-photo{max-width:320px}
@@ -1478,7 +1475,6 @@ html[data-motion="on"] .about-hero:not(.s-pill) .ah-pill{transform:translate(110
 @keyframes ah-ripple{0%{box-shadow:0 0 18px color-mix(in srgb,var(--live-glow) 55%,transparent),0 0 0 0 color-mix(in srgb,var(--live-glow) 55%,transparent)}
   100%{box-shadow:0 0 18px color-mix(in srgb,var(--live-glow) 55%,transparent),0 0 0 14px transparent}}
 @media(max-width:860px){.ah-pill{padding:14px 0 0 26px}.ah-cursor{left:0;top:0;width:30px;height:30px}}
-.ah-word{z-index:1}
 
 /* Cursor holds the pill at its right end, as if dragging it (tip on the pill's lower right) */
 .ah-pill{padding:0 26px 22px 0}

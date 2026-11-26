@@ -520,7 +520,7 @@ function backdropField(about, doc) {
   if (!BD) return null;
   const b = about.backdrop || (about.backdrop = { type: 'color', colors: BD.DEFAULT_COLORS.slice() });
   if (!Array.isArray(b.colors)) b.colors = BD.DEFAULT_COLORS.slice();
-  const preview = h('div', { class: 'bd-preview' }, h('span', { class: 'bd-preview-word' }, about.word || ''));
+  const preview = h('div', { class: 'bd-preview' });
   const extra = h('div', { class: 'bd-extra' });
   const changed = () => { markDirty(doc); BD.render(preview, b); };
   const types = [['color', 'Colour'], ['image', 'Image'], ['shader', 'Shader'], ['animated', 'Animated']];
@@ -1100,7 +1100,7 @@ function renderText() {
       field(s.about, 'title', 'Section title', d),
       aboutPhotoField(s.about, d),
       backdropField(s.about, d),
-      h('div', { class: 'grid3' }, field(s.about, 'hello', 'Highlighted greeting', d), field(s.about, 'name', 'Big name', d), field(s.about, 'word', 'Big word behind the photo', d)),
+      h('div', { class: 'grid3' }, field(s.about, 'hello', 'Highlighted greeting', d), field(s.about, 'name', 'Big name', d)),
       field(s.about, 'availability', 'Green online pill (Currently…)', d),
       field(s.about, 'body', 'Paragraph', d, { multi: true, rows: 4 }),
       h('div', { class: 'sub' }, field(s.about, 'languagesTitle', 'Languages list title', d),
