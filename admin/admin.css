@@ -706,3 +706,6 @@ img.mark{display:block;padding:0;background:none;border-radius:10px;object-fit:c
 .up-choice b{display:block;font:700 15px var(--font-display)}
 .up-choice small{display:block;color:var(--muted);font-size:13px}
 .up-choice:disabled{opacity:.45;cursor:not-allowed;border-color:var(--line);background:none}
+/* Save (unsaved-changes bar): green */
+#save{background:#22c55e;border-color:#22c55e;color:#052e14}
+:root[data-theme="light"] #save{background:#16a34a;border-color:#16a34a;color:#fff}
