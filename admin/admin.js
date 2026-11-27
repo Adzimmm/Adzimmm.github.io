@@ -152,21 +152,8 @@ function setTheme(theme) {
 $('#theme-toggle').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'));
 setTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
 
-// The admin uses the site's accent colours too (site.theme, set in Site text › Colours & theme).
-// The last ones seen are kept in this browser, so the login screen has them before the content loads.
-const ADMIN_COLORS = 'adz:admin-colors';
-function applyAdminColors(t) {
-  const hex = /^#[0-9a-f]{6}$/i;
-  t = t || {};
-  let css = '';
-  if (hex.test(t.dark || '')) css += `:root:root{--accent:${t.dark};--accent-soft:color-mix(in srgb,${t.dark} 14%,transparent)}`;
-  if (hex.test(t.light || '')) css += `:root:root[data-theme="light"]{--accent:${t.light};--accent-soft:color-mix(in srgb,${t.light} 10%,transparent)}`;
-  let el = document.getElementById('admin-colors');
-  if (!el) { el = document.createElement('style'); el.id = 'admin-colors'; document.head.append(el); }
-  el.textContent = css;
-  try { localStorage.setItem(ADMIN_COLORS, JSON.stringify({ dark: t.dark, light: t.light })); } catch (_) {}
-}
-try { applyAdminColors(JSON.parse(localStorage.getItem(ADMIN_COLORS) || 'null')); } catch (_) {}
+// The admin keeps its own grey accent (the site's colours are set in Site text › Colours & theme).
+try { localStorage.removeItem('adz:admin-colors'); } catch (_) {}
 paintIcons();
 
 $('[data-show-pw]').addEventListener('click', e => {
@@ -287,7 +274,6 @@ $('#discard').addEventListener('click', async () => {
   if (!ok) return;
   state.dirty.clear();
   await loadDocs();
-  applyAdminColors(state.docs.site.theme);
   updateSavebar();
   showTab(state.tab);
   toast('Changes discarded.');
@@ -1009,7 +995,7 @@ function colorsCard(s, d) {
   s.theme = { ...THEME_DEFAULT, ...(s.theme || {}) };
   const t = s.theme;
   const body = h('div', { class: 'colors' });
-  const set = changes => { Object.assign(t, changes); markDirty(d); applyAdminColors(t); draw(); };
+  const set = changes => { Object.assign(t, changes); markDirty(d); draw(); };
   // One colour: picker + hex box + a warning when buttons and links would be hard to read.
   const colorField = (key, label, bg, bgName) => {
     const ok = HEX.test(t[key]) && contrast(t[key], bg) >= 4.5;
@@ -2316,7 +2302,6 @@ async function enterApp(session) {
   if (!DEMO) { try { if (localStorage.getItem('adz:notrack') === null) localStorage.setItem('adz:notrack', '1'); } catch (_) {} }
   $('#panel').replaceChildren(h('div', { class: 'loading' }, loaderEl(), 'Loading content…'));
   await loadDocs();
-  applyAdminColors(state.docs.site.theme);
   setPageIcon(state.docs.site.meta && state.docs.site.meta.favicon);
   showTab(state.tab);
 }

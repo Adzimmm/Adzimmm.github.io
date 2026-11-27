@@ -402,19 +402,25 @@ export function mountInsights(root, { h, ico, card, switchField, ask, toast, sb,
     return h('span', { class: `stat-delta ${up ? 'up' : 'down'}` }, `${up ? '▲' : '▼'} ${Math.abs(change)}% vs ${vs}`);
   }
 
-  // Column chart: one bar per hour, day or week; the tallest bar carries its number.
+  // Line chart: one point per hour, day or week; the highest point carries its number.
+  // Each point sits in its own column, so hover and the arrow keys read it like before.
   function columns(s) {
     const max = Math.max(0, ...s.map(x => x.n));
     const ticks = niceTicks(max);
     const top = ticks[ticks.length - 1];
     const peakAt = max ? s.findIndex(x => x.n === max) : -1;
+    const y = n => 100 - (n / top) * 100;
+    const pts = s.map((x, i) => `${i + 0.5},${y(x.n).toFixed(2)}`).join(' ');
+    const line = h('div', { class: 'cc-line', 'aria-hidden': 'true' });
+    line.innerHTML = `<svg viewBox="0 0 ${s.length} 100" preserveAspectRatio="none"><polygon class="cc-area" points="0.5,100 ${pts} ${s.length - 0.5},100"/><polyline points="${pts}"/></svg>`;
     const slots = s.map((x, i) => h('div', { class: 'cc-slot' },
-      x.n ? h('i', { class: 'cc-bar', style: `height:${(x.n / top) * 100}%` }, i === peakAt ? h('b', { class: 'cc-peak' }, num(x.n)) : null) : null));
-    const plot = h('div', { class: 'cc-plot', tabindex: '0', role: 'group', 'aria-label': 'Views chart. Use the arrow keys to read each bar.' },
+      h('i', { class: `cc-dot${i === peakAt ? ' is-peak' : ''}`, style: `bottom:${(x.n / top) * 100}%` }, i === peakAt ? h('b', { class: 'cc-peak' }, num(x.n)) : null)));
+    const plot = h('div', { class: 'cc-plot', tabindex: '0', role: 'group', 'aria-label': 'Views chart. Use the arrow keys to read each point.' },
       h('div', { class: 'cc-grid', 'aria-hidden': 'true' }, ticks.map(t => h('span', { style: `bottom:${(t / top) * 100}%` }, h('em', {}, num(t))))),
+      line,
       h('div', { class: 'cc-bars', style: `--n:${s.length}` }, slots));
     bindHover(plot, slots, i => [`${plural(s[i].n, 'view')} · ${plural(s[i].people.size, 'visitor')}`, s[i].label],
-      i => slots[i].firstChild || slots[i], { start: s.length - 1 });
+      i => slots[i].firstChild, { start: s.length - 1 });
     return h('div', { class: 'cc' }, plot, h('div', { class: 'cc-axis', 'aria-hidden': 'true', style: `--n:${s.length}` }, s.map(x => h('span', {}, x.axis))));
   }
 
