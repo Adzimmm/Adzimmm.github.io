@@ -1141,6 +1141,9 @@ const FOLDER_ICONS = {
   'ui-ux': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/>',
   others: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/>',
 };
+// A folder's icon in the admin: its Google icon (p.symbol) if chosen, else the built-in drawing.
+const SYMBOL_NAME = /^[a-z0-9_]{1,40}$/;
+const folderIconHtml = p => (SYMBOL_NAME.test(p.symbol || '') ? `<span class="material-symbols-rounded folder-sym cat-sym" aria-hidden="true">${p.symbol}</span>` : folderIconSvg(iconOf(p)));
 const folderIconSvg = key => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${FOLDER_ICONS[key] || FOLDER_ICONS.others}</svg>`;
 const iconOf = p => (FOLDER_ICONS[p.icon] ? p.icon : FOLDER_ICONS[p.id] ? p.id : 'others');
 const accentOf = p => p.accent || THEMES[p.id]?.accent || '#c9c4d6';
@@ -1335,6 +1338,25 @@ function iconPicker(get, set) {
   return { el: row, draw };
 }
 
+// Any icon from Google Material Symbols by name (fonts.google.com/icons), with a live preview.
+function googleIconField(value, onChange) {
+  ensureSymbolsFont();
+  const prev = h('span', { class: 'material-symbols-rounded gsym-prev', 'aria-hidden': 'true' }, value || 'search');
+  const input = h('input', { value: value || '', placeholder: 'e.g. palette, photo_camera, movie', spellcheck: 'false', autocapitalize: 'off', 'aria-label': 'Google icon name' });
+  const tip = h('small', {}, 'Or any Google icon: copy its name from ', h('a', { href: 'https://fonts.google.com/icons', target: '_blank', rel: 'noopener' }, 'fonts.google.com/icons'), '. Leave empty to use the icon above.');
+  const show = () => { prev.textContent = input.value.trim().toLowerCase().replace(/\s+/g, '_') || 'search'; prev.classList.toggle('empty', !input.value.trim()); };
+  input.addEventListener('input', show);
+  input.addEventListener('change', () => {
+    const name = input.value.trim().toLowerCase().replace(/[\s-]+/g, '_');
+    if (name && !SYMBOL_NAME.test(name)) { toast('Use the icon name in small letters, like photo_camera.', true); return; }
+    input.value = name;
+    show();
+    onChange(name);
+  });
+  show();
+  return { el: h('div', { class: 'gsym' }, h('span', { class: 'gsym-row' }, prev, input), tip), clear: () => { input.value = ''; show(); } };
+}
+
 function switchField(label, checked, onChange) {
   const hint = h('small');
   const input = h('input', { type: 'checkbox', role: 'switch', checked, onchange: () => onChange(input.checked) });
@@ -1364,7 +1386,7 @@ function folderPreview() {
     el: frame,
     update(p, collections, visuals) {
       data = { title: (p.title || '').trim() || 'Folder name', label: labelOf(p), desc: p.desc || '', color: accentOf(p),
-        icon: folderIconSvg(iconOf(p)), collections, visuals };
+        icon: folderIconHtml(p), collections, visuals };
       push();
     },
   };
@@ -1393,7 +1415,8 @@ function openFolderWizard() {
   const labelInput = h('input', { placeholder: 'Shown small, above the name' });
   const descInput = h('textarea', { rows: 2, placeholder: 'One or two lines about this work (optional)' });
   const colours = swatchPicker(() => f.accent, c => { f.accent = c; refresh(); });
-  const icons = iconPicker(() => f.icon, k => { f.icon = k; touched.icon = true; refresh(); });
+  const icons = iconPicker(() => (f.symbol ? null : f.icon), k => { f.icon = k; f.symbol = ''; symField.clear(); touched.icon = true; refresh(); });
+  const symField = googleIconField('', name => { f.symbol = name; touched.icon = true; icons.draw(); refresh(); });
 
   function setName(value, typed = false) {
     f.title = value;
@@ -1552,7 +1575,7 @@ function openFolderWizard() {
           h('label', { class: 'field' }, h('span', {}, 'Folder name'), nameInput), nameWarn,
           h('label', { class: 'field' }, h('span', {}, 'Small label'), labelInput),
           h('div', { class: 'field' }, h('span', {}, 'Colour'), colours.el),
-          h('div', { class: 'field' }, h('span', {}, 'Icon'), icons.el),
+          h('div', { class: 'field' }, h('span', {}, 'Icon'), icons.el, symField.el),
           h('label', { class: 'field' }, h('span', {}, 'Description'), descInput)),
         step(2, 'Images', '', zone, colsBox, addColBtn, fileInput, dirInput),
         step(3, 'Publish', '', show.el, summaryLine, otherChanges)),
@@ -1591,7 +1614,7 @@ function openFolderWizard() {
     statusText.textContent = 'Getting the images ready…';
     await queue.catch(() => {});
     const id = uniqueId(list, title);
-    const folder = { id, category: id, title, label: f.label.trim(), desc: f.desc.trim(), accent: f.accent, icon: f.icon, sections: [] };
+    const folder = { id, category: id, title, label: f.label.trim(), desc: f.desc.trim(), accent: f.accent, icon: f.icon, ...(f.symbol ? { symbol: f.symbol } : {}), sections: [] };
     if (f.hidden) folder.hidden = true;
     const total = imageCount();
     const failed = [];
@@ -1692,7 +1715,13 @@ function renderProjects() {
     refresh();
     items[state.cat].querySelector('.swatch').style.background = c;
   });
-  const icons = iconPicker(() => iconOf(p), k => { p.icon = k; markDirty(d); refresh(); });
+  const icons = iconPicker(() => (p.symbol ? null : iconOf(p)), k => { p.icon = k; delete p.symbol; symField.clear(); markDirty(d); refresh(); });
+  const symField = googleIconField(p.symbol, name => {
+    if (name) p.symbol = name; else delete p.symbol;
+    icons.draw();
+    markDirty(d);
+    refresh();
+  });
   const visible = switchField('Show on the site', !p.hidden, on => {
     if (on) delete p.hidden; else p.hidden = true;
     markDirty(d);
@@ -1731,7 +1760,7 @@ function renderProjects() {
           live(field(p, 'label', 'Small label (top of card)', d), refresh),
           live(field(p, 'desc', 'Description', d, { multi: true, rows: 2 }), refresh),
           h('div', { class: 'field' }, h('span', {}, 'Colour'), colours.el),
-          h('div', { class: 'field' }, h('span', {}, 'Icon'), icons.el),
+          h('div', { class: 'field' }, h('span', {}, 'Icon'), icons.el, symField.el),
           visible.el),
         h('div', { class: 'preview-box' }, preview.el, h('p', { class: 'muted preview-note' }, `Live preview. ${OPEN_HINT}`))),
       h('div', { class: 'card-foot' },

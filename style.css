@@ -1691,3 +1691,12 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 .pv-zoom.has-fan .pv-zoom-img{opacity:0}
 .pv-fan-badge{position:absolute;right:4px;bottom:4px;width:14px;height:14px;border-radius:3px;background:#fff;box-shadow:-3px -3px 0 -1px rgba(255,255,255,.6),-6px -6px 0 -2px rgba(255,255,255,.35)}
 [data-motion="off"] .pv-fan-card{transition:none}
+
+/* Folder icon chosen from Google Material Symbols (same size as the built-in drawings in each place) */
+.cat-sym{display:block;flex:none;width:1em;height:1em;overflow:hidden;line-height:1;font-size:20px;user-select:none}
+.filter .cat-sym{font-size:16px}
+.chat-chip .cat-sym{font-size:15px}
+.chat-folder .cat-sym{color:var(--color)}
+[data-theme="light"] .chat-folder .cat-sym{color:color-mix(in srgb,var(--color) 70%,#0f0c15)}
+.cy-icon,.pv-icon{container-type:size}
+.cy-icon .cat-sym,.pv-icon .cat-sym{font-size:52cqw}

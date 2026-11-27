@@ -709,3 +709,9 @@ img.mark{display:block;padding:0;background:none;border-radius:10px;object-fit:c
 /* Save (unsaved-changes bar): green */
 #save{background:#22c55e;border-color:#22c55e;color:#052e14}
 :root[data-theme="light"] #save{background:#16a34a;border-color:#16a34a;color:#fff}
+.gsym{display:grid;gap:6px;margin-top:10px}
+.gsym-row{display:flex;align-items:center;gap:10px}
+.gsym-row input{flex:1}
+.gsym-prev{display:grid;place-items:center;flex:none;width:44px;height:44px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface-2);font-size:24px;color:var(--text)}
+.gsym-prev.empty{color:var(--faint)}
+.folder-sym{display:block;font-size:20px;line-height:1;width:1em;height:1em;overflow:hidden}

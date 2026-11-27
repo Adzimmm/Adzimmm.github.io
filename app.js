@@ -103,8 +103,29 @@
     'ui-ux': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/>',
     others: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/>',
   };
-  const filterButton = (id, label, active, icon) => `<button class="filter${active ? ' is-active' : ''}" type="button" data-filter="${id}" aria-pressed="${active}">${ICON(FILTER_ICONS[icon] || FILTER_ICONS[id] || FILTER_ICONS.others)}<span>${escapeHtml(label)}</span></button>`;
-  $('.filters').innerHTML = filterButton('all', 'All categories', true) + projects.map(p => filterButton(p.id, p.title, false, p.icon)).join('');
+  // Google Material Symbols: one shared stylesheet, cut down to the icon names in use (folders and social links).
+  const SYMBOL = /^[a-z0-9_]{1,40}$/;
+  const symbolsInUse = new Set();
+  function useSymbols(names) {
+    names.filter(n => SYMBOL.test(n)).forEach(n => symbolsInUse.add(n));
+    if (!symbolsInUse.size) return;
+    const href = `https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=${[...symbolsInUse].sort().join(',')}&display=block`;
+    let link = $('#material-symbols');
+    if (!link) {
+      link = document.createElement('link');
+      link.id = 'material-symbols';
+      link.rel = 'stylesheet';
+      document.head.append(link);
+    }
+    if (link.getAttribute('href') !== href) link.setAttribute('href', href);
+  }
+  // A folder's icon: the Google icon chosen in the admin (p.symbol), else one of the built-in drawings.
+  const catIcon = p => (p && SYMBOL.test(p.symbol || '')
+    ? `<span class="material-symbols-rounded cat-sym" aria-hidden="true">${p.symbol}</span>`
+    : ICON(FILTER_ICONS[p && p.icon] || FILTER_ICONS[p && p.id] || FILTER_ICONS.others));
+  useSymbols(projects.map(p => p.symbol || ''));
+  const filterButton = (id, label, active, p) => `<button class="filter${active ? ' is-active' : ''}" type="button" data-filter="${id}" aria-pressed="${active}">${p ? catIcon(p) : ICON(FILTER_ICONS.all)}<span>${escapeHtml(label)}</span></button>`;
+  $('.filters').innerHTML = filterButton('all', 'All categories', true) + projects.map(p => filterButton(p.id, p.title, false, p)).join('');
 
   // Each category has its own accent and tone. Cover colours never drive the system on their own.
   const CATEGORY_THEMES = {
@@ -184,7 +205,7 @@
           ${fx('cy-lines', 4)}${fx('cy-glows', 3)}${fx('cy-particles', 6)}${fx('cy-corners', 4)}
           <span class="cy-scan" aria-hidden="true"></span>
           <div class="cy-body">
-            <span class="cy-icon">${ICON(FILTER_ICONS[p.icon] || FILTER_ICONS[p.id] || FILTER_ICONS.others)}</span>
+            <span class="cy-icon">${catIcon(p)}</span>
             <p class="card-kicker">${escapeHtml(themeOf(p).label)}</p>
             <h3>${escapeHtml(p.title)}</h3>
             <p class="card-desc">${escapeHtml(p.desc)}</p>
@@ -421,7 +442,7 @@
     panel: modal,
     content: detailContent,
     escapeHtml,
-    icon: p => ICON(FILTER_ICONS[p.icon] || FILTER_ICONS[p.id] || FILTER_ICONS.others),
+    icon: catIcon,
     color: p => themeOf(p).color,
     label: p => themeOf(p).label,
     onClose: closeDetail,
@@ -772,14 +793,7 @@
       const out = !href.startsWith('mailto:');
       return `<li><a class="soc soc-${custom ? 'custom' : escapeHtml(item.type)}" href="${escapeHtml(href)}"${out ? ' target="_blank" rel="noopener"' : ''} style="--brand:${custom ? 'var(--accent-purple)' : brand.color}" aria-label="${escapeHtml(name)}"><span class="soc-tip" aria-hidden="true">${escapeHtml(name)}</span>${icon}</a></li>`;
     }).join('');
-    // Google's icon font, cut down to the icons in use (a few KB).
-    if (symbols.size && !$('#material-symbols')) {
-      const link = document.createElement('link');
-      link.id = 'material-symbols';
-      link.rel = 'stylesheet';
-      link.href = `https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=${[...symbols].filter(n => /^[a-z0-9_]+$/.test(n)).sort().join(',')}&display=block`;
-      document.head.append(link);
-    }
+    useSymbols([...symbols]); // Google's icon font, cut down to the icons in use (a few KB)
   }
 
   /* ---------- About intro: plays once when it scrolls into view ----------
@@ -856,7 +870,7 @@
     site,
     projects,
     resume: window.RESUME || {},
-    icon: p => ICON(FILTER_ICONS[p.icon] || FILTER_ICONS[p.id] || FILTER_ICONS.others),
+    icon: catIcon,
     color: p => themeOf(p).color,
     label: p => themeOf(p).label,
   });
