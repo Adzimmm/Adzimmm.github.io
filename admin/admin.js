@@ -814,7 +814,7 @@ async function uploadVideo(original, folder, alt, onStatus = () => {}) {
   let file = original;
   try {
     onStatus(`Compressing ${original.name}…`);
-    file = await compressVideo(original, pr => onStatus(`Compressing ${original.name}… ${Math.round(pr * 100)}%`), choice.trim);
+    file = await compressVideo(original, pr => onStatus(`Compressing ${original.name}… ${Math.round(pr * 100)}%`, pr), choice.trim);
   } catch (err) {
     if (choice.trim) throw err; // a preview that cannot be cut must not upload the whole video
     console.warn('Video compression failed, using the original file', err);
@@ -839,8 +839,13 @@ async function uploadVideo(original, folder, alt, onStatus = () => {}) {
   return a;
 }
 
+// A carousel's poster fields (src, size…) follow its first card; the box is wider to fit the side cards.
+function syncCarousel(a) {
+  const f = a.carousel[0];
+  Object.assign(a, { src: f.src, display: f.display, thumb: f.thumb, width: Math.round(f.width * 1.6), height: f.height });
+}
 async function removeStored(images) {
-  const paths = images.flatMap(a => a.storage || []);
+  const paths = images.flatMap(a => [...(a.storage || []), ...(a.carousel || []).flatMap(c => c.storage || [])]);
   if (paths.length && sb) await sb.storage.from(BUCKET).remove(paths);
 }
 
@@ -1764,57 +1769,88 @@ function renderProjects() {
   return [h('div', { class: 'split' }, side, editor)];
 }
 
+const modeState = new WeakMap(); // collection -> 'image' | 'carousel' | 'video'
 const openState = new WeakMap(); // collection -> open or closed, kept across re-renders
 
 function collectionCard(p, s, si, rerender) {
   const d = 'portfolio';
-  const status = h('span', {}, 'Drag images, videos or a folder here, or ', h('u', {}, 'choose files'));
-  const drop = h('label', { class: 'drop' },
-    h('input', { type: 'file', accept: 'image/*,video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov', multiple: true, onchange: e => { addFiles([...e.target.files]); e.target.value = ''; } }),
-    ico('upload'), status, h('small', {}, `JPG, PNG, WebP or GIF (resized to WebP). Videos: MP4, WebM or MOV up to ${VIDEO_INPUT_MAX_MB} MB; you pick a short preview for the site (full resolution, high quality) and can link the full video on Google Drive.`));
-  wireDrop(drop, (entries, files) => readDrop(entries, files, isMediaFile).then(tree => addFiles(allFiles(tree))).catch(err => toast(err.message, true)));
-  // What to add: single images, one image carousel (several images shown as a fanned stack), or videos.
-  const picker = (icon, label, accept, multiple, onPick) => h('label', { class: 'btn ghost small' }, ico(icon), label,
-    h('input', { type: 'file', accept, multiple, hidden: true, onchange: e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) onPick(f); } }));
-  const addBar = h('div', { class: 'add-bar' },
-    h('span', { class: 'muted' }, 'Add:'),
-    picker('image', 'Image', 'image/*', true, addFiles),
-    picker('carousel', 'Image carousel', 'image/*', true, addCarousel),
-    picker('play', 'Video', 'video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov', true, addFiles));
+  // Upload as: Image (each file its own visual), Carousel (all files become one fanned stack) or Video.
+  const MODES = {
+    image: { label: 'Image', icon: 'image', keep: isImageFile, accept: 'image/*',
+      text: 'Drag images or a folder here, or ', hint: 'JPG, PNG, WebP or GIF. Each image becomes its own visual (resized to WebP).' },
+    carousel: { label: 'Carousel', icon: 'carousel', keep: isImageFile, accept: 'image/*',
+      text: 'Drag the carousel images here, or ', hint: 'All the images you add at once become one carousel, in file-name order. Add more to it later with + on its thumbnail.' },
+    video: { label: 'Video', icon: 'play', keep: isVideoFile, accept: 'video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov',
+      text: 'Drag videos here, or ', hint: `MP4, WebM or MOV up to ${VIDEO_INPUT_MAX_MB} MB. You pick a short preview for the site and can link the full video on Google Drive.` },
+  };
+  const mode = () => modeState.get(s) || 'image';
+  const status = h('span', {});
+  const hint = h('small', {});
+  const input = h('input', { type: 'file', multiple: true, onchange: e => { const f = [...e.target.files]; e.target.value = ''; upload(f); } });
+  // Progress: overall percentage of this batch (a video's compression counts inside its own share).
+  const fill = h('i');
+  const pct = h('b', {}, '0%');
+  const bar = h('div', { class: 'up-bar', hidden: true, role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100' }, h('span', { class: 'up-track' }, fill), pct);
+  const progress = frac => {
+    const v = Math.max(0, Math.min(100, Math.round(frac * 100)));
+    bar.hidden = false;
+    fill.style.width = `${v}%`;
+    pct.textContent = `${v}%`;
+    bar.setAttribute('aria-valuenow', String(v));
+  };
+  const drop = h('label', { class: 'drop' }, input, ico('upload'), status, hint, bar);
+  const modeBtns = Object.entries(MODES).map(([k, m]) => h('button', { type: 'button', 'data-mode': k, onclick: () => { modeState.set(s, k); showMode(); } }, ico(m.icon), m.label));
+  const modeBar = h('div', { class: 'up-mode' }, h('span', { class: 'muted' }, 'Upload as'), h('div', { class: 'seg', role: 'group', 'aria-label': 'Upload as' }, modeBtns));
+  function showMode() {
+    const m = MODES[mode()];
+    modeBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode())));
+    input.accept = m.accept;
+    status.replaceChildren(m.text, h('u', {}, 'choose files'));
+    hint.textContent = m.hint;
+  }
+  showMode();
+  const upload = files => (mode() === 'carousel' ? addCarousel(files) : addFiles(files.filter(MODES[mode()].keep)));
+  wireDrop(drop, (entries, files) => readDrop(entries, files, MODES[mode()].keep).then(tree => upload(allFiles(tree))).catch(err => toast(err.message, true)));
 
-  async function addCarousel(files) {
-    const imgs = files.filter(isImageFile).sort(byName);
-    if (imgs.length < 2) { toast('Choose 2 or more images for a carousel.', true); return; }
-    drop.classList.add('busy');
-    const folder = `${p.id}/${slug(s.title)}`;
-    const alt = `${s.title} — carousel ${s.images.length + 1}`;
+  // Uploads images as carousel cards (each keeps its own storage paths, so one card can be removed later).
+  async function uploadCards(files, alt, from, onFrac) {
     const cards = [];
     try {
-      for (const [n, f] of imgs.entries()) {
-        status.textContent = `Carousel: uploading ${n + 1} of ${imgs.length}…`;
+      for (const [n, f] of files.entries()) {
+        onFrac(n / files.length, n);
         const info = await analyseImage(f, { preview: false });
-        const c = await uploadImage(f, folder, `${alt}, image ${n + 1}`);
+        const c = await uploadImage(f, `${p.id}/${slug(s.title)}`, `${alt}, image ${from + n + 1}`);
         c.dark = info.dark;
         c.opaque = info.opaque;
         cards.push(c);
       }
+      onFrac(1, files.length);
+      return cards;
     } catch (err) {
       await removeStored(cards); // nothing half-made stays in storage
-      toast(`Could not upload the carousel: ${err.message}`, true);
-      openState.set(s, true);
-      rerender();
-      return;
+      throw err;
     }
-    const first = cards[0];
-    s.images.push({
-      // The first image doubles as the poster for places that show one picture; the box is wider for the side cards.
-      src: first.src, display: first.display, thumb: first.thumb, alt,
-      width: Math.round(first.width * 1.6), height: first.height, opaque: true,
-      storage: cards.flatMap(c => c.storage || []),
-      carousel: cards.map(({ storage, ...c }) => c),
-    });
-    markDirty(d);
-    toast(`Carousel of ${imgs.length} images added. Click Save to publish.`);
+  }
+
+  async function addCarousel(files, into = null) {
+    const imgs = files.filter(isImageFile).sort(byName);
+    if (!imgs.length) { toast('No images found. Use JPG, PNG, WebP or GIF files.', true); return; }
+    drop.classList.add('busy');
+    const alt = into ? into.alt : `${s.title} — carousel ${s.images.length + 1}`;
+    try {
+      const cards = await uploadCards(imgs, alt, into ? into.carousel.length : 0, (frac, n) => {
+        status.textContent = `Carousel: uploading ${Math.min(n + 1, imgs.length)} of ${imgs.length}…`;
+        progress(frac);
+      });
+      const a = into || { alt, opaque: true, carousel: [] };
+      a.carousel.push(...cards);
+      syncCarousel(a);
+      if (!into) s.images.push(a);
+      markDirty(d);
+      toast(`${plural(cards.length, 'image')} added to the carousel (${a.carousel.length} in all). Click Save to publish.`);
+    } catch (err) {
+      toast(`Could not upload the carousel: ${err.message}`, true);
+    }
     openState.set(s, true);
     rerender();
   }
@@ -1826,12 +1862,16 @@ function collectionCard(p, s, si, rerender) {
     let done = 0;
     for (const [n, f] of imgs.entries()) {
       status.textContent = `Uploading ${n + 1} of ${imgs.length}…`;
+      progress(n / imgs.length);
       try {
         const folder = `${p.id}/${slug(s.title)}`;
         const alt = `${s.title} — visual ${s.images.length + 1}`;
         let a;
         if (isVideoFile(f)) {
-          a = await uploadVideo(f, folder, alt, text => { status.textContent = `${n + 1} of ${imgs.length}: ${text}`; });
+          a = await uploadVideo(f, folder, alt, (text, pr) => {
+            status.textContent = `${n + 1} of ${imgs.length}: ${text}`;
+            if (pr != null) progress((n + pr * 0.9) / imgs.length); // compressing is most of a video's time
+          });
           if (!a) continue; // skipped in the preview dialog
           a.opaque = true;
         } else {
@@ -1847,6 +1887,7 @@ function collectionCard(p, s, si, rerender) {
         toast(`Could not upload ${f.name}: ${err.message}`, true);
       }
     }
+    progress(1);
     if (done) toast(`${plural(done, 'file')} uploaded. Click Save to publish.`);
     openState.set(s, true);
     rerender();
@@ -1879,7 +1920,23 @@ function collectionCard(p, s, si, rerender) {
         markDirty(d);
       });
     }
-    const fig = h('figure', { class: 'thumb' }, frame, alt, fullField, h('label', { class: 'check', title: LIGHT_ART_TIP }, dark, 'Light artwork'));
+    let strip = null;
+    if (a.carousel) {
+      strip = h('div', { class: 'car-strip', title: 'Images in this carousel' },
+        a.carousel.map((c, k) => h('span', { class: 'car-card' },
+          h('img', { src: asset(c.thumb || c.display || c.src), alt: '', loading: 'lazy' }),
+          h('button', { type: 'button', class: 'car-x', title: 'Remove this image', 'aria-label': `Remove image ${k + 1}`, onclick: async () => {
+            if (a.carousel.length === 1) { toast('A carousel needs at least 1 image. Delete the whole item instead.', true); return; }
+            await removeStored([c]);
+            a.carousel.splice(k, 1);
+            syncCarousel(a);
+            markDirty(d);
+            rerender();
+          } }, '×'))),
+        h('label', { class: 'car-add', title: 'Add images to this carousel' }, '+',
+          h('input', { type: 'file', accept: 'image/*', multiple: true, hidden: true, onchange: e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) addCarousel(f, a); } })));
+    }
+    const fig = h('figure', { class: 'thumb' }, frame, strip, alt, fullField, h('label', { class: 'check', title: LIGHT_ART_TIP }, dark, 'Light artwork'));
     frame.addEventListener('dragstart', e => {
       dragFrom = i;
       e.dataTransfer.effectAllowed = 'move';
@@ -1944,7 +2001,7 @@ function collectionCard(p, s, si, rerender) {
         iconBtn('pencil', 'Rename collection', rename),
         moveBtns(p.sections, si, d, rerender),
         delBtn(async () => { await removeStored(s.images); p.sections.splice(si, 1); markDirty(d); rerender(); }, `collection "${s.title}"`))),
-    h('div', { class: 'coll-body' }, s.images.length ? thumbs : null, addBar, drop));
+    h('div', { class: 'coll-body' }, s.images.length ? thumbs : null, modeBar, drop));
   wrap.addEventListener('toggle', () => openState.set(s, wrap.open));
   return wrap;
 }

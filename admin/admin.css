@@ -674,5 +674,22 @@ img.mark{display:block;padding:0;background:none;border-radius:10px;object-fit:c
 .sw-logo-img{width:100%;height:100%;object-fit:contain;padding:4px}
 .sw-logo-img[hidden],.sw-logo-default[hidden],.sw-logo-box .btn[hidden]{display:none}
 .sw-logo-default{font:800 15px/1 var(--font-display);color:var(--accent)}
-.add-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
-.add-bar .muted{font-size:13px;font-weight:600}
+.up-mode{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 10px}
+.up-mode .muted{font-size:13px;font-weight:600}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface-2)}
+.seg button{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:0;border-radius:999px;background:none;color:var(--muted);font:600 13px var(--font);cursor:pointer;transition:background .15s,color .15s}
+.seg button .ico{width:15px;height:15px}
+.seg button:hover{color:var(--text)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+.up-bar{display:flex;align-items:center;gap:10px;width:min(420px,100%);margin-top:6px}
+.up-bar[hidden]{display:none}
+.up-track{position:relative;flex:1;height:8px;border-radius:999px;background:var(--line-strong);overflow:hidden}
+.up-track i{position:absolute;inset:0 auto 0 0;width:0;border-radius:inherit;background:var(--accent);transition:width .3s ease}
+.up-bar b{min-width:40px;font-size:13px;color:var(--text);text-align:right}
+.car-strip{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}
+.car-card{position:relative;width:34px;height:42px;border-radius:6px;overflow:hidden;border:1px solid var(--line-strong)}
+.car-card img{width:100%;height:100%;object-fit:cover}
+.car-x{position:absolute;top:1px;right:1px;display:grid;place-items:center;width:15px;height:15px;padding:0;border:0;border-radius:50%;background:rgba(10,9,14,.75);color:#fff;font:700 11px/1 var(--font);cursor:pointer;opacity:0;transition:opacity .15s}
+.car-card:hover .car-x,.car-x:focus-visible{opacity:1}
+.car-add{display:grid;place-items:center;width:34px;height:42px;border:1px dashed var(--line-strong);border-radius:6px;color:var(--muted);font:600 18px/1 var(--font);cursor:pointer}
+.car-add:hover{color:var(--text);border-color:var(--accent)}
