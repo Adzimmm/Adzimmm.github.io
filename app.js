@@ -16,13 +16,15 @@
   async function loadContent() {
     const cfg = window.SUPABASE || {};
     if (!cfg.url || !cfg.anonKey) return {};
-    let timer;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 2500);
     try {
-      // index.html starts this request in <head>; fetch it here only when that did not happen.
-      const request = window.SITE_CONTENT || fetch(`${cfg.url.replace(/\/$/, '')}/rest/v1/content?select=key,data`, { headers: { apikey: cfg.anonKey } })
-        .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); });
-      const late = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('timed out')), 2500); });
-      const rows = await Promise.race([request, late]);
+      const res = await fetch(`${cfg.url.replace(/\/$/, '')}/rest/v1/content?select=key,data`, {
+        headers: { apikey: cfg.anonKey },
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const rows = await res.json();
       return Object.fromEntries(rows.map(r => [r.key, r.data]));
     } catch (err) {
       console.warn('Using bundled content:', err.message);

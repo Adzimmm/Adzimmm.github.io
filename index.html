@@ -6,30 +6,18 @@
   <meta name="theme-color" content="#000000">
   <meta name="description" content="Adzim's portfolio — UUM Multimedia student: logos, branding, social media, print and UI/UX.">
   <title>Adzim's Portfolio</title>
-  <script src="supabase-config.js?v=bfa29f6a33"></script>
-  <script>
-    /* Start loading the content saved in the admin now, before the stylesheets (a script after them waits for them); app.js waits for it. */
-    (function () {
-      var c = window.SUPABASE || {};
-      if (!c.url || !c.anonKey || !window.fetch) return;
-      window.SITE_CONTENT = fetch(c.url.replace(/\/$/, '') + '/rest/v1/content?select=key,data', { headers: { apikey: c.anonKey } })
-        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
-      window.SITE_CONTENT.catch(function () {});
-    })();
-  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://kizpexgoqssuxoclpozy.supabase.co" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:ital,wght@0,400;0,600;0,700;1,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=bfa29f6a33">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=bfa29f6a33">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=bfa29f6a33">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=bfa29f6a33">
+  <link rel="stylesheet" href="style.css?v=441d351501">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=441d351501">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=441d351501">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=441d351501">
   <!-- Link preview (WhatsApp, LinkedIn, X) -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Adzim's Portfolio">
   <meta property="og:description" content="UUM Multimedia student: logos, branding, social media, print and UI/UX.">
-  <meta property="og:image" content="https://adzimmm.github.io/assets/og-image.png?v=bfa29f6a33">
+  <meta property="og:image" content="https://adzimmm.github.io/assets/og-image.png?v=441d351501">
   <meta property="og:url" content="https://adzimmm.github.io/">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -50,7 +38,8 @@
   }
   </script>
   <meta name="twitter:card" content="summary_large_image">
-  <script src="site-data.js?v=bfa29f6a33"></script>
+  <script src="supabase-config.js?v=441d351501"></script>
+  <script src="site-data.js?v=441d351501"></script>
   <script>
     /* Before first paint: motion follows the OS reduced-motion setting; the theme is the visitor's own choice,
        else the default set in the admin (site.theme.mode); accent colours come from site.theme too. */
@@ -283,14 +272,14 @@
     <div class="resume-pages" id="resume-sheet"></div>
   </dialog>
 
-  <script src="portfolio-data.js?v=bfa29f6a33"></script>
-  <script src="resume-data.js?v=bfa29f6a33"></script>
-  <script src="backdrop.js?v=bfa29f6a33"></script>
-  <script src="socials.js?v=bfa29f6a33"></script>
-  <script src="chat.js?v=bfa29f6a33"></script>
-  <script src="project-view.js?v=bfa29f6a33"></script>
-  <script src="app.js?v=bfa29f6a33"></script>
-  <script src="pet.js?v=bfa29f6a33"></script>
-  <script src="visit.js?v=bfa29f6a33"></script>
+  <script src="portfolio-data.js?v=441d351501"></script>
+  <script src="resume-data.js?v=441d351501"></script>
+  <script src="backdrop.js?v=441d351501"></script>
+  <script src="socials.js?v=441d351501"></script>
+  <script src="chat.js?v=441d351501"></script>
+  <script src="project-view.js?v=441d351501"></script>
+  <script src="app.js?v=441d351501"></script>
+  <script src="pet.js?v=441d351501"></script>
+  <script src="visit.js?v=441d351501"></script>
 </body>
 </html>

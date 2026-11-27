@@ -4,12 +4,12 @@
 // - Left alone: idle breathing, walks left and right, a macho wink now and then.
 // - prefers-reduced-motion: stands still on its first idle frame (still draggable and tappable).
 // - Add ?petdebug to the address for a panel that previews all six animations frame by frame.
-// The sprites are the original sheets halved to 256 px cells (WebP), shown smoothly at one size, never cropped.
+// The sprites are the original PNG sheets, shown smoothly at one size, never redrawn or cropped.
 (() => {
   'use strict';
 
   const COLS = 10;
-  const CELL = 256; // sheets are 2560 x 1280 WebP (the 512 px originals halved; drawn at most 240 px)
+  const CELL = 512;
   const ANIMS = { // frames and fps from animation_manifest.json
     idle: { frames: 50, fps: 15 },
     walk_left: { frames: 50, fps: 16 },
@@ -53,7 +53,7 @@
         img.decoding = 'async';
         img.onload = () => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()).then(() => resolve(true));
         img.onerror = () => resolve(false);
-        img.src = `assets/pet-v3/${name}.webp`;
+        img.src = `assets/pet-v3/${name}.png`;
       });
       sheets[name].then(ok => { if (ok) sheets[name].ready = true; });
     }
@@ -234,14 +234,11 @@
       play('idle');
       requestAnimationFrame(tick);
     });
-    // Walks and the wink once the page and its images have loaded, so they never hold up the content;
-    // the drag sheet loads on first hover or touch (~0.3 MB).
-    const later = () => (window.requestIdleCallback || (cb => setTimeout(cb, 1000)))(() => {
+    // Walks and the wink after the page settles; the drag sheet loads on first hover or touch (~1.8 MB).
+    (window.requestIdleCallback || (cb => setTimeout(cb, 2000)))(() => {
       ['walk_left', 'walk_right', 'macho_blink'].forEach(sheet);
       if (debug) Object.keys(ANIMS).forEach(sheet);
-    }, { timeout: 3000 });
-    if (document.readyState === 'complete') later();
-    else window.addEventListener('load', later, { once: true });
+    });
     const warm = () => sheet('drag_panic');
     pet.addEventListener('pointerenter', warm, { once: true });
     pet.addEventListener('pointerdown', warm, { once: true });
