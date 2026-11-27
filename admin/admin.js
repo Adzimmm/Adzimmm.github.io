@@ -1769,24 +1769,32 @@ function renderProjects() {
   return [h('div', { class: 'split' }, side, editor)];
 }
 
-const modeState = new WeakMap(); // collection -> 'image' | 'carousel' | 'video'
+// Asked on every upload that has images: each image its own visual, or all of them one carousel.
+// Videos always upload as videos. Resolves to 'image', 'carousel' or null (cancelled).
+function chooseUpload(nImg, nVid) {
+  return new Promise(resolve => {
+    const dlg = h('dialog', { class: 'crop-dialog up-dialog' });
+    const done = v => { dlg.close(); dlg.remove(); resolve(v); };
+    const opt = (v, icon, title, text) => h('button', { type: 'button', class: 'up-choice', onclick: () => done(v) }, ico(icon), h('span', {}, h('b', {}, title), h('small', {}, text)));
+    dlg.append(
+      h('h2', {}, `Upload ${plural(nImg, 'image')} as`),
+      h('div', { class: 'up-choices' },
+        opt('image', 'image', nImg > 1 ? 'Separate images' : 'Image', nImg > 1 ? `Each one becomes its own visual (${nImg} visuals).` : 'One visual in the gallery.'),
+        opt('carousel', 'carousel', 'Image carousel', nImg > 1 ? `All ${nImg} in one fanned stack. Add more later with + on its thumbnail.` : 'Start a carousel with this image, then add more with + on its thumbnail.')),
+      ...(nVid ? [h('p', { class: 'muted' }, `${plural(nVid, 'video')} in this upload ${nVid > 1 ? 'upload' : 'uploads'} as video.`)] : []),
+      h('div', { class: 'ask-actions' }, h('button', { class: 'btn ghost', type: 'button', onclick: () => done(null) }, 'Cancel')));
+    dlg.addEventListener('cancel', e => { e.preventDefault(); done(null); });
+    document.body.append(dlg);
+    dlg.showModal();
+  });
+}
+
 const openState = new WeakMap(); // collection -> open or closed, kept across re-renders
 
 function collectionCard(p, s, si, rerender) {
   const d = 'portfolio';
-  // Upload as: Image (each file its own visual), Carousel (all files become one fanned stack) or Video.
-  const MODES = {
-    image: { label: 'Image', icon: 'image', keep: isImageFile, accept: 'image/*',
-      text: 'Drag images or a folder here, or ', hint: 'JPG, PNG, WebP or GIF. Each image becomes its own visual (resized to WebP).' },
-    carousel: { label: 'Carousel', icon: 'carousel', keep: isImageFile, accept: 'image/*',
-      text: 'Drag the carousel images here, or ', hint: 'All the images you add at once become one carousel, in file-name order. Add more to it later with + on its thumbnail.' },
-    video: { label: 'Video', icon: 'play', keep: isVideoFile, accept: 'video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov',
-      text: 'Drag videos here, or ', hint: `MP4, WebM or MOV up to ${VIDEO_INPUT_MAX_MB} MB. You pick a short preview for the site and can link the full video on Google Drive.` },
-  };
-  const mode = () => modeState.get(s) || 'image';
-  const status = h('span', {});
-  const hint = h('small', {});
-  const input = h('input', { type: 'file', multiple: true, onchange: e => { const f = [...e.target.files]; e.target.value = ''; upload(f); } });
+  const status = h('span', {}, 'Drag images, videos or a folder here, or ', h('u', {}, 'choose files'));
+  const input = h('input', { type: 'file', accept: 'image/*,video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov', multiple: true, onchange: e => { const f = [...e.target.files]; e.target.value = ''; upload(f); } });
   // Progress: overall percentage of this batch (a video's compression counts inside its own share).
   const fill = h('i');
   const pct = h('b', {}, '0%');
@@ -1798,19 +1806,19 @@ function collectionCard(p, s, si, rerender) {
     pct.textContent = `${v}%`;
     bar.setAttribute('aria-valuenow', String(v));
   };
-  const drop = h('label', { class: 'drop' }, input, ico('upload'), status, hint, bar);
-  const modeBtns = Object.entries(MODES).map(([k, m]) => h('button', { type: 'button', 'data-mode': k, onclick: () => { modeState.set(s, k); showMode(); } }, ico(m.icon), m.label));
-  const modeBar = h('div', { class: 'up-mode' }, h('span', { class: 'muted' }, 'Upload as'), h('div', { class: 'seg', role: 'group', 'aria-label': 'Upload as' }, modeBtns));
-  function showMode() {
-    const m = MODES[mode()];
-    modeBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode())));
-    input.accept = m.accept;
-    status.replaceChildren(m.text, h('u', {}, 'choose files'));
-    hint.textContent = m.hint;
+  const drop = h('label', { class: 'drop' }, input, ico('upload'), status,
+    h('small', {}, `Images: JPG, PNG, WebP or GIF; you choose separate images or one carousel each time. Videos: MP4, WebM or MOV up to ${VIDEO_INPUT_MAX_MB} MB, with a short preview and an optional Google Drive link.`), bar);
+  async function upload(files) {
+    const imgs = files.filter(isImageFile);
+    const vids = files.filter(isVideoFile);
+    if (!imgs.length) return addFiles(vids);
+    const as = await chooseUpload(imgs.length, vids.length);
+    if (!as) return undefined;
+    if (as === 'image') return addFiles([...imgs, ...vids]);
+    await addCarousel(imgs);
+    return vids.length ? addFiles(vids) : undefined;
   }
-  showMode();
-  const upload = files => (mode() === 'carousel' ? addCarousel(files) : addFiles(files.filter(MODES[mode()].keep)));
-  wireDrop(drop, (entries, files) => readDrop(entries, files, MODES[mode()].keep).then(tree => upload(allFiles(tree))).catch(err => toast(err.message, true)));
+  wireDrop(drop, (entries, files) => readDrop(entries, files, isMediaFile).then(tree => upload(allFiles(tree))).catch(err => toast(err.message, true)));
 
   // Uploads images as carousel cards (each keeps its own storage paths, so one card can be removed later).
   async function uploadCards(files, alt, from, onFrac) {
@@ -2001,7 +2009,7 @@ function collectionCard(p, s, si, rerender) {
         iconBtn('pencil', 'Rename collection', rename),
         moveBtns(p.sections, si, d, rerender),
         delBtn(async () => { await removeStored(s.images); p.sections.splice(si, 1); markDirty(d); rerender(); }, `collection "${s.title}"`))),
-    h('div', { class: 'coll-body' }, s.images.length ? thumbs : null, modeBar, drop));
+    h('div', { class: 'coll-body' }, s.images.length ? thumbs : null, drop));
   wrap.addEventListener('toggle', () => openState.set(s, wrap.open));
   return wrap;
 }

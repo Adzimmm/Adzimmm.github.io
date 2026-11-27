@@ -674,13 +674,6 @@ img.mark{display:block;padding:0;background:none;border-radius:10px;object-fit:c
 .sw-logo-img{width:100%;height:100%;object-fit:contain;padding:4px}
 .sw-logo-img[hidden],.sw-logo-default[hidden],.sw-logo-box .btn[hidden]{display:none}
 .sw-logo-default{font:800 15px/1 var(--font-display);color:var(--accent)}
-.up-mode{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 10px}
-.up-mode .muted{font-size:13px;font-weight:600}
-.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface-2)}
-.seg button{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:0;border-radius:999px;background:none;color:var(--muted);font:600 13px var(--font);cursor:pointer;transition:background .15s,color .15s}
-.seg button .ico{width:15px;height:15px}
-.seg button:hover{color:var(--text)}
-.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
 .up-bar{display:flex;align-items:center;gap:10px;width:min(420px,100%);margin-top:6px}
 .up-bar[hidden]{display:none}
 .up-track{position:relative;flex:1;height:8px;border-radius:999px;background:var(--line-strong);overflow:hidden}
@@ -693,3 +686,10 @@ img.mark{display:block;padding:0;background:none;border-radius:10px;object-fit:c
 .car-card:hover .car-x,.car-x:focus-visible{opacity:1}
 .car-add{display:grid;place-items:center;width:34px;height:42px;border:1px dashed var(--line-strong);border-radius:6px;color:var(--muted);font:600 18px/1 var(--font);cursor:pointer}
 .car-add:hover{color:var(--text);border-color:var(--accent)}
+.up-dialog{width:min(520px,94vw)}
+.up-choices{display:grid;gap:10px;margin:14px 0}
+.up-choice{display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;border:1px solid var(--line-strong);border-radius:14px;background:var(--surface-2);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
+.up-choice:hover,.up-choice:focus-visible{border-color:var(--accent);background:var(--accent-soft)}
+.up-choice>.ico{flex:none;width:24px;height:24px;color:var(--accent)}
+.up-choice b{display:block;font:700 15px var(--font-display)}
+.up-choice small{display:block;color:var(--muted);font-size:13px}
