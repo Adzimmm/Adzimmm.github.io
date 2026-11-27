@@ -1,8 +1,8 @@
-/* Admin panel. Same tokens as the portfolio: dark by default, purple accent, Manrope + DM Sans. */
+/* Admin panel: dark grey by default (neutral, no tint), accent from the site colours, Manrope + DM Sans. */
 :root{
   color-scheme:dark;
-  --bg:#09090c;--surface:#121117;--surface-2:#18171f;--raised:#1d1c25;
-  --text:#f3f1f7;--muted:#9b97a6;--faint:#6e6a78;
+  --bg:#111112;--surface:#1a1a1b;--surface-2:#202022;--raised:#262628;
+  --text:#f2f2f3;--muted:#a1a1a6;--faint:#707075;
   --line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.16);
   --accent:#b8a0ff;--accent-ink:#16111f;--accent-soft:rgba(184,160,255,.14);
   --danger:#ff8a80;--danger-soft:rgba(255,138,128,.12);--ok:#5fd39a;
@@ -610,7 +610,7 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
 .coll-head{align-items:center}
 .coll-head .btn.add{margin-left:auto}
 /* Clear checkerboard behind every image preview, so transparent PNGs read as transparent */
-:root{--checker-a:#2c2b34;--checker-b:#1d1c23}
+:root{--checker-a:#2e2e30;--checker-b:#1f1f21}
 :root[data-theme="light"]{--checker-a:#ffffff;--checker-b:#e7e5ee}
 .thumb-img,.wz-thumb .thumb-img,.fav-big,.about-photo-prev,.crop-stage,.picker-grid img{background:repeating-conic-gradient(var(--checker-a) 0 25%,var(--checker-b) 0 50%) 0 0/14px 14px}
 .thumb-img.on-dark{background:repeating-conic-gradient(#2a3550 0 25%,#1b2438 0 50%) 0 0/14px 14px}
@@ -636,7 +636,7 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
 .logo-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
 .logo-stage{display:inline-flex;align-items:center;justify-content:center;min-width:96px;height:52px;padding:6px 10px;border-radius:10px;border:1px solid var(--line-strong)}
 .logo-light .logo-stage{background:#f6f4fa}
-.logo-dark .logo-stage{background:#121117}
+.logo-dark .logo-stage{background:#1a1a1b}
 .logo-light .logo-empty{color:#6d657a}
 .logo-dark .logo-empty{color:#9b97a6}
 .logo-outline{grid-column:1/-1}
