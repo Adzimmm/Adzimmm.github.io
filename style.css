@@ -1700,3 +1700,7 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 [data-theme="light"] .chat-folder .cat-sym{color:color-mix(in srgb,var(--color) 70%,#0f0c15)}
 .cy-icon,.pv-icon{container-type:size}
 .cy-icon .cat-sym,.pv-icon .cat-sym{font-size:52cqw}
+
+/* Mobile: the About pill waits 110vw off screen before it is dragged in; clip it so the page never gets wider than the phone */
+.about-hero{overflow-x:clip;overflow-clip-margin:24px}
+html{overflow-x:clip}
