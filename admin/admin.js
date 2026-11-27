@@ -43,6 +43,7 @@ const P = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   upload: '<path d="M12 16V4m-5 5 5-5 5 5M5 20h14"/>',
   play: '<path d="M8 5.5v13l11-6.5Z" fill="currentColor"/>',
+  carousel: '<rect x="7" y="4" width="10" height="16" rx="2"/><path d="M4 7v10M20 7v10"/>',
   image: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
   check: '<path d="m5 12 5 5 9-10"/>',
   alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
@@ -1772,6 +1773,51 @@ function collectionCard(p, s, si, rerender) {
     h('input', { type: 'file', accept: 'image/*,video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov', multiple: true, onchange: e => { addFiles([...e.target.files]); e.target.value = ''; } }),
     ico('upload'), status, h('small', {}, `JPG, PNG, WebP or GIF (resized to WebP). Videos: MP4, WebM or MOV up to ${VIDEO_INPUT_MAX_MB} MB; you pick a short preview for the site (full resolution, high quality) and can link the full video on Google Drive.`));
   wireDrop(drop, (entries, files) => readDrop(entries, files, isMediaFile).then(tree => addFiles(allFiles(tree))).catch(err => toast(err.message, true)));
+  // What to add: single images, one image carousel (several images shown as a fanned stack), or videos.
+  const picker = (icon, label, accept, multiple, onPick) => h('label', { class: 'btn ghost small' }, ico(icon), label,
+    h('input', { type: 'file', accept, multiple, hidden: true, onchange: e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) onPick(f); } }));
+  const addBar = h('div', { class: 'add-bar' },
+    h('span', { class: 'muted' }, 'Add:'),
+    picker('image', 'Image', 'image/*', true, addFiles),
+    picker('carousel', 'Image carousel', 'image/*', true, addCarousel),
+    picker('play', 'Video', 'video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov', true, addFiles));
+
+  async function addCarousel(files) {
+    const imgs = files.filter(isImageFile).sort(byName);
+    if (imgs.length < 2) { toast('Choose 2 or more images for a carousel.', true); return; }
+    drop.classList.add('busy');
+    const folder = `${p.id}/${slug(s.title)}`;
+    const alt = `${s.title} — carousel ${s.images.length + 1}`;
+    const cards = [];
+    try {
+      for (const [n, f] of imgs.entries()) {
+        status.textContent = `Carousel: uploading ${n + 1} of ${imgs.length}…`;
+        const info = await analyseImage(f, { preview: false });
+        const c = await uploadImage(f, folder, `${alt}, image ${n + 1}`);
+        c.dark = info.dark;
+        c.opaque = info.opaque;
+        cards.push(c);
+      }
+    } catch (err) {
+      await removeStored(cards); // nothing half-made stays in storage
+      toast(`Could not upload the carousel: ${err.message}`, true);
+      openState.set(s, true);
+      rerender();
+      return;
+    }
+    const first = cards[0];
+    s.images.push({
+      // The first image doubles as the poster for places that show one picture; the box is wider for the side cards.
+      src: first.src, display: first.display, thumb: first.thumb, alt,
+      width: Math.round(first.width * 1.6), height: first.height, opaque: true,
+      storage: cards.flatMap(c => c.storage || []),
+      carousel: cards.map(({ storage, ...c }) => c),
+    });
+    markDirty(d);
+    toast(`Carousel of ${imgs.length} images added. Click Save to publish.`);
+    openState.set(s, true);
+    rerender();
+  }
 
   async function addFiles(files) {
     const imgs = files.filter(isMediaFile).sort(byName);
@@ -1817,6 +1863,7 @@ function collectionCard(p, s, si, rerender) {
     const frame = h('div', { class: `thumb-img${a.dark ? ' on-dark' : ''}`, draggable: 'true', title: 'Drag to reorder' },
       h('img', { src: asset(a.thumb || a.display || a.src), alt: '', loading: 'lazy', draggable: 'false' }),
       h('span', { class: 'thumb-num' }, String(i + 1)),
+      a.carousel ? h('span', { class: 'thumb-video', title: 'Image carousel' }, ico('carousel'), `Carousel · ${a.carousel.length}`) : null,
       a.video ? h('span', { class: 'thumb-video', title: 'Video' }, ico('play'), [videoShape(a.width, a.height), a.duration ? fmtDuration(a.duration) : ''].filter(Boolean).join(' · ') || 'Video') : null,
       h('div', { class: 'thumb-tools' },
         moveBtns(s.images, i, d, rerender),
@@ -1897,7 +1944,7 @@ function collectionCard(p, s, si, rerender) {
         iconBtn('pencil', 'Rename collection', rename),
         moveBtns(p.sections, si, d, rerender),
         delBtn(async () => { await removeStored(s.images); p.sections.splice(si, 1); markDirty(d); rerender(); }, `collection "${s.title}"`))),
-    h('div', { class: 'coll-body' }, s.images.length ? thumbs : null, drop));
+    h('div', { class: 'coll-body' }, s.images.length ? thumbs : null, addBar, drop));
   wrap.addEventListener('toggle', () => openState.set(s, wrap.open));
   return wrap;
 }

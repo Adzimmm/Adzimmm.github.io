@@ -1668,3 +1668,26 @@ html.pv-open .pet{opacity:0;pointer-events:none}
 .sw-logo.is-default b{font:800 12px/1 var(--font-display,inherit);letter-spacing:.02em;color:var(--text)}
 [data-theme="light"] .sw-logo.is-default{background:linear-gradient(135deg,#fff,rgba(36,23,57,.04))}
 
+
+/* Image carousel (project gallery): a fanned stack, the front card full height, two more peeking out on each side */
+.pv-fan{position:absolute;inset:0;overflow:visible}
+.pv-fan-card{position:absolute;top:50%;left:50%;display:block;height:100%;aspect-ratio:var(--ca);max-width:64%;padding:0;border:0;border-radius:14px;overflow:hidden;background:var(--surface-raised,#222);
+  box-shadow:0 10px 28px rgba(0,0,0,.28);z-index:calc(10 - var(--ad,0));cursor:pointer;
+  transform:translate(-50%,-50%) translateX(calc(var(--d,0) * 18%)) scale(calc(1 - var(--ad,0) * .12));transition:transform .55s var(--ease),opacity .4s,filter .4s}
+.pv-fan-card img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none;user-select:none}
+.pv-fan-card:not(.is-front){filter:brightness(.88)}
+.pv-fan-card.is-front{cursor:default;box-shadow:0 18px 44px rgba(0,0,0,.35)}
+.pv-fan-card.is-hidden{opacity:0;pointer-events:none}
+.pv-fan-card:focus-visible{outline:2px solid var(--color,var(--accent));outline-offset:3px}
+.pv-fan-step{position:absolute;top:50%;z-index:20;display:grid;place-items:center;width:38px;height:38px;padding:0;border:0;border-radius:50%;background:rgba(10,9,14,.6);color:#fff;cursor:pointer;transform:translateY(-50%);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:background-color .2s}
+.pv-fan-step svg{width:18px;height:18px}
+.pv-fan-step.is-prev{left:2%}.pv-fan-step.is-next{right:2%}
+.pv-fan-step:hover{background:rgba(10,9,14,.82)}
+.pv-tile.is-fan{padding:0;background:transparent}
+.pv-tile.is-fan::after{display:none}
+.pv-tile.is-fan .pv-fan-card{cursor:inherit}
+.pv-frame.is-fan{position:relative;padding:0;background:transparent;box-shadow:none;overflow:visible;cursor:default}
+.pv-zoom-fan{position:absolute}
+.pv-zoom.has-fan .pv-zoom-img{opacity:0}
+.pv-fan-badge{position:absolute;right:4px;bottom:4px;width:14px;height:14px;border-radius:3px;background:#fff;box-shadow:-3px -3px 0 -1px rgba(255,255,255,.6),-6px -6px 0 -2px rgba(255,255,255,.35)}
+[data-motion="off"] .pv-fan-card{transition:none}

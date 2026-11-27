@@ -50,6 +50,29 @@
   const dims = a => (a.width > 0 && a.height > 0 ? ` width="${a.width}" height="${a.height}"` : '');
   // A video item keeps poster images in src/display/thumb (so image-only places still work) and the file in .video.
   const isVideo = a => Boolean(a && a.video);
+  // Image carousel: one item holding several images (a.carousel), shown as a fanned stack; the first image is its poster.
+  const isFan = a => Boolean(a && Array.isArray(a.carousel) && a.carousel.length > 1);
+  const fanHtml = (a, live) => `<div class="pv-fan" data-at="0" style="--ca:${ratio(a.carousel[0]).toFixed(4)}">${a.carousel.map((c, k) => (live
+    ? `<button type="button" class="pv-fan-card" data-fan-k="${k}" aria-label="Image ${k + 1} of ${a.carousel.length}"><img src="${esc(medium(c))}" alt="${esc(c.alt || a.alt || '')}" loading="lazy" decoding="async" draggable="false"></button>`
+    : `<span class="pv-fan-card"><img src="${esc(small(c))}" alt="" loading="lazy" decoding="async" draggable="false"></span>`)).join('')}${live
+    ? `<button type="button" class="pv-fan-step is-prev" data-fan-step="-1" aria-label="Previous image">${I.prev}</button><button type="button" class="pv-fan-step is-next" data-fan-step="1" aria-label="Next image">${I.next}</button>` : ''}</div>`;
+  // Each card's place in the stack: 0 in front, ±1 and ±2 peeking out behind on each side (wraps round).
+  function setFan(el, at) {
+    const cards = [...el.querySelectorAll('.pv-fan-card')];
+    const n = cards.length;
+    at = ((at % n) + n) % n;
+    el.dataset.at = String(at);
+    cards.forEach((c, k) => {
+      let d = (k - at + n) % n;
+      if (d > n / 2) d -= n;
+      c.style.setProperty('--d', String(d));
+      c.style.setProperty('--ad', String(Math.abs(d)));
+      c.classList.toggle('is-front', d === 0);
+      c.classList.toggle('is-hidden', Math.abs(d) > 2);
+      if (c.tagName === 'BUTTON') c.tabIndex = d === 0 || Math.abs(d) === 1 ? 0 : -1;
+    });
+  }
+  const initFans = root => root.querySelectorAll('.pv-fan').forEach(f => setFan(f, Number(f.dataset.at) || 0));
   // Horizontal, vertical or square: from the stored size, then checked against the video file itself.
   const known = a => a.width > 0 && a.height > 0;
   const orient = a => { const r = ratio(a); return r > 1.05 ? 'landscape' : r < 0.95 ? 'portrait' : 'square'; };
@@ -137,7 +160,7 @@
       </section>
       <div class="pv-zoom" role="dialog" aria-modal="true" aria-label="Visual at full size" hidden>
         <div class="pv-zoom-bg"></div>
-        <div class="pv-zoom-scroll"><img class="pv-zoom-img" alt="" draggable="false"><video class="pv-zoom-video" playsinline controls preload="metadata" hidden></video></div>
+        <div class="pv-zoom-scroll"><img class="pv-zoom-img" alt="" draggable="false"><video class="pv-zoom-video" playsinline controls preload="metadata" hidden></video><div class="pv-zoom-fan" hidden></div></div>
         <div class="pv-zoom-spin ball-loader" aria-hidden="true">${LOADER}</div>
         <button class="pv-zoom-btn is-close" type="button" data-pv="zoom-close" aria-label="Close full size">${I.close}</button>
         <button class="pv-zoom-btn is-prev" type="button" data-pv="zoom-prev" aria-label="Previous visual">${I.prev}</button>
@@ -156,7 +179,23 @@
     b.style.setProperty('--d', String(Math.min(i, 16)));
     b.setAttribute('aria-label', `${it.a.alt || it.s.title}. Open full size`);
     const vid = isVideo(it.a);
-    b.innerHTML = `<img src="${esc(small(it.a))}"${dims(it.a)} alt="" loading="lazy" decoding="async" draggable="false">${vid ? `<video class="pv-tile-video" muted loop playsinline preload="${known(it.a) ? 'none' : 'metadata'}" aria-hidden="true" src="${esc(it.a.video)}"></video>${PLAY()}` : ''}<span class="pv-tile-info" aria-hidden="true"><span>${esc(it.s.title)}</span>${I.expand}</span>`;
+    if (isFan(it.a)) {
+      // Hover flips through the stack; click opens it full size like any visual.
+      b.classList.add('is-fan');
+      b.setAttribute('aria-label', `${it.a.alt || it.s.title}. Image carousel, ${it.a.carousel.length} images. Open`);
+      b.innerHTML = `${fanHtml(it.a, false)}<span class="pv-tile-info" aria-hidden="true"><span>${esc(it.s.title)}</span>${I.expand}</span>`;
+      const f = b.querySelector('.pv-fan');
+      setFan(f, 0);
+      let timer = 0;
+      b.addEventListener('pointerenter', e => {
+        if (e.pointerType !== 'mouse' || !motion()) return;
+        setFan(f, Number(f.dataset.at) + 1);
+        timer = setInterval(() => setFan(f, Number(f.dataset.at) + 1), 1400);
+      });
+      b.addEventListener('pointerleave', () => clearInterval(timer));
+      return b;
+    }
+    b.innerHTML = `<img src="${esc(small(it.a))}"${dims(it.a)} alt=""" loading="lazy" decoding="async" draggable="false">${vid ? `<video class="pv-tile-video" muted loop playsinline preload="${known(it.a) ? 'none' : 'metadata'}" aria-hidden="true" src="${esc(it.a.video)}"></video>${PLAY()}` : ''}<span class="pv-tile-info" aria-hidden="true"><span>${esc(it.s.title)}</span>${I.expand}</span>`;
     if (vid) {
       // Hover plays a silent preview; click opens it full size with sound and controls.
       b.classList.add('is-video');
@@ -198,11 +237,13 @@
     if (!els.zoom.hidden && zoom.i === i) { setOrient(els.zoom, a); layoutZoom(); }
   }
 
-  const slideHtml = (it, i) => (isVideo(it.a)
+  const slideHtml = (it, i) => (isFan(it.a)
+    ? `<div class="pv-slide" data-i="${i}"><div class="pv-frame is-fan${artClass(it.a)}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}">${fanHtml(it.a, true)}</div></div>`
+    : isVideo(it.a)
     ? `<div class="pv-slide" data-i="${i}"><div class="pv-frame is-video is-${orient(it.a)}${artClass(it.a)}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}"><video controls playsinline preload="${known(it.a) ? 'none' : 'metadata'}" poster="${esc(medium(it.a))}" src="${esc(it.a.video)}" aria-label="${esc(it.a.alt || it.s.title)}"></video>${FULL(it.a)}</div></div>`
     : `<div class="pv-slide" data-i="${i}"><button type="button" class="pv-frame${artClass(it.a)}" data-zoom="${i}" style="--a:${ratio(it.a).toFixed(4)};--nw:${it.a.width > 0 ? `${it.a.width}px` : 'none'}" aria-label="${esc(it.a.alt || it.s.title)}. Open full size"><img src="${esc(medium(it.a))}"${dims(it.a)} alt="" loading="lazy" decoding="async" draggable="false"></button></div>`);
 
-  const thumbHtml = (it, i) => `<button type="button" class="pv-thumb${it.a.dark && !isClear() ? ' dark-art' : ''}" data-go="${i}" style="--a:${ratio(it.a).toFixed(4)}" aria-label="Visual ${i + 1} of ${items.length}"><img src="${esc(small(it.a))}" alt="" loading="lazy" decoding="async" draggable="false">${isVideo(it.a) ? PLAY() : ''}</button>`;
+  const thumbHtml = (it, i) => `<button type="button" class="pv-thumb${it.a.dark && !isClear() ? ' dark-art' : ''}" data-go="${i}" style="--a:${ratio(it.a).toFixed(4)}" aria-label="Visual ${i + 1} of ${items.length}"><img src="${esc(small(it.a))}" alt="" loading="lazy" decoding="async" draggable="false">${isVideo(it.a) ? PLAY() : ''}${isFan(it.a) ? '<span class="pv-fan-badge" aria-hidden="true"></span>' : ''}</button>`;
 
   /* ---------- Render ---------- */
   function render() {
@@ -234,6 +275,7 @@
       zoomScroll: q('.pv-zoom-scroll'),
       zoomImg: q('.pv-zoom-img'),
       zoomVideo: q('.pv-zoom-video'),
+      zoomFan: q('.pv-zoom-fan'),
       zoomCap: q('.pv-zoom-cap'),
       zoomPrev: q('.pv-zoom-btn.is-prev'),
       zoomNext: q('.pv-zoom-btn.is-next'),
@@ -280,6 +322,7 @@
       v.addEventListener('loadedmetadata', () => learnShape(it.a, v.videoWidth, v.videoHeight));
     });
     els.thumbs.innerHTML = items.map(thumbHtml).join('');
+    initFans(els.track);
     setCurrent(current, true, false);
   }
 
@@ -396,7 +439,7 @@
 
   // Mouse drag on the gallery (touch and trackpads scroll natively).
   function dragTrack(e) {
-    if (e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('video')) return;
+    if (e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('video, .pv-fan')) return;
     const tr = els.track;
     const w = tr.clientWidth;
     const startX = e.clientX;
@@ -502,15 +545,22 @@
     v.muted = false;
     v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
   }
+  function setZoomFan(it) {
+    const f = els.zoomFan;
+    const on = isFan(it.a);
+    f.hidden = !on;
+    els.zoom.classList.toggle('has-fan', on);
+    f.innerHTML = on ? fanHtml(it.a, true) : '';
+    if (on) initFans(f);
+  }
   const syncZoomVideo = () => {
-    const v = els.zoomVideo;
-    if (v.hidden) return;
     const st = els.zoomImg.style;
-    Object.assign(v.style, { width: st.width, height: st.height, left: st.left, top: st.top });
+    [els.zoomVideo, els.zoomFan].forEach(v => { if (!v.hidden) Object.assign(v.style, { width: st.width, height: st.height, left: st.left, top: st.top }); });
   };
 
   function setZoomImage(it, lowSrc) {
     setZoomVideo(it);
+    setZoomFan(it);
     const img = els.zoomImg;
     const token = ++zoom.token;
     img.className = `pv-zoom-img${artClass(it.a)}`;
@@ -550,7 +600,7 @@
     const maxH = Math.max(40, H - padTop - padBottom);
     const fitW = Math.min(maxW, maxH * r, natural);
     const wide = Math.min(W - (phone ? 16 : 120), natural);
-    const canFill = Number.isFinite(natural) && wide > fitW * 1.25 && !isVideo(it.a);
+    const canFill = Number.isFinite(natural) && wide > fitW * 1.25 && !isVideo(it.a) && !isFan(it.a);
     els.zoom.classList.toggle('can-fill', canFill);
     if (zoom.fit || !canFill) {
       zoom.fit = true;
@@ -680,7 +730,7 @@
     let sy = 0;
     sc.addEventListener('pointerdown', e => {
       swiped = false;
-      if (!zoom.fit || e.pointerType === 'mouse' || e.target.closest('video')) return;
+      if (!zoom.fit || e.pointerType === 'mouse' || e.target.closest('video, .pv-fan')) return;
       down = true;
       sx = e.clientX;
       sy = e.clientY;
@@ -718,7 +768,7 @@
         swiped = false;
         return;
       }
-      if (e.target.closest('video')) return; // play, pause and seek stay on the video
+      if (e.target.closest('video, .pv-fan')) return; // play, pause, seek and the carousel stay on themselves
       if (e.target === img) toggleFill(e);
       else closeZoom();
     });
@@ -726,6 +776,12 @@
 
   /* ---------- Events ---------- */
   function onClick(e) {
+    const fc = e.target.closest('[data-fan-k], [data-fan-step]');
+    if (fc && els.shell.contains(fc)) {
+      const f = fc.closest('.pv-fan');
+      setFan(f, fc.dataset.fanStep ? Number(f.dataset.at) + Number(fc.dataset.fanStep) : Number(fc.dataset.fanK));
+      return undefined;
+    }
     const t = e.target.closest('[data-pv], [data-layout-btn], [data-coll], [data-go], [data-zoom], .pv-tile');
     if (!t || !els.shell.contains(t)) return;
     if (t.classList.contains('pv-tile')) return openZoom(Number(t.dataset.i));
