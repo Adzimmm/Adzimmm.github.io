@@ -417,12 +417,20 @@ dialog::backdrop{background:rgba(5,4,8,.6);backdrop-filter:blur(4px)}
 .cc-bars{position:absolute;inset:0;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr))}
 .cc-slot{position:relative;min-width:0;border-radius:4px 4px 0 0}
 .cc-slot.is-active{background:var(--accent-soft)}
+.cc{--chart:#4d9cf8}
 .cc-line{position:absolute;inset:0;pointer-events:none}
-.cc-line svg{display:block;width:100%;height:100%;overflow:visible}
-.cc-line polyline{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
-.cc-line .cc-area{fill:var(--accent);opacity:.12;stroke:none}
-.cc-dot{position:absolute;left:50%;width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--surface);transform:translate(-50%,50%);opacity:0;transition:opacity .15s}
-.cc-dot.is-peak,.cc-slot.is-active .cc-dot{opacity:1}
+.cc-line svg{display:block;overflow:visible}
+.cc-now{fill:none;stroke:var(--chart);stroke-width:3.5;stroke-linejoin:round;stroke-linecap:round}
+.cc-area{fill:url(#cc-fill);stroke:none}
+.cc-before{fill:none;stroke:var(--muted);stroke-opacity:.6;stroke-width:3;stroke-linecap:round;stroke-dasharray:.1 8}
+.cc-dot{position:absolute;left:50%;width:12px;height:12px;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 2.5px var(--chart);transform:translate(-50%,50%);opacity:0;transition:opacity .15s}
+.cc-dot.is-ring,.cc-dot.is-peak{opacity:1}
+.cc-dot.is-last,.cc-slot.is-active .cc-dot{opacity:1;width:14px;height:14px;background:var(--chart);box-shadow:0 0 0 3px var(--surface)}
+.cc-legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;color:var(--muted);font-size:12px}
+.cc-legend span{display:inline-flex;align-items:center;gap:7px}
+.cc-legend span::before{content:"";width:18px;height:0;border-top:3px solid var(--chart);border-radius:2px}
+.cc-legend .is-before::before{border-top:3px dotted var(--muted)}
+:root[data-theme="light"] .cc{--chart:#2f7fe0}
 .cc-peak{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);color:var(--text);font-size:12px;font-style:normal;font-weight:700;white-space:nowrap}
 .cc-axis{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr))}
 .cc-axis span{display:flex;justify-content:center;min-width:0;color:var(--faint);font-size:11.5px;white-space:nowrap}

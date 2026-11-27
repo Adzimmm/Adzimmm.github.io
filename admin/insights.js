@@ -364,10 +364,11 @@ export function mountInsights(root, { h, ico, card, switchField, ask, toast, sb,
     }
 
     const { bars, daily } = series(rows, st.range, bounds(st.range).start);
+    const before = series(st.prev.map(v => (v.at ? v : { ...v, at: new Date(v.seen_at) })), st.range, bounds(st.range).prevStart).bars;
     const best = daily.reduce((a, x) => (x.n > a.n ? x : a), daily[0]);
     const timeCard = card(today ? 'Views today' : st.range === '90d' ? 'Views per week' : 'Views per day',
       today ? `Busiest so far: ${best.label}, ${plural(best.n, 'view')}.` : `Busiest day: ${best.label}, ${plural(best.n, 'view')}.`,
-      columns(bars),
+      columns(bars, before),
       tableView([today ? 'Hour' : st.range === '90d' ? 'Week' : 'Day', 'Views', 'Visitors'], [...bars].reverse().map(x => [x.label, num(x.n), num(x.people.size)])));
 
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -402,26 +403,63 @@ export function mountInsights(root, { h, ico, card, switchField, ask, toast, sb,
     return h('span', { class: `stat-delta ${up ? 'up' : 'down'}` }, `${up ? '▲' : '▼'} ${Math.abs(change)}% vs ${vs}`);
   }
 
-  // Line chart: one point per hour, day or week; the highest point carries its number.
-  // Each point sits in its own column, so hover and the arrow keys read it like before.
-  function columns(s) {
-    const max = Math.max(0, ...s.map(x => x.n));
+  // Line chart: a smooth curve per hour, day or week over a soft fill; the period before as a dotted line.
+  // Labelled points get a ring, the newest a solid dot, the highest its number. Each point sits in its own
+  // column, so hover and the arrow keys read it like before.
+  function columns(s, before = []) {
+    const max = Math.max(0, ...s.map(x => x.n), ...before.map(x => x.n));
     const ticks = niceTicks(max);
     const top = ticks[ticks.length - 1];
-    const peakAt = max ? s.findIndex(x => x.n === max) : -1;
-    const y = n => 100 - (n / top) * 100;
-    const pts = s.map((x, i) => `${i + 0.5},${y(x.n).toFixed(2)}`).join(' ');
+    const peakAt = Math.max(...s.map(x => x.n)) ? s.findIndex(x => x.n === Math.max(...s.map(v => v.n))) : -1;
     const line = h('div', { class: 'cc-line', 'aria-hidden': 'true' });
-    line.innerHTML = `<svg viewBox="0 0 ${s.length} 100" preserveAspectRatio="none"><polygon class="cc-area" points="0.5,100 ${pts} ${s.length - 0.5},100"/><polyline points="${pts}"/></svg>`;
-    const slots = s.map((x, i) => h('div', { class: 'cc-slot' },
-      h('i', { class: `cc-dot${i === peakAt ? ' is-peak' : ''}`, style: `bottom:${(x.n / top) * 100}%` }, i === peakAt ? h('b', { class: 'cc-peak' }, num(x.n)) : null)));
+    const draw = () => {
+      const W = line.clientWidth;
+      const H = line.clientHeight;
+      if (!W || !H) return;
+      const pt = list => list.map((x, i) => [((i + 0.5) / s.length) * W, H - (x.n / top) * H]);
+      const now = smooth(pt(s));
+      const last = pt(s)[s.length - 1];
+      line.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+        <defs><linearGradient id="cc-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--chart)" stop-opacity=".28"/><stop offset="1" stop-color="var(--chart)" stop-opacity="0"/></linearGradient></defs>
+        ${before.length ? `<path class="cc-before" d="${smooth(pt(before))}"/>` : ''}
+        <path class="cc-area" d="${now} L${last[0].toFixed(1)},${H} L${(W / s.length / 2).toFixed(1)},${H} Z"/>
+        <path class="cc-now" d="${now}"/></svg>`;
+    };
+    new ResizeObserver(draw).observe(line);
+    const slots = s.map((x, i) => {
+      const kind = i === s.length - 1 ? ' is-last' : i === peakAt ? ' is-peak' : x.axis ? ' is-ring' : '';
+      return h('div', { class: 'cc-slot' },
+        h('i', { class: `cc-dot${kind}`, style: `bottom:${(x.n / top) * 100}%` }, i === peakAt ? h('b', { class: 'cc-peak' }, num(x.n)) : null));
+    });
     const plot = h('div', { class: 'cc-plot', tabindex: '0', role: 'group', 'aria-label': 'Views chart. Use the arrow keys to read each point.' },
       h('div', { class: 'cc-grid', 'aria-hidden': 'true' }, ticks.map(t => h('span', { style: `bottom:${(t / top) * 100}%` }, h('em', {}, num(t))))),
       line,
       h('div', { class: 'cc-bars', style: `--n:${s.length}` }, slots));
-    bindHover(plot, slots, i => [`${plural(s[i].n, 'view')} · ${plural(s[i].people.size, 'visitor')}`, s[i].label],
+    bindHover(plot, slots, i => [`${plural(s[i].n, 'view')} · ${plural(s[i].people.size, 'visitor')}${before[i] ? ` (before: ${num(before[i].n)})` : ''}`, s[i].label],
       i => slots[i].firstChild, { start: s.length - 1 });
-    return h('div', { class: 'cc' }, plot, h('div', { class: 'cc-axis', 'aria-hidden': 'true', style: `--n:${s.length}` }, s.map(x => h('span', {}, x.axis))));
+    return h('div', { class: 'cc' }, plot, h('div', { class: 'cc-axis', 'aria-hidden': 'true', style: `--n:${s.length}` }, s.map(x => h('span', {}, x.axis))),
+      before.length ? h('div', { class: 'cc-legend', 'aria-hidden': 'true' }, h('span', { class: 'is-now' }, 'This period'), h('span', { class: 'is-before' }, 'The period before')) : null);
+  }
+
+  // Smooth path through points without overshooting below zero or above a peak (monotone cubic, Fritsch–Carlson).
+  function smooth(p) {
+    if (p.length < 2) return p.length ? `M${p[0][0]},${p[0][1]}` : '';
+    const n = p.length;
+    const d = p.slice(1).map((q, i) => (q[1] - p[i][1]) / (q[0] - p[i][0]));
+    const m = p.map((_, i) => (i === 0 ? d[0] : i === n - 1 ? d[n - 2] : d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2));
+    for (let i = 0; i < n - 1; i++) {
+      if (!d[i]) { m[i] = 0; m[i + 1] = 0; continue; }
+      const a = m[i] / d[i];
+      const b = m[i + 1] / d[i];
+      const t = a * a + b * b;
+      if (t > 9) { const k = 3 / Math.sqrt(t); m[i] = k * a * d[i]; m[i + 1] = k * b * d[i]; }
+    }
+    let path = `M${p[0][0].toFixed(1)},${p[0][1].toFixed(1)}`;
+    for (let i = 0; i < n - 1; i++) {
+      const dx = (p[i + 1][0] - p[i][0]) / 3;
+      path += ` C${(p[i][0] + dx).toFixed(1)},${(p[i][1] + m[i] * dx).toFixed(1)} ${(p[i + 1][0] - dx).toFixed(1)},${(p[i + 1][1] - m[i + 1] * dx).toFixed(1)} ${p[i + 1][0].toFixed(1)},${p[i + 1][1].toFixed(1)}`;
+    }
+    return path;
   }
 
   // Heatmap: 7 days × 24 hours, one hue, more views = stronger colour. The busiest hour has a ring.
