@@ -1769,19 +1769,24 @@ function renderProjects() {
   return [h('div', { class: 'split' }, side, editor)];
 }
 
-// Asked on every upload that has images: each image its own visual, or all of them one carousel.
-// Videos always upload as videos. Resolves to 'image', 'carousel' or null (cancelled).
-function chooseUpload(nImg, nVid) {
+// Asked on every upload: separate images, one image carousel, or video.
+// Before picking files (counts null) every choice is open; after a drop, only the ones that fit the files.
+// Resolves to 'image', 'carousel', 'video' or null (cancelled).
+function chooseUpload(nImg = null, nVid = null) {
   return new Promise(resolve => {
     const dlg = h('dialog', { class: 'crop-dialog up-dialog' });
     const done = v => { dlg.close(); dlg.remove(); resolve(v); };
-    const opt = (v, icon, title, text) => h('button', { type: 'button', class: 'up-choice', onclick: () => done(v) }, ico(icon), h('span', {}, h('b', {}, title), h('small', {}, text)));
+    const picked = nImg !== null;
+    const opt = (v, icon, title, text, off) => h('button', { type: 'button', class: 'up-choice', disabled: off, onclick: () => done(v) },
+      ico(icon), h('span', {}, h('b', {}, title), h('small', {}, text)));
+    const noImg = picked && !nImg;
+    const noVid = picked && !nVid;
     dlg.append(
-      h('h2', {}, `Upload ${plural(nImg, 'image')} as`),
+      h('h2', {}, picked ? `Upload ${[nImg ? plural(nImg, 'image') : '', nVid ? plural(nVid, 'video') : ''].filter(Boolean).join(' and ')} as` : 'What are you uploading?'),
       h('div', { class: 'up-choices' },
-        opt('image', 'image', nImg > 1 ? 'Separate images' : 'Image', nImg > 1 ? `Each one becomes its own visual (${nImg} visuals).` : 'One visual in the gallery.'),
-        opt('carousel', 'carousel', 'Image carousel', nImg > 1 ? `All ${nImg} in one fanned stack. Add more later with + on its thumbnail.` : 'Start a carousel with this image, then add more with + on its thumbnail.')),
-      ...(nVid ? [h('p', { class: 'muted' }, `${plural(nVid, 'video')} in this upload ${nVid > 1 ? 'upload' : 'uploads'} as video.`)] : []),
+        opt('image', 'image', 'Separate images', noImg ? 'No images in this upload.' : 'Each image becomes its own visual.', noImg),
+        opt('carousel', 'carousel', 'Image carousel', noImg ? 'No images in this upload.' : 'All the images in this upload become one fanned stack. Add more later with + on its thumbnail.', noImg),
+        opt('video', 'play', 'Video upload', noVid ? 'No videos in this upload.' : `MP4, WebM or MOV up to ${VIDEO_INPUT_MAX_MB} MB. You pick a short preview and can link the full video on Google Drive.`, noVid)),
       h('div', { class: 'ask-actions' }, h('button', { class: 'btn ghost', type: 'button', onclick: () => done(null) }, 'Cancel')));
     dlg.addEventListener('cancel', e => { e.preventDefault(); done(null); });
     document.body.append(dlg);
@@ -1794,7 +1799,9 @@ const openState = new WeakMap(); // collection -> open or closed, kept across re
 function collectionCard(p, s, si, rerender) {
   const d = 'portfolio';
   const status = h('span', {}, 'Drag images, videos or a folder here, or ', h('u', {}, 'choose files'));
-  const input = h('input', { type: 'file', accept: 'image/*,video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov', multiple: true, onchange: e => { const f = [...e.target.files]; e.target.value = ''; upload(f); } });
+  const ACCEPT = { image: 'image/*', carousel: 'image/*', video: 'video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov' };
+  let chosen = null; // the choice made before the file picker opened
+  const input = h('input', { type: 'file', multiple: true, onchange: e => { const f = [...e.target.files]; e.target.value = ''; upload(f, chosen); chosen = null; }, oncancel: () => { chosen = null; } });
   // Progress: overall percentage of this batch (a video's compression counts inside its own share).
   const fill = h('i');
   const pct = h('b', {}, '0%');
@@ -1807,16 +1814,28 @@ function collectionCard(p, s, si, rerender) {
     bar.setAttribute('aria-valuenow', String(v));
   };
   const drop = h('label', { class: 'drop' }, input, ico('upload'), status,
-    h('small', {}, `Images: JPG, PNG, WebP or GIF; you choose separate images or one carousel each time. Videos: MP4, WebM or MOV up to ${VIDEO_INPUT_MAX_MB} MB, with a short preview and an optional Google Drive link.`), bar);
-  async function upload(files) {
+    h('small', {}, 'Each upload asks what it is: separate images, one image carousel, or video.'), bar);
+  // Clicking the box asks first, then opens the file picker for that kind of file.
+  drop.addEventListener('click', async e => {
+    if (e.target === input || drop.classList.contains('busy')) return;
+    e.preventDefault();
+    const as = await chooseUpload();
+    if (!as) return;
+    chosen = as;
+    input.accept = ACCEPT[as];
+    input.click();
+  });
+  async function upload(files, as = null) {
     const imgs = files.filter(isImageFile);
     const vids = files.filter(isVideoFile);
-    if (!imgs.length) return addFiles(vids);
-    const as = await chooseUpload(imgs.length, vids.length);
+    if (!imgs.length && !vids.length) { toast('No images or videos found. Use JPG, PNG, WebP, GIF, MP4, WebM or MOV files.', true); return undefined; }
+    as = as || await chooseUpload(imgs.length, vids.length);
     if (!as) return undefined;
-    if (as === 'image') return addFiles([...imgs, ...vids]);
-    await addCarousel(imgs);
-    return vids.length ? addFiles(vids) : undefined;
+    const use = as === 'video' ? vids : imgs;
+    const left = files.length - use.length;
+    if (left) toast(`${plural(left, 'file')} skipped: not ${as === 'video' ? 'a video' : 'an image'}. Upload ${left > 1 ? 'them' : 'it'} separately.`, true);
+    if (!use.length) return undefined;
+    return as === 'carousel' ? addCarousel(use) : addFiles(use);
   }
   wireDrop(drop, (entries, files) => readDrop(entries, files, isMediaFile).then(tree => upload(allFiles(tree))).catch(err => toast(err.message, true)));
 

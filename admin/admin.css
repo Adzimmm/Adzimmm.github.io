@@ -693,3 +693,4 @@ img.mark{display:block;padding:0;background:none;border-radius:10px;object-fit:c
 .up-choice>.ico{flex:none;width:24px;height:24px;color:var(--accent)}
 .up-choice b{display:block;font:700 15px var(--font-display)}
 .up-choice small{display:block;color:var(--muted);font-size:13px}
+.up-choice:disabled{opacity:.45;cursor:not-allowed;border-color:var(--line);background:none}
